@@ -1103,9 +1103,10 @@ type
 
   { TLiFunc }
 
-  TLiFunc = class(TLiNamedObject)
+  TLiFunc = class(TLiObject)
   private
     FModule: TLiModule;
+    FName: string;
     FParent: TLiType;
     FParams: TLiVarbList;
     FResultType: TLiType;
@@ -1138,6 +1139,7 @@ type
     function AddCode(const Code: string): boolean;
     function SetCode(const Code: string): boolean;
     procedure Decompile(Level: integer; Lines: TStrings);
+    property Name: string read FName;
     property HasVarArg: boolean read FHasVarArg;
     property Parent: TLiType read FParent;
     property FullName: string read GetFullName;
@@ -1146,6 +1148,23 @@ type
     property ResultType: TLiType read FResultType write FResultType;
     property Proc: TLiLyseeProc read FProc write FProc;
     property STMTs: TLiSTMTList read GetSTMTs;
+  end;
+
+  { TLiFuncList }
+
+  TLiFuncList = class
+  private
+    FItems: TList;
+    function GetCount: integer;
+    function GetItem(Index: integer): TLiFunc;
+  public
+    constructor Create;
+    destructor Destroy;override;
+    function Get(const Name: string): TLiFunc;
+    procedure Clear;
+    procedure Delete(Index: integer);
+    property Count: integer read GetCount;
+    property Items[Index: integer]: TLiFunc read GetItem;default;
   end;
 
   { TLiModule }
@@ -1157,7 +1176,7 @@ type
     FImporters: TList;       {<--private: modules useing this module}
     FFileName: string;
     FTypeList: TList;
-    FFuncList: TLiNamedObjectList;
+    FFuncList: TLiFuncList;
     FConstants: TLiHashList;
     procedure InitModule;
     procedure DeleteFunctions;
@@ -8907,7 +8926,8 @@ begin
   FAfter := FLast.FCol;
   repeat
     SymTestNextID;
-    FModule.UseModule(FLast.FName);
+    if FModule.UseModule(FLast.FName) = nil then
+      ESyntax(FLast.FRow, FLast.FCol, 'module not exists: %s', [FLast.FName]);
     SymTestNext([syComma, sySemic]);
   until FLast.FSym = sySemic;
   SymGetNext;
@@ -10394,11 +10414,11 @@ end;
 
 constructor TLiFunc.CreateEx(const AName: string; M: TLiModule; Proc: TLiLyseeProc);
 begin
-  inherited Create(AName);
-  if AName <> '' then
+  FName := AName;
+  if FName <> '' then
   begin
     IncRefcount;
-    M.FFuncList.Add(Self);
+    M.FFuncList.FItems.Add(Self);
   end;
   FModule := M;
   FParams := TLiVarbList.Create;
@@ -10413,7 +10433,7 @@ end;
 
 constructor TLiFunc.CreateEx(const AName: string; P: TLiType; Proc: TLiLyseeProc);
 begin
-  inherited Create(AName);
+  FName := AName;
   FParent := P;
   FParent.FMethods.Add(Self);
   IncRefcount;
@@ -10433,7 +10453,7 @@ end;
 
 destructor TLiFunc.Destroy;
 begin
-  FModule.FFuncList.Remove(Self);
+  FModule.FFuncList.FItems.Remove(Self);
   LeaveParentClass;
   FreeAndNil(FSTMTs);
   FreeAndNil(FParams);
@@ -10703,6 +10723,61 @@ begin
   else Result := fiNone;
 end;
 
+{ TLiFuncList }
+
+constructor TLiFuncList.Create;
+begin
+  FItems := TList.Create;
+end;
+
+destructor TLiFuncList.Destroy;
+begin
+  Clear;
+  FreeAndNil(FItems);
+  inherited;
+end;
+
+function TLiFuncList.Get(const Name: string): TLiFunc;
+var
+  I: integer;
+begin
+  for I := 0 to GetCount - 1 do
+  begin
+    Result := self.GetItem(I);
+    if MatchID(Name, Result.FName) then Exit;
+  end;
+  Result := nil;
+end;
+
+function TLiFuncList.GetCount: integer;
+begin
+  if FItems <> nil then
+    Result := FItems.Count else
+    Result := 0;
+end;
+
+function TLiFuncList.GetItem(Index: integer): TLiFunc;
+begin
+  Result := TLiFunc(FItems[Index]);
+end;
+
+procedure TLiFuncList.Clear;
+var
+  I: integer;
+begin
+  for I := GetCount - 1 downto 0 do
+    Delete(I);
+end;
+
+procedure TLiFuncList.Delete(Index: integer);
+var
+  M: TLiFunc;
+begin
+  M := GetItem(Index);
+  FItems.Delete(Index);
+  M.Free
+end;
+
 { TLiModule }
 
 function TLiModule.AddFunc(const Names: array of string;
@@ -10753,9 +10828,7 @@ begin
   IncRefcount;
   FFileName := my_kernel;
   FTypeList := TList.Create;
-  FFuncList := TLiNamedObjectList.Create;
-  FFuncList.CaseSensitive := false;
-  FFuncList.AllowNil := false;
+  FFuncList := TLiFuncList.Create;
   FConstants := TLiHashList.Create;
   FConstants.CaseSensitive := false;
 end;
@@ -10790,16 +10863,8 @@ begin
 end;
 
 procedure TLiModule.DeleteFunctions;
-var
-  I: integer;
-  F: TLiFunc;
 begin
-  for I := FFuncList.Count - 1 downto 0 do
-  begin
-    F := TLiFunc(FFuncList[I]);
-    FFuncList.Delete(I);
-    F.Free;
-  end;
+  FFuncList.Clear;
 end;
 
 procedure TLiModule.DeleteTypes;
