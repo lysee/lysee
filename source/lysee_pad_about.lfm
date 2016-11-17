@@ -1,0 +1,149 @@
+object AboutForm: TAboutForm
+  Left = 372
+  Height = 480
+  Top = 149
+  Width = 512
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsDialog
+  Caption = 'About Lysee PAD'
+  ClientHeight = 480
+  ClientWidth = 512
+  OnCreate = FormCreate
+  LCLVersion = '1.6.0.4'
+  object Panel1: TPanel
+    Left = 12
+    Height = 420
+    Top = 12
+    Width = 488
+    BevelOuter = bvNone
+    ClientHeight = 420
+    ClientWidth = 488
+    Color = clBtnShadow
+    ParentColor = False
+    TabOrder = 0
+    object Panel2: TPanel
+      Left = 0
+      Height = 420
+      Top = 0
+      Width = 488
+      Align = alClient
+      BevelOuter = bvNone
+      ClientHeight = 420
+      ClientWidth = 488
+      ParentColor = False
+      TabOrder = 0
+      object Panel3: TPanel
+        Left = 0
+        Height = 40
+        Top = 0
+        Width = 488
+        Align = alTop
+        BevelOuter = bvNone
+        ClientHeight = 40
+        ClientWidth = 488
+        TabOrder = 0
+        OnClick = Panel3Click
+        object Image1: TImage
+          Left = 108
+          Height = 32
+          Top = 0
+          Width = 32
+          Picture.Data = {
+            055449636F6EFE0200000000010001002020100000000000E802000016000000
+            2800000020000000400000000100040000000000800200000000000000000000
+            0000000000000000000000000000800000800000008080008000000080008000
+            80800000C0C0C000808080000000FF0000FF000000FFFF00FF000000FF00FF00
+            FFFF0000FFFFFF00000099999999999999999999999900000099999999999999
+            999999999999990009999999999999999999999999999990099999999999B99B
+            999999BBBBB999909999999999999BBB99999BBBBBBB9999999999999999BBBB
+            B9999BBB66BB9999999999999999999BB9999BB6666BB999999999999999999B
+            BB999BB6666BB99999999999999BBBBBB9999BBB6666BB999999999999BBBBBB
+            999999BBBB666BB9999999999BBBBBBBB899999BBBB666BB99999999999BBBBB
+            BB899999BBBB666B999999999999BBBBBBB999999BBB666B9999999999BBBBBB
+            BBBB8999BBBB6666999999999BBBBBBBBBBBBBBBBBBB666699999999BBBBBBBB
+            BBBBBBBBBBB6666699999999BBBBBBBBBBBBBBBBBB6666669999B999BBBBBB66
+            BBB6666666666666999BBB99BBBBB66BBB6666666666666699BBBBBBBBBBB66B
+            BBBBB6666666666699BB6BBBBBBBB66BBBBBBBBB666666669BB666BBBBBBBBB6
+            66666BB666666666BBB6666BBBBBBBB666666B6666666666B6B6666BBBB66BB6
+            6666666666666666666666BBBB6666B66666666666666666666666BBBB6666B6
+            6666666666666666666666BBBB666BB66666666666666666666666BBB666BBB6
+            6666666666666666066666BB66666BB66666666666666660066666B666666666
+            6666666666666660006666666666666666666666666666000000666666666666
+            6666666666660000F000000FC000000380000001800000010000000000000000
+            0000000000000000000000000000000000000000000000000000000000000000
+            0000000000000000000000000000000000000000000000000000000000000000
+            0000000000000000000000000000000000000000000000008000000180000001
+            C0000003F000000F
+          }
+        end
+        object lblCopyright: TLabel
+          Left = 151
+          Height = 17
+          Top = 18
+          Width = 202
+          Caption = 'Copyright (C) 2003-2010 Li Yun Jie.'
+          ParentColor = False
+        end
+        object lblVersion: TLabel
+          Left = 151
+          Height = 17
+          Top = 1
+          Width = 58
+          Caption = 'lblVersion'
+          ParentColor = False
+        end
+      end
+      object Memo1: TMemo
+        Left = 0
+        Height = 380
+        Top = 40
+        Width = 488
+        Align = alClient
+        Lines.Strings = (
+          'Copyright (c) 2003-2016, Li Yun Jie'
+          'All rights reserved.'
+          ''
+          'Redistribution and use in source and binary forms, with or without '
+          'modification, are permitted provided that the following conditions are met:'
+          ''
+          'Redistributions of source code must retain the above copyright notice, this list '
+          'of conditions and the following disclaimer.'
+          ''
+          'Redistributions in binary form must reproduce the above copyright notice, this '
+          'list of conditions and the following disclaimer in the documentation and/or '
+          'other materials provided with the distribution.'
+          ''
+          'Neither the name of Li Yun Jie nor the names of its contributors may be used '
+          'to endorse or promote products derived from this software without specific '
+          'prior written permission.'
+          ''
+          'THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND '
+          'CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, '
+          'INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF '
+          'MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE '
+          'DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE '
+          'LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR '
+          'CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, '
+          'PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, '
+          'OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY '
+          'THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT '
+          '(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF '
+          'THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH '
+          'DAMAGE.'
+        )
+        ReadOnly = True
+        ScrollBars = ssVertical
+        TabOrder = 1
+      end
+    end
+  end
+  object btnOK: TButton
+    Left = 219
+    Height = 25
+    Top = 440
+    Width = 75
+    Caption = 'OK'
+    OnClick = btnOKClick
+    TabOrder = 1
+  end
+end

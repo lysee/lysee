@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2003-2016, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2003/02/28                                                      }
-{    MODIFIED: 2016/11/15                                                      }
+{    MODIFIED: 2016/11/17                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -76,74 +76,20 @@ type
   public
     constructor Create(const AName: string);virtual;
     destructor Destroy;override;
-    function SafeName: string;
     property Name: string read FName write SetName;
-  end;
-
-  { TLiNamedObjectList }
-
-  TLiNamedObjectFunc = function(Nobj: TLiNamedObject; Data: pointer): boolean;
-
-  TLiNamedObjectList = class(TLiObject)
-  private
-    FItems: TList;
-    FCaseSensitive: boolean;
-    FUnique: boolean;
-    FSorted: boolean;
-    FInOrder: boolean;
-    FAllowNil: boolean;
-    function GetCount: integer;
-    function GetItem(Index: integer): TLiNamedObject;
-    function GetName(Index: integer): string;
-    procedure SetCaseSensitive(Value: boolean);
-    procedure SetUnique(Value: boolean);
-    procedure SetSorted(Value: boolean);
-    procedure SetAllowNil(Value: boolean);
-    function GetNameList: string;
-  public
-    constructor Create;
-    destructor Destroy; override;
-    procedure Assign(Source: TLiNamedObjectList);
-    procedure Clear;
-    procedure Delete(Index: integer);
-    procedure Remove(const Name: string);overload;
-    procedure Remove(Nobj: TLiNamedObject);overload;
-    function IndexOf(const Name: string): integer;overload;
-    function IndexOf(Nobj: TLiNamedObject): integer;overload;
-    function Add(Nobj: TLiNamedObject): integer;
-    function Get(const Name: string): TLiNamedObject;
-    procedure Each(Func: TLiNamedObjectFunc; Data: pointer);
-    procedure Sort;
-    property Count: integer read GetCount;
-    property Items[Index: integer]: TLiNamedObject read GetItem;default;
-    property Names[Index: integer]: string read GetName;
-    property NameList: string read GetNameList;
-    property CaseSensitive: boolean read FCaseSensitive write SetCaseSensitive;
-    property Unique: boolean read FUnique write SetUnique;
-    property Sorted: boolean read FSorted write SetSorted;
-    property AllowNil: boolean read FAllowNil write SetAllowNil;
-  end;
-
-  { TLiLock }
-
-  TLiLock = class(TLiObject)
-  public
-    procedure Enter;virtual;abstract;
-    procedure Leave;virtual;abstract;
-    function TryEnter: boolean;virtual;abstract;
   end;
 
   { TLiSpinLock }
 
-  TLiSpinLock = class(TLiLock)
+  TLiSpinLock = class(TLiObject)
   private
-    FCriticalSection: SyncObjs.TCriticalSection;
+    FCriticalSection: TCriticalSection;
   public
     constructor Create;
     destructor Destroy;override;
-    procedure Enter;override;
-    procedure Leave;override;
-    function TryEnter: boolean;override;
+    procedure Enter;
+    procedure Leave;
+    function TryEnter: boolean;
   end;
 
   { TLiMD5 }
@@ -370,21 +316,6 @@ function GetProcAddr(Handle: THandle; const ProcName: string): pointer;
 function stdin: integer;
 function stdout: integer;
 function stderr: integer;
-
-function Gets: string;
-function Puts(const Text: string): integer;overload;
-function Puts(S: TStream; const Text: string): integer;overload;
-function Putln: integer;overload;
-function Putln(const Text: string): integer;overload;
-function Putln(S: TStream; const Text: string): integer;overload;
-function Putln(S: TStream): integer;overload;
-
-{ http }
-
-function HTTPDecode(const AStr: AnsiString): AnsiString;
-function HTTPEncode(const AStr: AnsiString): AnsiString;
-function HTMLEncode(const AStr: string): string;
-function HTMLDecode(const AStr: string): string;
 
 { misc }
 
@@ -1676,257 +1607,29 @@ end;
 
 function stdin: integer;
 begin
-  {$IFDEF FPC}
-  Result := StdInputHandle;
-  {$ELSE}
+  {$IFDEF MSWINDOWS}
   Result := GetStdhandle(STD_INPUT_HANDLE);
+  {$ELSE}
+  Result := StdInputHandle;
   {$ENDIF}
 end;
 
 function stdout: integer;
 begin
-  {$IFDEF FPC}
-  Result := StdOutputHandle;
-  {$ELSE}
+  {$IFDEF MSWINDOWS}
   Result := GetStdhandle(STD_OUTPUT_HANDLE);
+  {$ELSE}
+  Result := StdOutputHandle;
   {$ENDIF}
 end;
 
 function stderr: integer;
 begin
-  {$IFDEF FPC}
-  Result := StdErrorHandle;
-  {$ELSE}
+  {$IFDEF MSWINDOWS}
   Result := GetStdhandle(STD_ERROR_HANDLE);
+  {$ELSE}
+  Result := StdErrorHandle;
   {$ENDIF}
-end;
-
-function Gets: string;
-begin
-  System.Readln(Result);
-end;
-
-function Puts(const Text: string): integer;
-begin
-  Result := Length(Text);
-  System.Write(Text);
-end;
-
-function Puts(S: TStream; const Text: string): integer;
-begin
-  Result := Length(Text);
-  if Result > 0 then
-    Result := S.Write(pchar(Text)^, Result
-      {$IFDEF UNICODE}* sizeof(char){$ENDIF});
-end;
-
-function Putln: integer;
-begin
-  Result := Putln(sLineBreak);
-end;
-
-function Putln(const Text: string): integer;
-begin
-  Result := Length(Text);
-  System.Writeln(Text);
-end;
-
-function Putln(S: TStream; const Text: string): integer;
-begin
-  Result := Puts(S, Text) + Puts(S, sLineBreak);
-end;
-
-function Putln(S: TStream): integer;
-begin
-  Result := Puts(S, sLineBreak);
-end;
-
-function HTTPDecode(const AStr: AnsiString): AnsiString;
-var
-  Sp, Rp, Cp: PAnsiChar;
-  S: AnsiString;
-begin
-  SetLength(Result, Length(AStr));
-  Sp := PAnsiChar(AStr);
-  Rp := PAnsiChar(Result);
-  Cp := Sp;
-  try
-    while Sp^ <> #0 do
-    begin
-      case Sp^ of
-        '+': Rp^ := ' ';
-        '%': begin
-               // Look for an escaped % (%%) or %<hex> encoded character
-               Inc(Sp);
-               if Sp^ = '%' then
-                 Rp^ := '%'
-               else
-               begin
-                 Cp := Sp;
-                 Inc(Sp);
-                 if (Cp^ <> #0) and (Sp^ <> #0) then
-                 begin
-                   S := AnsiChar('$') + Cp^ + Sp^;
-                   Rp^ := AnsiChar(StrToInt(string(S)));
-                 end
-                 else
-                   Throw('Error decoding URL style (%%XX) encoded string at position %d',
-                     [Cp - PAnsiChar(AStr)]);
-               end;
-             end;
-      else
-        Rp^ := Sp^;
-      end;
-      Inc(Rp);
-      Inc(Sp);
-    end;
-  except
-    on E:EConvertError do
-      Throw('Invalid URL encoded character (%s) at position %d',
-        [AnsiChar('%') + Cp^ + Sp^, Cp - PAnsiChar(AStr)])
-  end;
-  SetLength(Result, Rp - PAnsiChar(Result));
-end;
-
-function HTTPEncode(const AStr: AnsiString): AnsiString;
-// The NoConversion set contains characters as specificed in RFC 1738 and
-// should not be modified unless the standard changes.
-const
-  NoConversion = ['A'..'Z','a'..'z','*','@','.','_','-',
-                  '0'..'9','$','!','''','(',')'];
-var
-  Sp, Rp: PAnsiChar;
-begin
-  SetLength(Result, Length(AStr) * 3);
-  Sp := PAnsiChar(AStr);
-  Rp := PAnsiChar(Result);
-  while Sp^ <> #0 do
-  begin
-    if Sp^ in NoConversion then
-      Rp^ := Sp^
-    else
-      if Sp^ = ' ' then
-        Rp^ := '+'
-      else
-      begin
-        FormatBuf(Rp^, 3, AnsiString('%%%.2x'), 6, [Ord(Sp^)]);
-        Inc(Rp,2);
-      end;
-    Inc(Rp);
-    Inc(Sp);
-  end;
-  SetLength(Result, Rp - PAnsiChar(Result));
-end;
-
-function HTMLEncode(const AStr: string): string;
-var
-  Sp, Rp: pchar;
-begin
-  SetLength(Result, Length(AStr) * 10);
-  Sp := pchar(AStr);
-  Rp := pchar(Result);
-  while Sp^ <> #0 do
-  begin
-    case Sp^ of
-      '&': begin
-             FormatBuf(Rp, 5, '&amp;', 5, []);
-             Inc(Rp,4);
-           end;
-      '<',
-      '>': begin
-             if Sp^ = '<' then
-               FormatBuf(Rp, 4, '&lt;', 4, [])
-             else
-               FormatBuf(Rp, 4, '&gt;', 4, []);
-             Inc(Rp,3);
-           end;
-      '"': begin
-             FormatBuf(Rp, 6, '&quot;', 6, []);
-             Inc(Rp,5);
-           end;
-    else
-      Rp^ := Sp^
-    end;
-    Inc(Rp);
-    Inc(Sp);
-  end;
-  SetLength(Result, Rp - pchar(Result));
-end;
-
-function HTMLDecode(const AStr: string): string;
-var
-  Sp, Rp, Cp, Tp: pchar;
-  S: String;
-  I, Code: Integer;
-begin
-  SetLength(Result, Length(AStr));
-  Sp := pchar(AStr);
-  Rp := pchar(Result);
-  Cp := Sp;
-  try
-    while Sp^ <> #0 do
-    begin
-      case Sp^ of
-        '&': begin
-               Cp := Sp;
-               Inc(Sp);
-               case Sp^ of
-                 'a': if StrPos(Sp, 'amp;') = Sp then  { do not localize }
-                      begin
-                        Inc(Sp, 3);
-                        Rp^ := '&';
-                      end;
-                 'l',
-                 'g': if (StrPos(Sp, 'lt;') = Sp) or (StrPos(Sp, 'gt;') = Sp) then { do not localize }
-                      begin
-                        Cp := Sp;
-                        Inc(Sp, 2);
-                        while (Sp^ <> ';') and (Sp^ <> #0) do
-                          Inc(Sp);
-                        if Cp^ = 'l' then
-                          Rp^ := '<'
-                        else
-                          Rp^ := '>';
-                      end;
-                 'q': if StrPos(Sp, 'quot;') = Sp then  { do not localize }
-                      begin
-                        Inc(Sp,4);
-                        Rp^ := '"';
-                      end;
-                 '#': begin
-                        Tp := Sp;
-                        Inc(Tp);
-                        while (Sp^ <> ';') and (Sp^ <> #0) do
-                          Inc(Sp);
-                        SetString(S, Tp, Sp - Tp);
-                        Val(S, I, Code);
-                        if I >= $10000 then
-                        begin
-                          // Decode surrogate pair
-                          Rp^ := Char(((I - $10000) div $400) + $d800);
-                          Inc(Rp);
-                          Rp^ := Char(((I - $10000) and $3ff) + $dc00);
-                        end
-                        else
-                          Rp^ := Chr((I));
-                      end;
-                 else
-                   Throw('Invalid HTML encoded character (%s) at position %d',
-                     [Cp^ + Sp^, Cp - pchar(AStr)])
-               end;
-           end
-      else
-        Rp^ := Sp^;
-      end;
-      Inc(Rp);
-      Inc(Sp);
-    end;
-  except
-    on E:EConvertError do
-      Throw('Invalid HTML encoded character (%s) at position %d',
-        [Cp^ + Sp^, Cp - pchar(AStr)])
-  end;
-  SetLength(Result, Rp - pchar(Result));
 end;
 
 procedure Swap(var V1, V2: integer);
@@ -1982,323 +1685,9 @@ begin
   inherited;
 end;
 
-function TLiNamedObject.SafeName: string;
-begin
-  if Self <> nil then Result := FName else Result := '';
-end;
-
 procedure TLiNamedObject.SetName(const AName: string);
 begin
   FName := AName;
-end;
-
-{ TLiNamedObjectList }
-
-function TLiNamedObjectList.GetCount: integer;
-begin
-  Result := FItems.Count;
-end;
-
-function TLiNamedObjectList.GetItem(Index: integer): TLiNamedObject;
-begin
-  Result := TLiNamedObject(FItems[Index]);
-end;
-
-function TLiNamedObjectList.GetName(Index: integer): string;
-var
-  M: TLiNamedObject;
-begin
-  M := GetItem(Index);
-  if M <> nil then
-    Result := M.FName else
-    Result := '';
-end;
-
-function TLiNamedObjectList.GetNameList: string;
-var
-  I: integer;
-begin
-  Result := '';
-  if GetCount > 0 then
-  begin
-    Result := GetItem(0).FName;
-    for I := 1 to GetCount - 1 do
-      Result := Result + ',' + GetItem(I).FName;
-  end;
-end;
-
-procedure TLiNamedObjectList.SetAllowNil(Value: boolean);
-var
-  I: integer;
-begin
-  if FAllowNil <> Value then
-  begin
-    FAllowNil := Value;
-    if not FAllowNil then
-      for I := GetCount - 1 downto 0 do
-        if FItems[I] = nil then
-          FItems.Delete(I);
-  end;
-end;
-
-procedure TLiNamedObjectList.SetCaseSensitive(Value: boolean);
-begin
-  if FCaseSensitive <> Value then
-  begin
-    FCaseSensitive := Value;
-    if FSorted then
-    begin
-      FSorted := false;
-      SetSorted(true);
-    end;
-  end;
-end;
-
-procedure TLiNamedObjectList.SetSorted(Value: boolean);
-begin
-  if FSorted <> Value then
-  begin
-    FSorted := Value;
-    if FSorted then Sort;
-  end;
-end;
-
-procedure TLiNamedObjectList.SetUnique(Value: boolean);
-
-  procedure unique_sort(L, R: integer);
-  var
-    I, J: integer;
-    M: pointer;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := FItems[(L + R) div 2];
-      repeat
-         while PByte(M) > PByte(FItems[I]) do Inc(I);
-         while PByte(M) < PByte(FItems[J]) do Dec(J);
-         If I <= J then
-         begin
-           FItems.Exchange(I, J);
-           Inc(I);
-           Dec(J);
-         end;
-      until I > J;
-      if L < J then unique_sort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var
-  I: integer;
-begin
-  if FUnique <> Value then
-  begin
-    FUnique := Value;
-    if FUnique and (GetCount > 1) then
-    try
-      FInOrder := false;
-      unique_sort(0, GetCount - 1);
-      for I := GetCount - 1 downto 1 do
-        if FItems[I] = FItems[I - 1] then
-          Delete(I);
-    finally
-      if FSorted then
-      begin
-        FSorted := false;
-        SetSorted(true);
-      end;
-    end;
-  end;
-end;
-
-procedure TLiNamedObjectList.Sort;
-
-  procedure name_sort(L, R: integer);
-  var
-    I, J: integer;
-    S: string;
-  begin
-    repeat
-      I := L;
-      J := R;
-      S := GetName((L + R) div 2);
-      repeat
-         while CompareString(S, GetName(I), FCaseSensitive) = crMore do Inc(I);
-         while CompareString(S, GetName(J), FCaseSensitive) = crLess do Dec(J);
-         If I <= J then
-         begin
-           FItems.Exchange(I, J);
-           Inc(I);
-           Dec(J);
-         end;
-      until I > J;
-      if L < J then name_sort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-begin
-  if GetCount > 1 then name_sort(0, GetCount - 1);
-  FInOrder := true;
-end;
-
-procedure TLiNamedObjectList.Each(Func: TLiNamedObjectFunc; Data: pointer);
-var
-  I: integer;
-begin
-  for I := 0 to GetCount - 1 do
-    if not Func(GetItem(I), Data) then
-      Exit;
-end;
-
-constructor TLiNamedObjectList.Create;
-begin
-  FItems := TList.Create;
-  FCaseSensitive := false;
-  FUnique := false;
-  FSorted := false;
-  FInOrder := false;
-  FAllowNil := true;
-end;
-
-destructor TLiNamedObjectList.Destroy;
-begin
-  Clear;
-  FreeAndNil(FItems);
-  inherited Destroy;
-end;
-
-procedure TLiNamedObjectList.Assign(Source: TLiNamedObjectList);
-var
-  I: integer;
-begin
-  if Self <> Source then
-  begin
-    Clear;
-    for I := 0 to Source.GetCount - 1 do
-      Add(Source[I]);
-  end;
-end;
-
-procedure TLiNamedObjectList.Clear;
-var
-  I: integer;
-begin
-  for I := GetCount - 1 downto 0 do Delete(I);
-end;
-
-procedure TLiNamedObjectList.Delete(Index: integer);
-var
-  nobj: TLiNamedObject;
-begin
-  nobj := GetItem(Index);
-  FItems.Delete(Index);
-  nobj.DecRefcount;
-end;
-
-procedure TLiNamedObjectList.Remove(const Name: string);
-var
-  I: integer;
-begin
-  I := IndexOf(Name);
-  if I >= 0 then Delete(I);
-end;
-
-procedure TLiNamedObjectList.Remove(Nobj: TLiNamedObject);
-var
-  I: integer;
-begin
-  I := IndexOf(Nobj);
-  if I >= 0 then Delete(I);
-end;
-
-function TLiNamedObjectList.IndexOf(const Name: string): integer;
-var
-  L, R: Integer;
-  V: TLiCompare;
-begin
-  R := GetCount - 1;
-  if FSorted or FInOrder then
-  begin
-    L := 0;
-    while L <= R do
-    begin
-      Result := (L + R) div 2;
-      V := CompareString(Name, GetName(Result), FCaseSensitive);
-      if V = crEqual then Exit else
-      if V > crMore then
-        L := Result + 1 else
-        R := Result - 1;
-    end;
-  end
-  else
-  for L := 0 to R do
-    if CompareString(Name, GetName(L), FCaseSensitive) = crEqual then
-    begin
-      Result := L;
-      Exit;
-    end;
-  Result := -1;
-end;
-
-function TLiNamedObjectList.IndexOf(Nobj: TLiNamedObject): integer;
-begin
-  Result := FItems.IndexOf(Nobj);
-end;
-
-function TLiNamedObjectList.Add(Nobj: TLiNamedObject): integer;
-var
-  L, R, I: Integer;
-  S: string;
-begin
-  if (Nobj = nil) and not FAllowNil then
-  begin
-    Result := -1;
-    Exit;
-  end;
-
-  if FUnique then
-  begin
-    Result := FItems.IndexOf(Nobj);
-    if Result >= 0 then Exit;
-  end
-  else Result := -1;
-
-  if not FSorted or (GetCount = 0) then
-  begin
-    Result := FItems.Add(Nobj);
-    FInOrder := false;
-  end
-  else
-  if Nobj = nil then FItems.Insert(0, Nobj) else
-  if Result < 0 then
-  begin
-    S := Nobj.FName;
-    L := 0;
-    R := GetCount - 1;
-    repeat
-      I := (L + R) div 2;
-      if CompareString(S, GetName(I), FCaseSensitive) in [crMore, crEqual] then
-        L := I + 1 else
-        R := I - 1;
-    until L > R;
-    Result := L;
-    FItems.Insert(L, Nobj);
-  end
-  else FItems.Insert(Result + 1, Nobj);
-
-  Nobj.IncRefcount;
-end;
-
-function TLiNamedObjectList.Get(const Name: string): TLiNamedObject;
-var
-  I: integer;
-begin
-  I := IndexOf(Name);
-  if I >= 0 then
-    Result := GetItem(I) else
-    Result := nil;
 end;
 
 { TLiSpinLock }
@@ -2325,12 +1714,7 @@ end;
 
 function TLiSpinLock.TryEnter: boolean;
 begin
-  {$IFDEF FPC}
-  FCriticalSection.Enter;
-  Result := true;
-  {$ELSE}
   Result := FCriticalSection.TryEnter;
-  {$ENDIF}
 end;
 
 { TLiMD5 }

@@ -1,0 +1,77 @@
+{ This is an automatically generated lazarus resource file }
+
+LazarusResources.Add('TAboutForm','FORMDATA',[
+  'TPF0'#10'TAboutForm'#9'AboutForm'#4'Left'#3't'#1#6'Height'#3#224#1#3'Top'#3
+  +#149#0#5'Width'#3#0#2#11'BorderIcons'#11#12'biSystemMenu'#0#11'BorderStyle'#7
+  +#8'bsDialog'#7'Caption'#6#15'About Lysee PAD'#12'ClientHeight'#3#224#1#11'Cl'
+  +'ientWidth'#3#0#2#8'OnCreate'#7#10'FormCreate'#10'LCLVersion'#6#7'1.6.0.4'#0
+  +#6'TPanel'#6'Panel1'#4'Left'#2#12#6'Height'#3#164#1#3'Top'#2#12#5'Width'#3
+  +#232#1#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#3#164#1#11'ClientWidth'#3
+  +#232#1#5'Color'#7#11'clBtnShadow'#11'ParentColor'#8#8'TabOrder'#2#0#0#6'TPan'
+  +'el'#6'Panel2'#4'Left'#2#0#6'Height'#3#164#1#3'Top'#2#0#5'Width'#3#232#1#5'A'
+  +'lign'#7#8'alClient'#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#3#164#1#11
+  +'ClientWidth'#3#232#1#11'ParentColor'#8#8'TabOrder'#2#0#0#6'TPanel'#6'Panel3'
+  +#4'Left'#2#0#6'Height'#2'('#3'Top'#2#0#5'Width'#3#232#1#5'Align'#7#5'alTop'
+  +#10'BevelOuter'#7#6'bvNone'#12'ClientHeight'#2'('#11'ClientWidth'#3#232#1#8
+  +'TabOrder'#2#0#7'OnClick'#7#11'Panel3Click'#0#6'TImage'#6'Image1'#4'Left'#2
+  +'l'#6'Height'#2' '#3'Top'#2#0#5'Width'#2' '#12'Picture.Data'#10#8#3#0#0#5'TI'
+  +'con'#254#2#0#0#0#0#1#0#1#0'  '#16#0#0#0#0#0#232#2#0#0#22#0#0#0'('#0#0#0' '#0
+  +#0#0'@'#0#0#0#1#0#4#0#0#0#0#0#128#2#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0
+  +#0#0#0#128#0#0#128#0#0#0#128#128#0#128#0#0#0#128#0#128#0#128#128#0#0#192#192
+  +#192#0#128#128#128#0#0#0#255#0#0#255#0#0#0#255#255#0#255#0#0#0#255#0#255#0
+  +#255#255#0#0#255#255#255#0#0#0#153#153#153#153#153#153#153#153#153#153#153
+  +#153#0#0#0#153#153#153#153#153#153#153#153#153#153#153#153#153#153#0#9#153
+  +#153#153#153#153#153#153#153#153#153#153#153#153#153#144#9#153#153#153#153
+  +#153#185#155#153#153#153#187#187#185#153#144#153#153#153#153#153#153#155#187
+  +#153#153#155#187#187#187#153#153#153#153#153#153#153#153#187#187#185#153#155
+  +#187'f'#187#153#153#153#153#153#153#153#153#153#155#185#153#155#182'fk'#185
+  +#153#153#153#153#153#153#153#153#155#187#153#155#182'fk'#185#153#153#153#153
+  +#153#153#155#187#187#185#153#155#187'ff'#187#153#153#153#153#153#153#187#187
+  +#187#153#153#153#187#187'fk'#185#153#153#153#153#155#187#187#187#184#153#153
+  +#155#187#182'f'#187#153#153#153#153#153#155#187#187#187#137#153#153#187#187
+  +'fk'#153#153#153#153#153#153#187#187#187#185#153#153#155#187'fk'#153#153#153
+  +#153#153#187#187#187#187#187#137#153#187#187'ff'#153#153#153#153#155#187#187
+  +#187#187#187#187#187#187#187'ff'#153#153#153#153#187#187#187#187#187#187#187
+  +#187#187#182'ff'#153#153#153#153#187#187#187#187#187#187#187#187#187'fff'#153
+  +#153#185#153#187#187#187'f'#187#182'ffffff'#153#155#187#153#187#187#182'k'
+  +#187'fffffff'#153#187#187#187#187#187#182'k'#187#187#182'fffff'#153#187'k'
+  +#187#187#187#182'k'#187#187#187#187'ffff'#155#182'f'#187#187#187#187#182'ffk'
+  +#182'ffff'#187#182'fk'#187#187#187#182'ffkfffff'#182#182'fk'#187#182'k'#182
+  +'fffffffffff'#187#187'ff'#182'fffffffffff'#187#187'ff'#182'fffffffffff'#187
+  +#187'fk'#182'fffffffffff'#187#182'f'#187#182'ffffffff'#6'ff'#187'ffk'#182'ff'
+  +'fffff`'#6'ff'#182'fffffffffff`'#0'ffffffffffffff'#0#0#0'ffffffffffff'#0#0
+  +#240#0#0#15#192#0#0#3#128#0#0#1#128#0#0#1#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0
+  +#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0
+  +#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0
+  +#0#0#128#0#0#1#128#0#0#1#192#0#0#3#240#0#0#15#0#0#6'TLabel'#12'lblCopyright'
+  +#4'Left'#3#151#0#6'Height'#2#17#3'Top'#2#18#5'Width'#3#202#0#7'Caption'#6'#C'
+  +'opyright (C) 2003-2010 Li Yun Jie.'#11'ParentColor'#8#0#0#6'TLabel'#10'lblV'
+  +'ersion'#4'Left'#3#151#0#6'Height'#2#17#3'Top'#2#1#5'Width'#2':'#7'Caption'#6
+  +#10'lblVersion'#11'ParentColor'#8#0#0#0#5'TMemo'#5'Memo1'#4'Left'#2#0#6'Heig'
+  +'ht'#3'|'#1#3'Top'#2'('#5'Width'#3#232#1#5'Align'#7#8'alClient'#13'Lines.Str'
+  +'ings'#1#6'#Copyright (c) 2003-2016, Li Yun Jie'#6#20'All rights reserved.'#6
+  +#0#6'CRedistribution and use in source and binary forms, with or without '#6
+  +'Kmodification, are permitted provided that the following conditions are met'
+  +':'#6#0#6'QRedistributions of source code must retain the above copyright no'
+  +'tice, this list '#6'+of conditions and the following disclaimer.'#6#0#6'ORe'
+  +'distributions in binary form must reproduce the above copyright notice, thi'
+  +'s '#6'Llist of conditions and the following disclaimer in the documentation'
+  +' and/or '#6'/other materials provided with the distribution.'#6#0#6'MNeithe'
+  +'r the name of Li Yun Jie nor the names of its contributors may be used '#6
+  +'Kto endorse or promote products derived from this software without specific'
+  +' '#6#25'prior written permission.'#6#0#6'7THIS SOFTWARE IS PROVIDED BY THE '
+  +'COPYRIGHT HOLDERS AND '#6'<CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED '
+  +'WARRANTIES, '#6'9INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF '
+  +#6'9MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE '#6'=DISCLAIMED'
+  +'. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE '#6'DLIABLE FOR ANY DIRE'
+  +'CT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR '#6'6CONSEQUENTIAL DAMAGES'
+  ,' (INCLUDING, BUT NOT LIMITED TO, '#6'@PROCUREMENT OF SUBSTITUTE GOODS OR SE'
+  +'RVICES; LOSS OF USE, DATA, '#6'@OR PROFITS; OR BUSINESS INTERRUPTION) HOWEV'
+  +'ER CAUSED AND ON ANY '#6'DTHEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT '
+  +'LIABILITY, OR TORT '#6'>(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY '
+  +'WAY OUT OF '#6'ETHE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILIT'
+  +'Y OF SUCH '#6#7'DAMAGE.'#0#8'ReadOnly'#9#10'ScrollBars'#7#10'ssVertical'#8
+  +'TabOrder'#2#1#0#0#0#0#7'TButton'#5'btnOK'#4'Left'#3#219#0#6'Height'#2#25#3
+  +'Top'#3#184#1#5'Width'#2'K'#7'Caption'#6#2'OK'#7'OnClick'#7#10'btnOKClick'#8
+  +'TabOrder'#2#1#0#0#0
+]);
