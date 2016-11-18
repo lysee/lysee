@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2003-2015, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2003/02/28                                                      }
-{    MODIFIED: 2016/11/16                                                      }
+{    MODIFIED: 2016/11/18                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -649,7 +649,7 @@ type
     function GetAsString: string;
     function GetAsFunc: TLiFunc;
     function GetAsList: TLiList;
-    function GetAsHashed: TLiHashList;
+    function GetAsHashList: TLiHashList;
     function GetAsModule: TLiModule;
     function GetAsStringList: TLiStringList;
     function GetAsEnum: TLiEnumItem;
@@ -664,7 +664,7 @@ type
     procedure SetAsType(Value: TLiType);
     procedure SetAsFunc(Value: TLiFunc);
     procedure SetAsList(Value: TLiList);
-    procedure SetAsHashed(Value: TLiHashList);
+    procedure SetAsHashList(Value: TLiHashList);
     procedure SetAsModule(Value: TLiModule);
     procedure SetAsStringList(Value: TLiStringList);
     procedure SetAsEnum(Value: TLiEnumItem);
@@ -706,7 +706,7 @@ type
     property AsModule: TLiModule read GetAsModule write SetAsModule;
     property AsFunc: TLiFunc read GetAsFunc write SetAsFunc;
     property AsList: TLiList read GetAsList write SetAsList;
-    property AsHashed: TLiHashList read GetAsHashed write SetAsHashed;
+    property AsHashList: TLiHashList read GetAsHashList write SetAsHashList;
     property AsString: string read GetAsString write SetAsString;
     property AsStringList: TLiStringList read GetAsStringList write SetAsStringList;
     property AsChar: char read GetAsChar write SetAsChar;
@@ -1119,8 +1119,8 @@ type
     function GetMinArgs: integer;
     function GetFullName: string;
   public
-    constructor CreateEx(const AName: string; M: TLiModule; Proc: TLiLyseeProc);overload;
-    constructor CreateEx(const AName: string; P: TLiType; Proc: TLiLyseeProc);overload;
+    constructor Create(const AName: string; M: TLiModule; Proc: TLiLyseeProc);
+    constructor CreateMethod(const AName: string; P: TLiType; Proc: TLiLyseeProc);
     destructor Destroy;override;
     function Prototype: string;
     function FindInside(const ID: string; rec: PLiFind = nil): boolean;
@@ -1517,6 +1517,7 @@ type
 
 function AcquireLock: boolean;
 function ReleaseLock: boolean;
+function SetupModule(const Name: string): TLiModule;
 procedure Command;
 function MatchID(const ID1, ID2: string): boolean;overload;
 function MatchID(const ID: string; const IDList: array of string): boolean;overload;
@@ -1819,7 +1820,7 @@ procedure string_in_hashed(V1, V2: TLiValue);
 var
   H: TLiHashList;
 begin
-  H := V2.AsHashed;
+  H := V2.AsHashList;
   V1.SetAsBoolean((H <> nil) and H.Has(V1.AsString));
 end;
 
@@ -2368,7 +2369,7 @@ begin
   if L <> nil then
     for I := 0 to L.FStrings.Count - 1 do
       H.Add(L.FStrings[I]).SetValue(TLiValue(L.FStrings.Objects[I]));
-  Value.SetAsHashed(H);
+  Value.SetAsHashList(H);
 end;
 
 procedure string_as_strlist(Value: TLiValue);
@@ -3764,7 +3765,7 @@ var
   H: TLiHashList;
 begin
   H := TLiHashList.Create;
-  Param.FResult.SetAsHashed(H);
+  Param.FResult.SetAsHashList(H);
 end;
 
 procedure pp_hashed_isEmpty(const Param: TLiParam);
@@ -4525,6 +4526,17 @@ begin
   if Result then my_spinlock.Release;
 end;
 
+function SetupModule(const Name: string): TLiModule;
+begin
+  if IsID(Name) then
+  begin
+    Result := my_modules.Find(Name);
+    if Result = nil then
+      Result := TLiModule.Create(Name);
+  end
+  else Result := nil;
+end;
+
 procedure Command;
 var
   E: TLiContext;
@@ -5141,7 +5153,7 @@ end;
 function TLiContext.GetMainFunc: TLiFunc;
 begin
   if FMainFunc = nil then
-    FMainFunc := TLiFunc.CreateEx(LSE_MAIN, FMainModule, nil);
+    FMainFunc := TLiFunc.Create(LSE_MAIN, FMainModule, nil);
   Result := FMainFunc;
 end;
 
@@ -5398,7 +5410,7 @@ begin
   if ParamOK(Names, Types, true, E) and (FindMethod(Names[0]) = nil) then
     if not MatchID(Names[0], 'create') or (Types[0] = Self) then
     begin
-      Result := TLiFunc.CreateEx(Names[0], Self, Proc);
+      Result := TLiFunc.CreateMethod(Names[0], Self, Proc);
       Result.FResultType := Types[0];
       Result.FHasVarArg := E;
       if MatchID(Names[0], 'create') then
@@ -5408,7 +5420,7 @@ begin
         Result.FParams.Add(Names[I], Types[I]);
       if FConstructer = Result then
       begin
-        F := TLiFunc.CreateEx(FName + '_create', FModule, Proc);
+        F := TLiFunc.Create(FName + '_create', FModule, Proc);
         F.FResultType := Result.FResultType;
         F.FParams.Assign(Result.FParams);
         F.FHasVarArg := E;
@@ -5416,7 +5428,7 @@ begin
       else
       if MakeModuleFunc and not FModule.Find(Names[0]) then
       begin
-        F := TLiFunc.CreateEx(Names[0], FModule, Proc);
+        F := TLiFunc.Create(Names[0], FModule, Proc);
         F.FResultType := Result.FResultType;
         F.FParams.Assign(Result.FParams);
         F.FHasVarArg := E;
@@ -5709,7 +5721,7 @@ procedure TLiType.SetupProp(const AName: string; AType: TLiType;
     Result := nil;
     if FindMethod(FuncName) = nil then
     begin
-      Result := TLiFunc.CreateEx(FuncName, Self, Read);
+      Result := TLiFunc.CreateMethod(FuncName, Self, Read);
       Result.FResultType := AType;
       Result.FParams.Add('self', Self);
       for I := 0 to Length(IndexNames) - 1 do
@@ -7044,7 +7056,7 @@ begin
   end;
 end;
 
-function TLiValue.GetAsHashed: TLiHashList;
+function TLiValue.GetAsHashList: TLiHashList;
 begin
   if FType = my_hash then Result := TLiHashList(FValue.VObject) else
   begin
@@ -7265,7 +7277,7 @@ begin
   FValue.VObject := Value;
 end;
 
-procedure TLiValue.SetAsHashed(Value: TLiHashList);
+procedure TLiValue.SetAsHashList(Value: TLiHashList);
 begin
   my_hash._IncRefcount(Value);
   my_hash._SetDefault(Self);
@@ -7975,7 +7987,7 @@ var
     key: string;
   begin
     hash := TLiHashList.Create;
-    Outv.SetAsHashed(hash);
+    Outv.SetAsHashList(hash);
     N := GetParamCount;
     I := 0;
     while I < N do
@@ -8944,7 +8956,7 @@ begin
     if FModule.Find(FLast.FName) then ERedeclared;
     L := FLast;
     SymTestNext([syEQ]);
-    FFunc := TLiFunc.CreateEx('', FModule, nil);
+    FFunc := TLiFunc.Create('', FModule, nil);
     FModule.FConstants.Add(L.FName).SetAsFunc(FFunc);
     S := FFunc.GetSTMTs.Add(ssConst) as TLiSTMT_assign;
     S.FVarb := L.FName;
@@ -8958,7 +8970,7 @@ begin
   FAfter := FLast.FCol;
   SymTestNext([syID]);
   if FModule.Find(FLast.FName) then ERedeclared;
-  FFunc := TLiFunc.CreateEx(FLast.FName, FModule, nil);
+  FFunc := TLiFunc.Create(FLast.FName, FModule, nil);
 
   if FLast.FSym = syProc then
   begin
@@ -9000,7 +9012,7 @@ begin
         Result.STMTs.Clear;
         ParseUsesConstFunc;
       end
-      else Result := TLiFunc.CreateEx('', FModule, nil);
+      else Result := TLiFunc.Create('', FModule, nil);
       while FLast.FSym <> syEOF do
       begin
         FAfter := -1;
@@ -9606,7 +9618,7 @@ begin
     Result := UseToken(FLast);
     F := FFunc;
     try
-      FFunc := TLiFunc.CreateEx('', FModule, nil);
+      FFunc := TLiFunc.Create('', FModule, nil);
       ParseArguments(syVert);
       FFunc.STMTs.Add(ssResult).FExpr := ParseExpr(false, [], false);
       Result.FValue.VFunc := FFunc;
@@ -10412,7 +10424,7 @@ end;
 
 { TLiFunc }
 
-constructor TLiFunc.CreateEx(const AName: string; M: TLiModule; Proc: TLiLyseeProc);
+constructor TLiFunc.Create(const AName: string; M: TLiModule; Proc: TLiLyseeProc);
 begin
   FName := AName;
   if FName <> '' then
@@ -10431,7 +10443,7 @@ begin
         Context.FRollbacks.Add(Self);
 end;
 
-constructor TLiFunc.CreateEx(const AName: string; P: TLiType; Proc: TLiLyseeProc);
+constructor TLiFunc.CreateMethod(const AName: string; P: TLiType; Proc: TLiLyseeProc);
 begin
   FName := AName;
   FParent := P;
@@ -10681,7 +10693,7 @@ begin
     P := FParams[0].FType;
     if (P <> my_nil) and (P <> my_variant) and (P.FindMethod(FName) = nil) then
     begin
-      Result := TLiFunc.CreateEx(FName, P, FProc);
+      Result := TLiFunc.CreateMethod(FName, P, FProc);
       Result.FResultType := FResultType;
       Result.FParams.Assign(FParams);
       Result.FHasVarArg := FHasVarArg;
@@ -10790,7 +10802,7 @@ begin
   E := false;
   if ParamOK(Names, Types, false, E) and not Find(Names[0]) then
   begin
-    Result := TLiFunc.CreateEx(Names[0], Self, Proc);
+    Result := TLiFunc.Create(Names[0], Self, Proc);
     Result.FResultType := Types[0];
     Result.FHasVarArg := E;
     for I := 1 to Length(Names) - 1 do
@@ -12579,9 +12591,9 @@ begin
   my_spinlock := Syncobjs.TCriticalSection.Create;
   my_gcman := TLiGarbageCollect.Create;
   my_modules := TLiModuleList.Create(nil);
-  my_system := TLiModule.CreateEx(LSE_SYSTE, nil);
-  my_classes := TLiModule.CreateEx('classes', nil);
-  my_sysutils := TLiModule.CreateEx('sysutils', nil);
+  my_system := TLiModule.Create(LSE_SYSTE);
+  my_classes := TLiModule.Create('classes');
+  my_sysutils := TLiModule.Create('sysutils');
 
   //-- types -----------------------------------------------------------------
 
