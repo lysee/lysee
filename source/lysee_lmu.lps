@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="9"/>
+    <BuildModes Active="Default"/>
+    <Units Count="19">
+      <Unit0>
+        <Filename Value="lysee_lmu.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="27"/>
+        <CursorPos X="11" Y="44"/>
+        <UsageCount Value="27"/>
+        <Loaded Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="lysee.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="10134"/>
+        <CursorPos X="38" Y="10143"/>
+        <UsageCount Value="25"/>
+        <Loaded Value="True"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="lysee_pmc.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="1699"/>
+        <CursorPos X="37" Y="1702"/>
+        <UsageCount Value="21"/>
+        <Loaded Value="True"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="basic.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="2"/>
+        <UsageCount Value="21"/>
+        <Loaded Value="True"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="lysee\lpmc.pas"/>
+        <UsageCount Value="24"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="lbasic.pas"/>
+        <TopLine Value="477"/>
+        <CursorPos Y="487"/>
+        <UsageCount Value="24"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="lysee\lysee.pas"/>
+        <TopLine Value="3323"/>
+        <CursorPos X="42" Y="3335"/>
+        <UsageCount Value="22"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="lpmc.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="115"/>
+        <CursorPos X="15" Y="124"/>
+        <UsageCount Value="24"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="lysee\fpc\xxx.pas"/>
+        <UsageCount Value="10"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="lysee\modules\lminifile.pas"/>
+        <TopLine Value="13"/>
+        <CursorPos X="33" Y="20"/>
+        <UsageCount Value="11"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="modules\lmfileutils_m.pas"/>
+        <TopLine Value="10"/>
+        <UsageCount Value="20"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="modules\lmsysutils.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="59"/>
+        <CursorPos Y="59"/>
+        <UsageCount Value="11"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="C:\lazarus\fpc\2.6.4\source\rtl\objpas\sysutils\sysstrh.inc"/>
+        <UsageCount Value="11"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="modules\lmsysutils_m.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="2"/>
+        <CursorPos X="30" Y="12"/>
+        <UsageCount Value="10"/>
+      </Unit13>
+      <Unit14>
+        <Filename Value="lysee_pmc.txt"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="23"/>
+        <CursorPos Y="42"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="None"/>
+      </Unit14>
+      <Unit15>
+        <Filename Value="modules\lysee_.pas"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="10"/>
+      </Unit15>
+      <Unit16>
+        <Filename Value="modules\demo.txt"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="7"/>
+        <UsageCount Value="10"/>
+        <DefaultSyntaxHighlighter Value="None"/>
+      </Unit16>
+      <Unit17>
+        <Filename Value="modules\lysee_strutils.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="122"/>
+        <CursorPos Y="141"/>
+        <UsageCount Value="10"/>
+      </Unit17>
+      <Unit18>
+        <Filename Value="modules\lm_strutils.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="138"/>
+        <CursorPos Y="157"/>
+        <UsageCount Value="10"/>
+      </Unit18>
+    </Units>
+    <JumpHistory Count="17" HistoryIndex="16">
+      <Position1>
+        <Filename Value="lysee.pas"/>
+      </Position1>
+      <Position2>
+        <Filename Value="lysee.pas"/>
+        <Caret Line="2768" Column="27" TopLine="2758"/>
+      </Position2>
+      <Position3>
+        <Filename Value="lysee.pas"/>
+        <Caret Line="499" TopLine="486"/>
+      </Position3>
+      <Position4>
+        <Filename Value="lysee.pas"/>
+        <Caret Line="3120" Column="3" TopLine="3118"/>
+      </Position4>
+      <Position5>
+        <Filename Value="lysee.pas"/>
+        <Caret Line="2899" Column="11" TopLine="2889"/>
+      </Position5>
+      <Position6>
+        <Filename Value="lysee_pmc.pas"/>
+      </Position6>
+      <Position7>
+        <Filename Value="lysee_pmc.pas"/>
+        <Caret Line="20" Column="22" TopLine="10"/>
+      </Position7>
+      <Position8>
+        <Filename Value="lysee_pmc.pas"/>
+        <Caret Line="276" Column="8" TopLine="264"/>
+      </Position8>
+      <Position9>
+        <Filename Value="lysee_pmc.pas"/>
+        <Caret Line="20" Column="22" TopLine="10"/>
+      </Position9>
+      <Position10>
+        <Filename Value="lysee_pmc.pas"/>
+        <Caret Line="275" Column="51" TopLine="266"/>
+      </Position10>
+      <Position11>
+        <Filename Value="lysee.pas"/>
+        <Caret Line="7" Column="39"/>
+      </Position11>
+      <Position12>
+        <Filename Value="lysee.pas"/>
+        <Caret Line="10144" Column="23" TopLine="10134"/>
+      </Position12>
+      <Position13>
+        <Filename Value="lysee_lmu.lpr"/>
+        <Caret Line="21" Column="35" TopLine="21"/>
+      </Position13>
+      <Position14>
+        <Filename Value="lysee_pmc.pas"/>
+        <Caret Line="255" Column="14" TopLine="246"/>
+      </Position14>
+      <Position15>
+        <Filename Value="lysee_pmc.pas"/>
+        <Caret Line="255" Column="15" TopLine="244"/>
+      </Position15>
+      <Position16>
+        <Filename Value="lysee_lmu.lpr"/>
+        <Caret Line="21" Column="35" TopLine="21"/>
+      </Position16>
+      <Position17>
+        <Filename Value="lysee_lmu.lpr"/>
+        <Caret Line="50" TopLine="31"/>
+      </Position17>
+    </JumpHistory>
+  </ProjectSession>
+</CONFIG>

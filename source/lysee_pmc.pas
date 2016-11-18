@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2012-2016, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2012/02/17                                                      }
-{    MODIFIED: 2016/11/15                                                      }
+{    MODIFIED: 2016/11/19                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -17,14 +17,7 @@ unit lysee_pmc;
 interface
 
 uses
-  SysUtils, Classes, Types, basic, lysee;
-
-const
-
-  { MCD: Module Compiling Directives }
-
-  MCD_ADD = 3; {@pmc-add LSE-TYPE => PAS-TYPE-LIST ....}
-  MCD_END = 4; {@pmc-end}
+  SysUtils, Classes, basic, lysee;
 
 type
 
@@ -178,13 +171,13 @@ type
 
   { TLiPasTokenizer }
 
-  TLiPasSymbol = (psUnit, psProgram, psLibrary, psModule, psInterface, psUses, psType,
-    psClass, psPacked, psRecord, psConst, psVar, psProp, psFunc, psProc,
-    psConstructor, psDestructor, psIn, psOut, psOf, psPrivate, psProtected,
-    psPublic, psPublished, psVirtual, psDynamic, psAbstract, psDefault,
-    psOverload, psOverride, psInline, psPlatform, psImplementation, psBegin,
-    psEnd, psEqual, psLParen, psRParen, psLArray, psRArray, psColon, psSemic,
-    psComma, psID, psNone, psEOF);
+  TLiPasSymbol = (psUnit, psProgram, psLibrary, psModule, psInterface,
+    psUses, psType, psClass, psPacked, psRecord, psConst, psVar, psProp,
+    psFunc, psProc, psConstructor, psDestructor, psIn, psOut, psOf,
+    psPrivate, psProtected, psPublic, psPublished, psVirtual, psDynamic,
+    psAbstract, psDefault, psOverload, psOverride, psInline, psPlatform,
+    psImplementation, psBegin, psEnd, psEqual, psLParen, psRParen,
+    psLArray, psRArray, psColon, psSemic, psComma, psID, psNone, psEOF);
   TPascalSymbols = set of TLiPasSymbol;
 
   RLiPasToken = packed record
@@ -238,6 +231,7 @@ type
     FSourceCodes: TStrings;
     FResultCodes: TStrings;
     FMyModule: string;
+    function GetResultUnitName: string;
   protected
     procedure ParseConst;
     procedure ParseType;
@@ -251,14 +245,14 @@ type
     function SymTestLast(Syms: TPascalSymbols): PLiPasToken;
     procedure AddConst(const AName: string);
     function AddFunc(const FuncName: string): TLiPasFunc;
-    procedure Directive(MCD: integer; const Content: string);
-    procedure InitProcess;
     procedure GenerateCodes;
   public
     constructor Create;
     destructor Destroy;override;
-    procedure Clear;
+    procedure Clear(ClearSourceCodes: boolean);
     procedure Process;
+    property Module: string read FModule;
+    property ResultUnitName: string read GetResultUnitName;
     property Errors: TStrings read FErrors;
     property SourceCodes: TStrings read FSourceCodes;
     property ResultCodes: TStrings read FResultCodes;
@@ -266,7 +260,6 @@ type
 
 function GetKeyword(const ID: string): TLiPasSymbol;
 function ExtractDirective(var T: string): string;
-function DecodeDirective(const Directive: string): integer;
 function Fetch(var T: string; const M: string = ':'): string;
 
 var
@@ -277,8 +270,10 @@ var
 
 implementation
 
+{$IFNDEF FPC}
 uses
-  {$IFDEF MSWINDOWS}Windows,{$ENDIF}Math;
+  {$IFDEF MSWINDOWS}Windows,{$ENDIF}Math, Types;
+{$ENDIF}
 
 procedure pp_pmc_parseFile(const Param: TLiParam);
 var
@@ -336,13 +331,6 @@ begin
     end;
   Result := T;
   T := '';
-end;
-
-function DecodeDirective(const Directive: string): integer;
-begin
-  Result := 0;
-  if MatchID(Directive, '@pmc-add') then Result := MCD_ADD else
-  if MatchID(Directive, '@pmc-end') then Result := MCD_END;
 end;
 
 function Fetch(var T: string; const M: string = ':'): string;
@@ -665,7 +653,7 @@ procedure TLiPasFunc.GenBodyCode(Codes: TStrings);
       TID_STRING  : Result := Format('Param[%d].AsString', [X]);
       TID_MODULE  : Result := Format('Param[%d].AsModule', [X]);
       TID_FUNCTION: Result := Format('Param[%d].AsFunc', [X]);
-      TID_HASHLIST  : Result := Format('Param[%d].AsHashed', [X]);
+      TID_HASHLIST: Result := Format('Param[%d].AsHashList', [X]);
       TID_LIST    : Result := Format('Param[%d].AsList', [X]);
       TID_STRLIST : Result := Format('Param[%d].AsStringList', [X]);
       else Result := Format('Param[%d].GetOA(%s)', [X, T.FMyName]);
@@ -732,7 +720,7 @@ procedure TLiPasFunc.GenBodyCode(Codes: TStrings);
     P := FPasType;
     T := P.FLseType;
     if not MatchID(T.FPasTypeName, P.FName)  then
-      V := P.FName + '(' + get_call + ')' else
+      V := T.FPasTypeName + '(' + get_call + ')' else
       V := get_call;
     Result := '';
     case T.FType.TID of
@@ -748,7 +736,7 @@ procedure TLiPasFunc.GenBodyCode(Codes: TStrings);
       TID_STRING  : Result := Format('Param.Result.AsString := %s', [V]);
       TID_MODULE  : Result := Format('Param.Result.AsModule := %s', [V]);
       TID_FUNCTION: Result := Format('Param.Result.AsFunc := %s', [V]);
-      TID_HASHLIST  : Result := Format('Param.Result.AsHashed := %s', [V]);
+      TID_HASHLIST: Result := Format('Param.Result.AsHashList := %s', [V]);
       TID_LIST    : Result := Format('Param.Result.AsList := %s', [V]);
       TID_STRLIST : Result := Format('Param.Result.AsStringList := %s', [V]);
       else Result := Format('Param.Result.SetTOA(%s, %s)', [T.FMyName, V]);
@@ -841,7 +829,7 @@ procedure TLiPasFunc.GenSetupCode(Codes: TStrings; const MyModule: string);
     Result := H + FName + '''';
     Result := Result + param_names(1, true);
     if HasResult then
-      Result := Result + '], [my_' + FPasType.FName else
+      Result := Result + '], [' + FPasType.LseType.FMyName else
       Result := Result + '], [my_nil';
     Result := Result + param_types(1, true);
     Result := Result + '],' + sLineBreak +
@@ -855,9 +843,9 @@ procedure TLiPasFunc.GenSetupCode(Codes: TStrings; const MyModule: string);
   begin
     H := '  my_' + FParent.FName + '.SetupProp([''';
     if FIsDefault then
-      Result := H + ''', my_' else
-      Result := H + FName + ''', my_';
-    Result := Result + FPasType.Name + ', [';
+      Result := H + ''', ' else
+      Result := H + FName + ''', ';
+    Result := Result + FPasType.LseType.FMyName + ', [';
     Result := Result + param_names(1, false);
     Result := Result + '], [';
     Result := Result + param_types(1, false);
@@ -877,7 +865,7 @@ procedure TLiPasFunc.GenSetupCode(Codes: TStrings; const MyModule: string);
     H := '  my_' + FParent.FName + '.AddMethod([''';
     Result := H + 'create''';
     Result := Result + param_names(0, true);
-    Result := Result + '], [my_' + FPasType.FName;
+    Result := Result + '], [' + FPasType.LseType.FMyName;
     Result := Result + param_types(0, true);
     Result := Result + '],' + sLineBreak + StringOfChar(' ', Length(H) - 2) +
       '{$IFDEF FPC}@{$ENDIF}' + LyseeProcName + ');';
@@ -1205,33 +1193,13 @@ begin
 end;
 
 function TLiPasTokenizer.SkipSpaces: boolean;
-
-  function skip_space: boolean;
-  begin
-    while FChar <= ' ' do if not GetChar then Break;
-    Result := (FChar > ' ');
-  end;
-
-var
-  M, P: integer;
-  S: string;
 begin
   Result := false;
-  while not Result and skip_space do
+  while not Result and (FChar <> #0) do
+    if FChar <= ' ' then GetChar else
     if FChar = '{' then
     begin
-      P := FPosition + 1;
-      if GotoChar(['}']) then
-      begin
-        S := Copy(FCode, P, FPosition - P);
-        M := DecodeDirective(ExtractDirective(S));
-        if M > 0 then case M of
-          MCD_END: begin Stop; Exit; end;
-          else FParser.Directive(M, S);
-        end;
-        GetChar;
-      end
-      else Exit;
+      if GotoChar(['}']) then GetChar else Exit;
     end
     else
     if (FChar = '(') and (PeekChar = '*') then
@@ -1254,10 +1222,19 @@ begin
   Result.FStyle := fsNormal;
 end;
 
-procedure TLiPasTranslater.Clear;
+procedure TLiPasTranslater.Clear(ClearSourceCodes: boolean);
 begin
-  FSourceCodes.Clear;
-  InitProcess;
+  if ClearSourceCodes then FSourceCodes.Clear;
+  FResultCodes.Clear;
+  FTokenizer.SetCode('');
+  FConstants.Clear;
+  FFuncs.Clear;
+  FNewLseTypes.Clear;
+  FNewPasTypes.Clear;
+  FErrors.Clear;
+  FModule := '';
+  FUses := '';
+  FMyModule := '';
 end;
 
 constructor TLiPasTranslater.Create;
@@ -1275,24 +1252,10 @@ end;
 
 destructor TLiPasTranslater.Destroy;
 begin
-  Clear;
-  FreeAll([FNewLseTypes, FConstants, FNewPasTypes, FFuncs, FErrors, FSourceCodes,
-           FResultCodes, FTokenizer]);
+  Clear(true);
+  FreeAll([FNewLseTypes, FConstants, FNewPasTypes, FFuncs, FErrors,
+           FSourceCodes, FResultCodes, FTokenizer]);
   inherited;
-end;
-
-procedure TLiPasTranslater.InitProcess;
-begin
-  FTokenizer.SetCode('');
-  FNewLseTypes.Clear;
-  FNewPasTypes.Clear;
-  FFuncs.Clear;
-  FConstants.Clear;
-  FErrors.Clear;
-  FResultCodes.Clear;
-  FModule := '';
-  FUses := '';
-  FMyModule := '';
 end;
 
 procedure TLiPasTranslater.ParseTo(Syms: TPascalSymbols);
@@ -1330,7 +1293,7 @@ end;
 
 procedure TLiPasTranslater.ParseType;
 var
-  K: string;
+  K, X: string;
   T: TLiType;
   L: TLiLseType;
   P: TLiPasType;
@@ -1349,8 +1312,11 @@ begin
     end
     else
     begin
-      T := TLiType.Create(K, nil, nil);
-      L := FNewLseTypes.Add(T, 'my_' + K, K);
+      if (Length(K) > 3) and (Copy(K, 1, 3) = 'TLi') and CharInSet(K[4], CS_UPPER) then
+        X := 'T' + Copy(K, 4, Length(K)) else
+        X := K;
+      T := TLiType.Create(X, nil, nil);
+      L := FNewLseTypes.Add(T, 'my_' + X, K);
       P := FNewPasTypes.Add(L, K);
       SymTestNext([psConstructor, psFunc, psProc, psProp, psEnd]);
       while Last^.sym <> psEnd do
@@ -1376,6 +1342,11 @@ begin
   Result := FTokenizer.GetNextToken;
 end;
 
+function TLiPasTranslater.GetResultUnitName: string;
+begin
+  Result := 'lm' + FModule;
+end;
+
 function TLiPasTranslater.GotoToken(Syms: TPascalSymbols): boolean;
 var
   T: PLiPasToken;
@@ -1393,34 +1364,6 @@ end;
 function TLiPasTranslater.Last: PLiPasToken;
 begin
   Result := FTokenizer.Current;
-end;
-
-procedure TLiPasTranslater.Directive(MCD: integer; const Content: string);
-var
-  code: string;
-
-  {@pmc-add lysee-type => pascal-type-list ...}
-  procedure add_pascal_type;
-  var
-    T: TLiLseType;
-    P: string;
-  begin
-    T := FNewLseTypes.Find(Fetch(code, '=>'));
-    if (T <> nil) and (T.FType <> my_nil) then
-      while code <> '' do
-      begin
-        P := Fetch(code, ',');
-        if IsID(P) then
-          FNewPasTypes.Add(T, P);
-      end;
-  end;
-
-begin
-  code := Trim(Content);
-  case MCD of
-    MCD_ADD: add_pascal_type;
-    MCD_END: FTokenizer.Stop;
-  end;
 end;
 
 procedure TLiPasTranslater.ParseFunc(Clss: TLiPasType);
@@ -1570,11 +1513,10 @@ procedure TLiPasTranslater.Process;
 var
   I: integer;
 begin
+  Clear(false);
+  FTokenizer.SetCode(FSourceCodes.Text);
   try
-    InitProcess;
-    FTokenizer.SetCode(FSourceCodes.Text);
-
-    // 1. get unit name
+    // 1. get module name
     SymTestNext([psModule]);
     SymTestNext([psID]);
     FModule := Last^.name;
@@ -1655,7 +1597,7 @@ procedure TLiPasTranslater.GenerateCodes;
         Add('');
         Add('  %s = class(TLiType)', [T]);
         Add('  protected');
-        Add('    function _IncRefcount(Obj: pointer): integer;override');
+        Add('    function _IncRefcount(Obj: pointer): integer;override;');
         Add('    function _DecRefcount(Obj: pointer): integer;override;');
         Add('    function _AsString(Obj: pointer): string;override;');
         Add('  end;');
@@ -1704,7 +1646,9 @@ procedure TLiPasTranslater.GenerateCodes;
       Add('');
       Add('function %s._AsString(Obj: pointer): string;', [T]);
       Add('begin');
-      Add('  Result := '''';');
+      Add('  if Obj <> nil then');
+      Add('    Result := %s(Obj).AsString else', [FNewLseTypes[I].FPasTypeName]);
+      Add('    Result := '''';');
       Add('end;');
     end;
   end;
@@ -1724,7 +1668,7 @@ procedure TLiPasTranslater.GenerateCodes;
     I: integer;
     T: string;
   begin
-    Add('  %s := TLiModule.Create(''%s'', nil);', [FMyModule, FModule]);
+    Add('  %s := SetupModule(''%s'');', [FMyModule, FModule]);
     for I := 0 to FNewLseTypes.Count - 1 do
     begin
       T := FNewLseTypes[I].Name;
@@ -1754,7 +1698,7 @@ procedure TLiPasTranslater.GenerateCodes;
 
 begin
   FResultCodes.Clear;
-  Add('unit lysee_%s;', [FModule]);
+  Add('unit %s;', [ResultUnitName]);
   Add('');
   Add('{$IFDEF FPC}');
   Add('{$MODE objfpc}{$H+}');
