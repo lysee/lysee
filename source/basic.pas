@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2003-2016, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2003/02/28                                                      }
-{    MODIFIED: 2016/11/18                                                      }
+{    MODIFIED: 2016/11/19                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -65,6 +65,7 @@ type
     function IncRefcount: integer;virtual;
     function DecRefcount: integer;virtual;
     function RefCount: integer;
+    function AsString: string;virtual;
   end;
 
   { TLiNamedObject }
@@ -79,9 +80,9 @@ type
     property Name: string read FName write SetName;
   end;
 
-  { TLiSpinLock }
+  { TLiCriticalSection }
 
-  TLiSpinLock = class(TLiObject)
+  TLiCriticalSection = class(TLiObject)
   private
     FCriticalSection: TCriticalSection;
   public
@@ -91,6 +92,10 @@ type
     procedure Leave;
     function TryEnter: boolean;
   end;
+
+  { TLiSpinLock }
+
+  TLiSpinLock = TLicriticalsection;
 
   { TLiMD5 }
 
@@ -260,35 +265,35 @@ function CheckIndex(Index, MinX, MaxX: int64): boolean;overload;
 
 { ym }
 
-function GetYM: integer;overload;
-function GetYM(Date: TDateTime): integer;overload;
-function IsYM(Y, M: integer): boolean;overload;
-function IsYM(YM: integer): boolean;overload;
-function IsYM(YM, MinYM, MaxYM: integer): boolean;overload;
-function IsYM(const YM: string): boolean;overload;
-function YMToStr(YM: integer): string;
-function StrToYM(const S: string; DefValue: integer = 0): integer;
-function DecodeYM(YM: integer; var Y, M: integer): boolean;
-function PrevYM(YM: integer; Offset: integer = 1): integer;overload;
-function PrevYM(const YM: string): string;overload;
-function NextYM(YM: integer; Offset: integer = 1): integer;overload;
-function NextYM(const YM: string): string;overload;
+function GetYm: integer;
+function GetYmFrom(Date: TDateTime): integer;
+function IsYm(Ym: integer): boolean;
+function IsYmOf(Y, M: integer): boolean;
+function IsYmIn(Ym, MinYM, MaxYM: integer): boolean;
+function IsYmStr(const Ym: string): boolean;
+function YmToStr(Ym: integer): string;
+function StrToYm(const S: string; DefValue: integer = 0): integer;
+function DecodeYm(Ym: integer; var Y, M: integer): boolean;
+function PrevYm(Ym: integer; Offset: integer = 1): integer;
+function PrevYmStr(const Ym: string): string;
+function NextYm(Ym: integer; Offset: integer = 1): integer;
+function NextYmStr(const Ym: string): string;
 
 { ymd }
 
-function GetYMD: integer;overload;
-function GetYMD(Date: TDateTime): integer;overload;
+function GetYmd: integer;
+function GetYmdFrom(Date: TDateTime): integer;
 function Today: integer;
-function IsYMD(Y, M, D: integer): boolean;overload;
-function IsYMD(YMD: integer): boolean;overload;
-function IsYMD(const YMD: string): boolean;overload;
-function YMDToStr(YMD: integer): string;overload;
-function YMDToStr(YMD: integer; const Delimiter: string): string;overload;
-function StrToYMD(const S: string; DefValue: integer = 0): integer;
-function YMDToDate(YMD: integer): TDateTime;
-function DecodeYMD(YMD: integer; var Y, M, D: integer): boolean;
-function NextYMD(YMD: integer; Offset: integer = 1): integer;
-function PrevYMD(YMD: integer; Offset: integer = 1): integer;
+function IsYmd(Ymd: integer): boolean;
+function IsYmdOf(Y, M, D: integer): boolean;
+function IsYmdStr(const Ymd: string): boolean;
+function YmdToStr(Ymd: integer): string;
+function YmdToStrOf(Ymd: integer; const Delimiter: string): string;
+function StrToYmd(const S: string; DefValue: integer = 0): integer;
+function YmdToDate(Ymd: integer): TDateTime;
+function DecodeYmd(Ymd: integer; var Y, M, D: integer): boolean;
+function NextYmd(Ymd: integer; Offset: integer = 1): integer;
+function PrevYmd(Ymd: integer; Offset: integer = 1): integer;
 
 { md5 }
 
@@ -1250,12 +1255,12 @@ begin
   Result := StringOfChar(C, Times);
 end;
 
-function GetYM: integer;
+function GetYm: integer;
 begin
-  Result := GetYM(Date);
+  Result := GetYmFrom(Date);
 end;
 
-function GetYM(Date: TDateTime): integer;
+function GetYmFrom(Date: TDateTime): integer;
 var
   Y, M, D: word;
 begin
@@ -1263,34 +1268,34 @@ begin
   Result := (Y * 100) + M;
 end;
 
-function IsYM(Y, M: integer): boolean;
+function IsYmOf(Y, M: integer): boolean;
 begin
   Result := (Y >= 1) and (Y <= 9999) and (M >= 1) and (M <= 12);
 end;
 
-function IsYM(YM: integer): boolean;
+function IsYm(Ym: integer): boolean;
 begin
-  Result := IsYM(YM div 100, YM mod 100);
+  Result := IsYmOf(Ym div 100, Ym mod 100);
 end;
 
-function IsYM(YM, MinYM, MaxYM: integer): boolean;
+function IsYmIn(Ym, MinYM, MaxYM: integer): boolean;
 begin
-  Result := (YM >= MinYM) and (YM <= MaxYM) and IsYM(YM);
+  Result := (Ym >= MinYM) and (Ym <= MaxYM) and IsYm(Ym);
 end;
 
-function IsYM(const YM: string): boolean;
+function IsYmStr(const Ym: string): boolean;
 begin
-  Result := IsYM(StrToYM(YM));
+  Result := IsYm(StrToYm(Ym));
 end;
 
-function YMToStr(YM: integer): string;
+function YmToStr(Ym: integer): string;
 begin
-  if YM > 0 then
-    Result := Format('%.6d', [YM]) else
+  if Ym > 0 then
+    Result := Format('%.6d', [Ym]) else
     Result := '';
 end;
 
-function StrToYM(const S: string; DefValue: integer): integer;
+function StrToYm(const S: string; DefValue: integer): integer;
 var
   L: integer;
 begin
@@ -1302,32 +1307,32 @@ begin
     Result := DefValue;
 end;
 
-function DecodeYM(YM: integer; var Y, M: integer): boolean;
+function DecodeYm(Ym: integer; var Y, M: integer): boolean;
 begin
-  Y := YM div 100;
-  M := YM mod 100;
-  Result := IsYM(Y, M);
+  Y := Ym div 100;
+  M := Ym mod 100;
+  Result := IsYmOf(Y, M);
 end;
 
-function PrevYM(YM, Offset: integer): integer;
+function PrevYM(Ym, Offset: integer): integer;
 begin
-  Result := NextYM(ym, - Offset);
+  Result := NextYm(ym, - Offset);
 end;
 
-function PrevYM(const YM: string): string;
+function PrevYmStr(const Ym: string): string;
 begin
-  Result := YMToStr(PrevYM(StrToYM(YM)));
+  Result := YmToStr(PrevYm(StrToYm(Ym)));
 end;
 
-function NextYM(YM, Offset: integer): integer;
+function NextYM(Ym, Offset: integer): integer;
 var
   Y, M: integer;
 begin
   {$IFDEF FPC}
   Y := 0; M := 0;
   {$ENDIF}
-  if Offset = 0 then Result := YM else
-  if DecodeYM(YM, Y, M) then
+  if Offset = 0 then Result := Ym else
+  if DecodeYm(Ym, Y, M) then
   begin
     Inc(Offset, Y * 12 + M - 1);
     Y := Offset div 12;
@@ -1337,17 +1342,17 @@ begin
   else Result := 0;
 end;
 
-function NextYM(const YM: string): string;
+function NextYmStr(const Ym: string): string;
 begin
-  Result := YMToStr(NextYM(StrToYM(YM)));
+  Result := YmToStr(NextYm(StrToYm(Ym)));
 end;
 
-function GetYMD: integer;
+function GetYmd: integer;
 begin
-  Result := GetYMD(Date);
+  Result := GetYmdFrom(Date);
 end;
 
-function GetYMD(Date: TDateTime): integer;
+function GetYmdFrom(Date: TDateTime): integer;
 var
   Y, M, D: word;
 begin
@@ -1357,53 +1362,53 @@ end;
 
 function Today: integer;
 begin
-  Result := GetYMD;
+  Result := GetYmd;
 end;
 
-function IsYMD(Y, M, D: integer): boolean;
+function IsYmdOf(Y, M, D: integer): boolean;
 var
   T: TDateTime;
 begin
   Result := TryEncodeDate(Y, M, D, T);
 end;
 
-function IsYMD(YMD: integer): boolean;overload;
+function IsYmd(Ymd: integer): boolean;
 var
   Y, M, D: integer;
 begin
   {$IFDEF FPC}
   Y := 0; M := 0; D := 0;
   {$ENDIF}
-  Result := DecodeYMD(YMD, Y, M, D);
+  Result := DecodeYmd(Ymd, Y, M, D);
 end;
 
-function IsYMD(const YMD: string): boolean;
+function IsYmdStr(const Ymd: string): boolean;
 begin
-  Result := IsYMD(StrToYMD(YMD));
+  Result := IsYmd(StrToYmd(Ymd));
 end;
 
-function YMDToStr(YMD: integer): string;
+function YmdToStr(Ymd: integer): string;
 begin
-  if YMD > 0 then
-    Result := Format('%.8d', [YMD]) else
+  if Ymd > 0 then
+    Result := Format('%.8d', [Ymd]) else
     Result := '';
 end;
 
-function YMDToStr(YMD: integer; const Delimiter: string): string;
+function YmdToStrOf(Ymd: integer; const Delimiter: string): string;
 var
   Y, M, D: integer;
 begin
-  if YMD > 0 then
+  if Ymd > 0 then
   begin
-    D := YMD mod 100; YMD := YMD div 100;
-    M := YMD mod 100;
-    Y := YMD div 100;
+    D := Ymd mod 100; Ymd := Ymd div 100;
+    M := Ymd mod 100;
+    Y := Ymd div 100;
     Result := Format('%.4d%s%.2d%s%.2d', [Y, Delimiter, M, Delimiter, D]);
   end
   else Result := '';
 end;
 
-function StrToYMD(const S: string; DefValue: integer): integer;
+function StrToYmd(const S: string; DefValue: integer): integer;
 begin
   try
     Result := StrToInt(Copy(S, 1, 4)) * 10000;
@@ -1417,47 +1422,47 @@ begin
       Inc(Result, StrToInt(Copy(S, 6, 2)) * 100);
       Inc(Result, StrToInt(Copy(S, 9, 2)));
     end;
-    if not IsYMD(Result) then
+    if not IsYmd(Result) then
       Result := DefValue;
   except
     Result := DefValue;
   end;
 end;
 
-function YMDToDate(YMD: integer): TDateTime;
+function YmdToDate(Ymd: integer): TDateTime;
 var
   Y, M, D: integer;
 begin
-  D := YMD mod 100; YMD := YMD div 100;
-  M := YMD mod 100;
-  Y := YMD div 100;
+  D := Ymd mod 100; Ymd := Ymd div 100;
+  M := Ymd mod 100;
+  Y := Ymd div 100;
   if not TryEncodeDate(Y, M, D, Result) then Result := 0;
 end;
 
-function DecodeYMD(YMD: integer; var Y, M, D: integer): boolean;
+function DecodeYmd(Ymd: integer; var Y, M, D: integer): boolean;
 begin
-  D := YMD mod 100; YMD := YMD div 100;
-  M := YMD mod 100;
-  Y := YMD div 100;
-  Result := IsYMD(Y, M, D);
+  D := Ymd mod 100; Ymd := Ymd div 100;
+  M := Ymd mod 100;
+  Y := Ymd div 100;
+  Result := IsYmdOf(Y, M, D);
 end;
 
-function NextYMD(YMD, Offset: integer): integer;
+function NextYMD(Ymd, Offset: integer): integer;
 var
   T: TDateTime;
 begin
-  if Offset = 0 then Result := YMD else
+  if Offset = 0 then Result := Ymd else
   begin
-    T := YmdToDate(YMD);
+    T := YmdToDate(Ymd);
     if T > 1 then
-      Result := GetYMD(IncDay(T, Offset)) else
+      Result := GetYmdFrom(IncDay(T, Offset)) else
       Result := 0;
   end;
 end;
 
-function PrevYMD(YMD, Offset: integer): integer;
+function PrevYMD(Ymd, Offset: integer): integer;
 begin
-  Result := NextYMD(YMD, - Offset);
+  Result := NextYMD(Ymd, - Offset);
 end;
 
 { md5 }
@@ -1650,6 +1655,11 @@ begin
     Result := 0;
 end;
 
+function TLiObject.AsString: string;
+begin
+  Result := '';
+end;
+
 function TLiObject.DecRefcount: integer;
 begin
   if Self <> nil then
@@ -1690,29 +1700,29 @@ begin
   FName := AName;
 end;
 
-{ TLiSpinLock }
+{ TLiCriticalSection }
 
-constructor TLiSpinLock.Create;
+constructor TLiCriticalSection.Create;
 begin
   FCriticalSection := SyncObjs.TCriticalSection.Create;
 end;
 
-destructor TLiSpinLock.Destroy;
+destructor TLiCriticalSection.Destroy;
 begin
   FreeAndNil(FCriticalSection);
 end;
 
-procedure TLiSpinLock.Enter;
+procedure TLiCriticalSection.Enter;
 begin
   FCriticalSection.Enter;
 end;
 
-procedure TLiSpinLock.Leave;
+procedure TLiCriticalSection.Leave;
 begin
   FCriticalSection.Leave;
 end;
 
-function TLiSpinLock.TryEnter: boolean;
+function TLiCriticalSection.TryEnter: boolean;
 begin
   Result := FCriticalSection.TryEnter;
 end;

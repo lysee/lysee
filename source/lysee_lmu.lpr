@@ -15,37 +15,7 @@ program lysee_lmu;
 uses
   Classes, SysUtils, basic, lysee, lysee_pmc;
 
-var
-  I: integer;
-  F: string;
-  T: TLiPasTranslater;
-
 begin
-  try
-    if ParamCount > 0 then
-    begin
-      T := TLiPasTranslater.Create;
-      try
-        for I := 1 to ParamCount do
-        begin
-          F := ExpandFileName(Trim(ParamStr(I)));
-          T.SourceCodes.LoadFromFile(F);
-          T.Process;
-          T.ResultCodes.SaveToFile(ExtractFilePath(F) + T.ResultUnitName + '.pas');
-        end;
-      finally
-        T.Free;
-      end;
-      ExitCode := 0;
-    end
-    else
-    begin
-      F := ExtractFileName(ParamStr(0));
-      Writeln(Format('Usage: %s pmc-files ...', [F]));
-    end;
-  except
-    Writeln(ExceptionStr);
-    ExitCode := 1;
-  end;
+  ExitCode := 1 - Ord(CommandLMU);
 end.
 

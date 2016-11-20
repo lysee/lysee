@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2012, Li Yun Jie. All Rights Reserved.            }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2012/05/19                                                      }
-{    MODIFIED: 2016/11/15                                                      }
+{    MODIFIED: 2016/11/19                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -30,7 +30,6 @@ type
   private
     FField: TField;
     function GetIndex: integer;
-    function GetAsString: string;
     function GetAsBoolean: boolean;
     function GetAsCurrency: currency;
     function GetAsFloat: double;
@@ -43,11 +42,11 @@ type
     constructor Create(AField: TField);
     procedure SaveValueTo(Value: TLiValue);
     function IsNull: boolean;
+    function AsString: string;override;
     property Field: TField read FField;
     property FieldName: string read GetName;
     property FieldType: TLiType read GetType;
     property FieldIndex: integer read GetIndex;
-    property AsString: string read GetAsString;
     property AsChar: char read GetAsChar;
     property AsInteger: int64 read GetAsInteger;
     property AsFloat: double read GetAsFloat;
@@ -70,7 +69,6 @@ type
     function GetEof: boolean;
     function GetBof: boolean;
     function GetRecordCount: integer;
-    function GetAsString: string;
   protected
     procedure SetupFields;
     procedure ClearFields;
@@ -88,6 +86,7 @@ type
     function IndexOf(const Name: string): integer;
     function FindField(const Name: string): TLiField;
     function FieldByName(const Name: string): TLiField;
+    function AsString: string;override;
     property DataSet: TDataSet read FDataSet;
     property Active: boolean read GetActive write SetActive;
     property RecordCount: integer read GetRecordCount;
@@ -95,7 +94,6 @@ type
     property Fields[Index: integer]: TLiField read GetField;default;
     property Bof: boolean read GetBof;
     property Eof: boolean read GetEof;
-    property AsString: string read GetAsString;
   end;
 
   { TLiDataBase }
@@ -820,7 +818,7 @@ begin
   Result := FieldToInt(FField);
 end;
 
-function TLiField.GetAsString: string;
+function TLiField.AsString: string;
 begin
   Result := FieldToStr(FField);
 end;
@@ -928,7 +926,7 @@ begin
   Result := FDataSet.Active;
 end;
 
-function TLiDataSet.GetAsString: string;
+function TLiDataSet.AsString: string;
 var
   I, N: integer;
 begin

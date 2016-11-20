@@ -31,7 +31,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="modules\lmsysutils.pas"/>
+        <CommandLineParams Value="lmdefs\lm_strutils.lm"/>
       </local>
     </RunParams>
     <Units Count="4">

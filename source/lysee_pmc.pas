@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2012-2016, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2012/02/17                                                      }
-{    MODIFIED: 2016/11/19                                                      }
+{    MODIFIED: 2016/11/20                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -23,6 +23,8 @@ type
 
   TLiPasTranslater = class; {forward}
 
+  TLiCompileEnv = (cePascal, ceFPC, ceDelphi);
+
   { TLiLseType }
 
   TLiLseType = class
@@ -30,10 +32,16 @@ type
     FType: TLiType;
     FMyName: string; // my_string, my_char, ...
     FPasTypeName: string;
+    FEnumItems: string;
+    FCE: TLiCompileEnv;
     function GetName: string;
   public
     constructor Create(AType: TLiType; const AMyName, APasTypeName: string);
     destructor Destroy;override;
+    function IsClass: boolean;
+    function IsEnum: boolean;
+    function IsEnumSet: boolean;
+    function EnumItemList: TStrings;
     property VType: TLiType read FType;
     property Name: string read GetName;
     property MyName: string read FMyName;
@@ -54,6 +62,8 @@ type
     function Add(AType: TLiType; const MyName, PasTypeName: string): TLiLseType;
     function Find(AType: TLiType): TLiLseType;overload;
     function Find(const AName: string): TLiLseType;overload;
+    function ClassCount: integer;
+    function FirstEnumSetIndex: integer;
     property Count: integer read GetCount;
     property Items[Index: integer]: TLiLseType read GetItem;default;
   end;
@@ -64,6 +74,7 @@ type
   private
     FName: string;
     FLseType: TLiLseType;
+    FCE: TLiCompileEnv;
     function GetLseTypeName: string;
   public
     constructor Create(const TypeName: string);
@@ -138,6 +149,7 @@ type
     FIsDefault: boolean;
     FUnitName: string;
     FGetSet: TLiPasFunc;
+    FCE: TLiCompileEnv;
     procedure GenBodyCode(Codes: TStrings);
     procedure GenSetupCode(Codes: TStrings; const MyModule: string);
   public
@@ -149,7 +161,7 @@ type
     property Params: TLiPasVarbList read FParams;
     property Parent: TLiPasType read FParent;
     property Style: TLiFuncStyle read FStyle;
-  end;
+end;
 
   { TLiPasFuncList }
 
@@ -171,9 +183,9 @@ type
 
   { TLiPasTokenizer }
 
-  TLiPasSymbol = (psUnit, psProgram, psLibrary, psModule, psInterface,
+  TLiPasSymbol = (psUnit, psProgram, psLibrary, psInterface,
     psUses, psType, psClass, psPacked, psRecord, psConst, psVar, psProp,
-    psFunc, psProc, psConstructor, psDestructor, psIn, psOut, psOf,
+    psFunc, psProc, psConstructor, psDestructor, psIn, psOut, psSet, psOf,
     psPrivate, psProtected, psPublic, psPublished, psVirtual, psDynamic,
     psAbstract, psDefault, psOverload, psOverride, psInline, psPlatform,
     psImplementation, psBegin, psEnd, psEqual, psLParen, psRParen,
@@ -183,6 +195,8 @@ type
   RLiPasToken = packed record
     sym : TLiPasSymbol;
     name: string;
+    row : integer;
+    col : integer;
   end;
   PLiPasToken = ^RLiPasToken;
 
@@ -193,8 +207,11 @@ type
     FCode: string;
     FSize: integer;
     FPosition: integer;
+    FRow: integer;
+    FCol: integer;
     FChar: char;
     FParser: TLiPasTranslater;
+    FCE: TLiCompileEnv;
     function GetChar: boolean;
     function PeekChar: char;
     function PrevChar: char;
@@ -225,7 +242,7 @@ type
     FUses: string;
     FNewLseTypes: TLiLseTypeList;
     FNewPasTypes: TLiPasTypeList;
-    FConstants: TStringList;
+    FConstants: array[TLiCompileEnv] of TStringList;
     FFuncs: TLiPasFuncList;
     FErrors: TStrings;
     FSourceCodes: TStrings;
@@ -244,13 +261,15 @@ type
     function SymTestNext(Syms: TPascalSymbols): PLiPasToken;
     function SymTestLast(Syms: TPascalSymbols): PLiPasToken;
     procedure AddConst(const AName: string);
-    function AddFunc(const FuncName: string): TLiPasFunc;
+    function FindFunc(const AName: string; Parent: TLiPasType): TLiPasFunc;
+    function AddFunc(const AName: string): TLiPasFunc;
     procedure GenerateCodes;
   public
     constructor Create;
     destructor Destroy;override;
     procedure Clear(ClearSourceCodes: boolean);
     procedure Process;
+    function NewClassCount: integer;
     property Module: string read FModule;
     property ResultUnitName: string read GetResultUnitName;
     property Errors: TStrings read FErrors;
@@ -261,6 +280,7 @@ type
 function GetKeyword(const ID: string): TLiPasSymbol;
 function ExtractDirective(var T: string): string;
 function Fetch(var T: string; const M: string = ':'): string;
+function CommandLMU: boolean;
 
 var
   LseTypes: TLiLseTypeList;
@@ -294,12 +314,13 @@ end;
 
 const
   Symbols: array[TLiPasSymbol] of string = (
-    'unit', 'program', 'library', 'module', 'interface', 'uses', 'type', 'class',
-    'packed', 'record', 'const', 'var', 'property', 'function', 'procedure',
-    'constructor', 'destructor', 'in', 'out', 'of', 'private', 'protected',
-    'public', 'published', 'virtual', 'dynamic', 'abstract', 'default',
-    'overload', 'override', 'inline', 'platform', 'implementation', 'begin',
-    'end',  '=', '(', ')', '[', ']', ':', ';', ',', 'ID', 'NONE', 'EOF'
+    'unit', 'program', 'library', 'interface', 'uses', 'type', 'class',
+    'packed', 'record', 'const', 'var', 'property', 'function',
+    'procedure', 'constructor', 'destructor', 'in', 'out', 'set', 'of',
+    'private', 'protected', 'public', 'published', 'virtual', 'dynamic',
+    'abstract', 'default', 'overload', 'override', 'inline', 'platform',
+    'implementation', 'begin', 'end',  '=', '(', ')', '[', ']', ':', ';',
+    ',', 'ID', 'NONE', 'EOF'
   );
 
 function GetKeyword(const ID: string): TLiPasSymbol;
@@ -339,6 +360,45 @@ begin
   T := Trim(T);
 end;
 
+function CommandLMU: boolean;
+var
+  I: integer;
+  F: string;
+  T: TLiPasTranslater;
+begin
+  Result := true;
+  try
+    if ParamCount > 0 then
+    begin
+      T := TLiPasTranslater.Create;
+      try
+        for I := 1 to ParamCount do
+        begin
+          F := ExpandFileName(Trim(ParamStr(I)));
+          Write('process ' + F + ' ... ');
+          T.SourceCodes.LoadFromFile(F);
+          T.Process;
+          Writeln('done');
+          T.ResultCodes.SaveToFile(ExtractFilePath(F) + T.ResultUnitName + '.pas');
+          if T.Errors.Count > 0 then
+            Writeln(T.Errors.Text);
+        end;
+      finally
+        T.Free;
+      end;
+    end
+    else
+    begin
+      F := ChangeFileExt(ExtractFileName(ParamStr(0)), '');
+      Writeln(Format('Usage: %s pmc-files ...', [F]));
+      Result := false;
+    end;
+  except
+    Writeln(ExceptionStr);
+    Result := false;
+  end;
+end;
+
 { TLyLseType }
 
 constructor TLiLseType.Create(AType: TLiType; const AMyName, APasTypeName: string);
@@ -355,9 +415,30 @@ begin
   inherited Destroy;
 end;
 
+function TLiLseType.EnumItemList: TStrings;
+begin
+  Result := TStringList.Create;
+  Result.CommaText := ReplaceAll(TrimAll(FEnumItems), '''', '');
+end;
+
 function TLiLseType.GetName: string;
 begin
   Result := FType.Name;
+end;
+
+function TLiLseType.IsClass: boolean;
+begin
+  Result := (FType.Style = tsObject);
+end;
+
+function TLiLseType.IsEnum: boolean;
+begin
+  Result := FType.IsEnum;
+end;
+
+function TLiLseType.IsEnumSet: boolean;
+begin
+  Result := FType.IsEnumSet;
 end;
 
 { TLyLseTypeList }
@@ -410,6 +491,19 @@ begin
   end;
 end;
 
+function TLiLseTypeList.ClassCount: integer;
+var
+  I: integer;
+  T: TLiLseType;
+begin
+  Result := 0;
+  for I := 0 to GetCount - 1 do
+  begin
+    T := GetItem(I);
+    if T.IsClass then Inc(Result);
+  end;
+end;
+
 procedure TLiLseTypeList.Clear;
 var
   I: integer;
@@ -435,6 +529,19 @@ begin
   if Self <> LseTypes then
     Result := LseTypes.Find(AName) else
     Result := nil;
+end;
+
+function TLiLseTypeList.FirstEnumSetIndex: integer;
+var
+  I: integer;
+begin
+  for I := 0 to GetCount - 1 do
+    if GetItem(I).IsEnumSet then
+    begin
+      Result := I;
+      Exit;
+    end;
+  Result := -1;
 end;
 
 { TLyPasType }
@@ -656,7 +763,12 @@ procedure TLiPasFunc.GenBodyCode(Codes: TStrings);
       TID_HASHLIST: Result := Format('Param[%d].AsHashList', [X]);
       TID_LIST    : Result := Format('Param[%d].AsList', [X]);
       TID_STRLIST : Result := Format('Param[%d].AsStringList', [X]);
-      else Result := Format('Param[%d].GetOA(%s)', [X, T.FMyName]);
+      else
+      if T.FType.IsEnum then
+        Result := Format('%s(Param[%d].AsInteger)', [P.FName, X]) else
+      if T.FType.IsEnumSet then
+        Result := Format('Get%s(Param[%d])', [P.FName, X]) else
+        Result := Format('%s(Param[%d].GetOA(%s))', [P.FName, X, T.FMyName]);
     end;
     if Result <> '' then
       if not MatchID(T.FPasTypeName, P.FName)  then
@@ -739,7 +851,12 @@ procedure TLiPasFunc.GenBodyCode(Codes: TStrings);
       TID_HASHLIST: Result := Format('Param.Result.AsHashList := %s', [V]);
       TID_LIST    : Result := Format('Param.Result.AsList := %s', [V]);
       TID_STRLIST : Result := Format('Param.Result.AsStringList := %s', [V]);
-      else Result := Format('Param.Result.SetTOA(%s, %s)', [T.FMyName, V]);
+      else
+      if T.FType.IsEnum then
+        Result := Format('%s.SetValue(Param.Result, Ord(%s))', [T.FMyName, V]) else
+      if T.FType.IsEnumSet then
+        Result := Format('Set%s(Param.Result, %s)', [P.FName, V]) else
+        Result := Format('Param.Result.SetTOA(%s, pointer(%s))', [T.FMyName, V]);
     end;
   end;
 
@@ -748,6 +865,8 @@ var
   P: TLiPasVarb;
 begin
   Add('');
+  if FCE = ceFPC then Add('{$IFDEF FPC}') else
+  if FCE = ceDelphi then Add('{$IFNDEF FPC}');
   Add(LyseeProcPrototype);
   if FParams.Count > 0 then
   begin
@@ -770,6 +889,7 @@ begin
     Add('  ' + set_result + ';') else
     Add('  ' + get_call + ';');
   Add('end;');
+  if FCE <> cePascal then Add('{$ENDIF}');
 end;
 
 procedure TLiPasFunc.GenSetupCode(Codes: TStrings; const MyModule: string);
@@ -809,7 +929,9 @@ procedure TLiPasFunc.GenSetupCode(Codes: TStrings; const MyModule: string);
     H: string;
   begin
     H := '  ' + MyModule + '.AddFunc([''';
-    Result := H + FName + '''';
+    if FName[1] = '_' then
+      Result := H + Copy(FName, 2, Length(FName)) + '''' else
+      Result := H + FName + '''';
     Result := Result + param_names(0, true);
     Result := Result + '], [';
     if HasResult then
@@ -825,7 +947,7 @@ procedure TLiPasFunc.GenSetupCode(Codes: TStrings; const MyModule: string);
   var
     H: string;
   begin
-    H := '  my_' + FParent.FName + '.AddMethod([''';
+    H := '  ' + FParent.FLseType.FMyName + '.AddMethod([''';
     Result := H + FName + '''';
     Result := Result + param_names(1, true);
     if HasResult then
@@ -841,7 +963,7 @@ procedure TLiPasFunc.GenSetupCode(Codes: TStrings; const MyModule: string);
   var
     H: string;
   begin
-    H := '  my_' + FParent.FName + '.SetupProp([''';
+    H := '  ' + FParent.FLseType.FMyName + '.SetupProp(''';
     if FIsDefault then
       Result := H + ''', ' else
       Result := H + FName + ''', ';
@@ -862,7 +984,7 @@ procedure TLiPasFunc.GenSetupCode(Codes: TStrings; const MyModule: string);
   var
     H: string;
   begin
-    H := '  my_' + FParent.FName + '.AddMethod([''';
+    H := '  ' + FParent.FLseType.FMyName + '.AddMethod([''';
     Result := H + 'create''';
     Result := Result + param_names(0, true);
     Result := Result + '], [' + FPasType.LseType.FMyName;
@@ -874,6 +996,8 @@ procedure TLiPasFunc.GenSetupCode(Codes: TStrings; const MyModule: string);
 var
   S: string;
 begin
+  if FCE = ceFPC then Codes.Add('  {$IFDEF FPC}') else
+  if FCE = ceDelphi then Codes.Add('  {$IFNDEF FPC}');
   S := '';
   case FStyle of
     fsNormal: S := setup_normal;
@@ -882,6 +1006,7 @@ begin
     fsCreate: S := setup_create;
   end;
   if S <> '' then Codes.Add(S);
+  if FCE <> cePascal then Codes.Add('  {$ENDIF}');
 end;
 
 function TLiPasFunc.HasResult: boolean;
@@ -1007,6 +1132,12 @@ var
   F13: boolean;
 begin
   F13 := (FChar = #13);
+  if F13 or (FChar = #10) then
+  begin
+    Inc(FRow);
+    FCol := 1;
+  end
+  else Inc(FCol);
   Inc(FPosition);
   Result := (FPosition <= FSize);
   if Result then
@@ -1079,6 +1210,8 @@ function TLiPasTokenizer.GetToken(T: PLiPasToken): boolean;
     begin
       T^.sym := psNone;
       T^.name := '';
+      T^.row := FRow;
+      T^.col := FCol;
       if CharInSet(FChar, CS_HEAD) then get_ident else
       case FChar of
         ''''    : skip_string;
@@ -1115,10 +1248,13 @@ end;
 
 procedure TLiPasTokenizer.SetCode(const Value: string);
 begin
+  FCE := cePascal;
   FCode := Value;
   FSize := Length(FCode);
   FIndex := -1;
   FPosition := 1;
+  FRow := 1;
+  FCol := 1;
   if FPosition <= FSize then
     FChar := FCode[FPosition] else
     FChar := #0;
@@ -1193,10 +1329,32 @@ begin
 end;
 
 function TLiPasTokenizer.SkipSpaces: boolean;
+
+  function match_ce(const S: string): boolean;
+  var
+    L: integer;
+  begin
+    L := Length(S);
+    Result := MatchID(S, Copy(FCode, FPosition, L));
+    if Result then
+    begin
+      Inc(FPosition, L - 1);
+      GetChar;
+    end;
+  end;
+
 begin
   Result := false;
   while not Result and (FChar <> #0) do
     if FChar <= ' ' then GetChar else
+    if FChar = '[' then
+    begin
+      if match_ce('[pascal]') then FCE := cePascal else
+      if match_ce('[free-pascal]') then FCE := ceFPC else
+      if match_ce('[delphi]') then FCE := ceDelphi else
+        Result := true;
+    end
+    else
     if FChar = '{' then
     begin
       if GotoChar(['}']) then GetChar else Exit;
@@ -1216,10 +1374,11 @@ end;
 
 { TLyPasParser }
 
-function TLiPasTranslater.AddFunc(const FuncName: string): TLiPasFunc;
+function TLiPasTranslater.AddFunc(const AName: string): TLiPasFunc;
 begin
-  Result := FFuncs.Add(FuncName);
+  Result := FFuncs.Add(AName);
   Result.FStyle := fsNormal;
+  Result.FCE := FTokenizer.FCE;;
 end;
 
 procedure TLiPasTranslater.Clear(ClearSourceCodes: boolean);
@@ -1227,7 +1386,9 @@ begin
   if ClearSourceCodes then FSourceCodes.Clear;
   FResultCodes.Clear;
   FTokenizer.SetCode('');
-  FConstants.Clear;
+  FConstants[cePascal].Clear;
+  FConstants[ceDelphi].Clear;
+  FConstants[ceFPC].Clear;
   FFuncs.Clear;
   FNewLseTypes.Clear;
   FNewPasTypes.Clear;
@@ -1240,8 +1401,12 @@ end;
 constructor TLiPasTranslater.Create;
 begin
   FTokenizer := TLiPasTokenizer.Create(Self, '');
-  FConstants := TStringList.Create;
-  FConstants.CaseSensitive := false;
+  FConstants[cePascal] := TStringList.Create;
+  FConstants[cePascal].CaseSensitive := false;
+  FConstants[ceDelphi] := TStringList.Create;
+  FConstants[ceDelphi].CaseSensitive := false;
+  FConstants[ceFPC] := TStringList.Create;
+  FConstants[ceFPC].CaseSensitive := false;
   FNewLseTypes := TLiLseTypeList.Create;
   FNewPasTypes := TLiPasTypeList.Create;
   FFuncs := TLiPasFuncList.Create;
@@ -1253,8 +1418,9 @@ end;
 destructor TLiPasTranslater.Destroy;
 begin
   Clear(true);
-  FreeAll([FNewLseTypes, FConstants, FNewPasTypes, FFuncs, FErrors,
-           FSourceCodes, FResultCodes, FTokenizer]);
+  FreeAll([FNewLseTypes, FConstants[cePascal], FConstants[ceDelphi],
+    FConstants[ceFPC], FNewPasTypes, FFuncs, FErrors,
+    FSourceCodes, FResultCodes, FTokenizer]);
   inherited;
 end;
 
@@ -1292,6 +1458,20 @@ begin
 end;
 
 procedure TLiPasTranslater.ParseType;
+
+  function parse_enum_items: string;
+  begin
+    SymTestNext([psID]);
+    Result := '''' + Last^.name + '''';
+    SymTestNext([psComma, psRParen]);
+    while Last^.sym = psComma do
+    begin
+      SymTestNext([psID]);
+      Result := Result + ', ''' + Last^.name + '''';
+      SymTestNext([psComma, psRParen]);
+    end;
+  end;
+
 var
   K, X: string;
   T: TLiType;
@@ -1302,12 +1482,62 @@ begin
   repeat
     K := Last^.name;
     SymTestNext([psEqual]);
-    SymTestNext([psClass, psID]);
+    SymTestNext([psClass, psID, psLParen, psSet]);
     if Last^.sym = psID then
     begin
-      L := FNewLseTypes.Find(Last^.name);
-      if (L <> nil) and (L.FType <> my_nil) then
-        FNewPasTypes.Add(L, K);
+      P := FNewPasTypes.Find(Last^.name);
+      if P <> nil then
+      begin
+        P := FNewPasTypes.Add(P.FLseType, K);
+        P.FCE := FTokenizer.FCE;
+      end
+      else FErrors.Add('unknown type: ' + Last^.name);
+      SymTestNext([psSemic]);
+    end
+    else
+    if Last^.sym = psLParen then
+    begin
+      T := TLiEnumType.Create(K, nil, nil);
+      L := FNewLseTypes.Add(T, 'my_' + K, K);
+      L.FCE := FTokenizer.FCE;
+      P := FNewPasTypes.Add(L, K);
+      P.FCE := FTokenizer.FCE;
+      L.FEnumItems := parse_enum_items;
+      SymTestNext([psSemic]);
+    end
+    else
+    if Last^.sym = psSet then
+    begin
+      SymTestNext([psOf]);
+      SymTestNext([psID, psLParen]);
+      if Last^.sym = psID then
+      begin
+        L := FNewLseTypes.Find(Last^.name);
+        if (L <> nil) and L.IsEnum then
+        begin
+          T := TLiEnumType(L.FType).NewEnumSetType(K);
+          L := FNewLseTypes.Add(T, 'my_' + K, K);
+          L.FCE := FTokenizer.FCE;
+          P := FNewPasTypes.Add(L, K);
+          P.FCE := FTokenizer.FCE;
+        end
+        else
+        if L = nil then
+          FErrors.Add('unknown type: ' + Last^.name) else
+          FErrors.Add('unknown enum type: ' + L.Name);
+      end
+      else
+      begin
+        T := TLiEnumType.Create('#' + K, nil, nil);
+        L := FNewLseTypes.Add(T, 'my_' + K + 'Item', '#' + K);
+        L.FCE := FTokenizer.FCE;
+        L.FEnumItems := parse_enum_items;
+        T := TLiEnumType(T).NewEnumSetType(K);
+        L := FNewLseTypes.Add(T, 'my_' + K, K);
+        L.FCE := FTokenizer.FCE;
+        P := FNewPasTypes.Add(L, K);
+        P.FCE := FTokenizer.FCE;
+      end;
       SymTestNext([psSemic]);
     end
     else
@@ -1317,16 +1547,15 @@ begin
         X := K;
       T := TLiType.Create(X, nil, nil);
       L := FNewLseTypes.Add(T, 'my_' + X, K);
+      L.FCE := FTokenizer.FCE;
       P := FNewPasTypes.Add(L, K);
-      SymTestNext([psConstructor, psFunc, psProc, psProp, psEnd]);
-      while Last^.sym <> psEnd do
-      begin
+      P.FCE := FTokenizer.FCE;
+      while GotoToken([psConstructor, psFunc, psProc, psProp, psEnd]) do
         case Last^.sym of
           psFunc, psProc, psConstructor: ParseFunc(P);
           psProp: ParseProp(P);
+          else Break;
         end;
-        GotoToken([psConstructor, psFunc, psProc, psProp, psEnd]);
-      end;
     end;
     GotoToken([psType, psConst, psFunc, psProc, psID]);
   until Last^.sym <> psID;
@@ -1334,7 +1563,21 @@ end;
 
 procedure TLiPasTranslater.AddConst(const AName: string);
 begin
-  FConstants.Values[AName] := AName;
+  FConstants[FTokenizer.FCE].Values[AName] := AName;
+end;
+
+function TLiPasTranslater.FindFunc(const AName: string; Parent: TLiPasType): TLiPasFunc;
+var
+  I: integer;
+begin
+  for I := 0 to FFuncs.Count - 1 do
+  begin
+    Result := FFuncs[I];
+    if Result.FParent = Parent then
+      if MatchID(AName, Result.FName) then
+        Exit;
+  end;
+  Result := nil;
 end;
 
 function TLiPasTranslater.GetNextToken: PLiPasToken;
@@ -1344,7 +1587,7 @@ end;
 
 function TLiPasTranslater.GetResultUnitName: string;
 begin
-  Result := 'lm' + FModule;
+  Result := 'lm_' + FModule;
 end;
 
 function TLiPasTranslater.GotoToken(Syms: TPascalSymbols): boolean;
@@ -1366,6 +1609,11 @@ begin
   Result := FTokenizer.Current;
 end;
 
+function TLiPasTranslater.NewClassCount: integer;
+begin
+  Result := FNewLseTypes.ClassCount;
+end;
+
 procedure TLiPasTranslater.ParseFunc(Clss: TLiPasType);
 var
   S: TLiPasSymbol;
@@ -1378,6 +1626,11 @@ begin
   try
     S := Last^.sym;
     SymTestNext([psID]);
+    if FindFunc(Last^.name, Clss) <> nil then
+    begin
+      ParseTo([psSemic]);
+      Exit;
+    end;
     F := AddFunc(Last^.name);
 
     // 1. setup function
@@ -1517,11 +1770,10 @@ begin
   FTokenizer.SetCode(FSourceCodes.Text);
   try
     // 1. get module name
-    SymTestNext([psModule]);
     SymTestNext([psID]);
     FModule := Last^.name;
     FMyModule := 'my_' + FModule;
-    SymTestNext([psSemic]);
+    SymTestNext([psColon]);
 
     // 2. get used unit list
     SymTestNext([psUses]);
@@ -1585,22 +1837,30 @@ procedure TLiPasTranslater.GenerateCodes;
   var
     I: integer;
     T: string;
+    L: TLiLseType;
   begin
-    if FNewLseTypes.Count > 0 then
+    if NewClassCount > 0 then
     begin
       Add('type');
       for I := 0 to FNewLseTypes.Count - 1 do
       begin
-        T := 'TLiType_' + FNewLseTypes[I].Name;
-        Add('');
-        Add('  { %s }', [T]);
-        Add('');
-        Add('  %s = class(TLiType)', [T]);
-        Add('  protected');
-        Add('    function _IncRefcount(Obj: pointer): integer;override;');
-        Add('    function _DecRefcount(Obj: pointer): integer;override;');
-        Add('    function _AsString(Obj: pointer): string;override;');
-        Add('  end;');
+        L := FNewLseTypes[I];
+        if L.IsClass then
+        begin
+          T := 'TLiType_' + L.Name;
+          Add('');
+          Add('  { %s }', [T]);
+          Add('');
+          if L.FCE = ceFPC then Add('  {$IFDEF FPC}') else
+          if L.FCE = ceDelphi then Add('  {$IFNDEF FPC}');
+          Add('  %s = class(TLiType)', [T]);
+          Add('  protected');
+          Add('    function _IncRefcount(Obj: pointer): integer;override;');
+          Add('    function _DecRefcount(Obj: pointer): integer;override;');
+          Add('    function _AsString(Obj: pointer): string;override;');
+          Add('  end;');
+          if L.FCE <> cePascal then Add('  {$ENDIF}');
+        end;
       end;
     end;
   end;
@@ -1608,14 +1868,21 @@ procedure TLiPasTranslater.GenerateCodes;
   procedure Add_var;
   var
     I: integer;
-    T: string;
+    L: TLiLseType;
   begin
     Add('var');
     Add('  %s: TLiModule;', [FMyModule]);
     for I := 0 to FNewLseTypes.Count - 1 do
     begin
-      T := FNewLseTypes[I].Name;
-      Add('  my_%s: TLiType_%s;', [T, T]);
+      L := FNewLseTypes[I];
+      if L.FCE = ceFPC then Add('  {$IFDEF FPC}') else
+      if L.FCE = ceDelphi then Add('  {$IFNDEF FPC}');
+      if L.IsClass then
+        Add('  %s: TLiType_%s;', [L.FMyName, L.Name]) else
+      if L.FEnumItems <> '' then
+        Add('  %s: TLiEnumType;', [L.FMyName]) else
+        Add('  %s: TLiEnumSetType;', [L.FMyName]);
+      if L.FCE <> cePascal then Add('  {$ENDIF}');
     end;
   end;
 
@@ -1623,33 +1890,41 @@ procedure TLiPasTranslater.GenerateCodes;
   var
     I: integer;
     T: string;
+    L: TLiLseType;
   begin
     for I := 0 to FNewLseTypes.Count - 1 do
     begin
-      T := 'TLiType_' + FNewLseTypes[I].Name;
-      Add('');
-      Add('{ %s }', [T]);
-      Add('');
-      Add('function %s._IncRefcount(Obj: pointer): integer;', [T]);
-      Add('begin');
-      Add('  if Obj <> nil then');
-      Add('    Result := %s(Obj).IncRefcount else', [FNewLseTypes[I].FPasTypeName]);
-      Add('    Result := 0;');
-      Add('end;');
-      Add('');
-      Add('function %s._DecRefcount(Obj: pointer): integer;', [T]);
-      Add('begin');
-      Add('  if Obj <> nil then');
-      Add('    Result := %s(Obj).DecRefcount else', [FNewLseTypes[I].FPasTypeName]);
-      Add('    Result := 0;');
-      Add('end;');
-      Add('');
-      Add('function %s._AsString(Obj: pointer): string;', [T]);
-      Add('begin');
-      Add('  if Obj <> nil then');
-      Add('    Result := %s(Obj).AsString else', [FNewLseTypes[I].FPasTypeName]);
-      Add('    Result := '''';');
-      Add('end;');
+      L := FNewLseTypes[I];
+      if L.IsClass then
+      begin
+        T := 'TLiType_' + L.Name;
+        Add('');
+        Add('{ %s }', [T]);
+        Add('');
+        if L.FCE = ceFPC then Add('{$IFDEF FPC}') else
+        if L.FCE = ceDelphi then Add('{$IFNDEF FPC}');
+        Add('function %s._IncRefcount(Obj: pointer): integer;', [T]);
+        Add('begin');
+        Add('  if Obj <> nil then');
+        Add('    Result := %s(Obj).IncRefcount else', [FNewLseTypes[I].FPasTypeName]);
+        Add('    Result := 0;');
+        Add('end;');
+        Add('');
+        Add('function %s._DecRefcount(Obj: pointer): integer;', [T]);
+        Add('begin');
+        Add('  if Obj <> nil then');
+        Add('    Result := %s(Obj).DecRefcount else', [FNewLseTypes[I].FPasTypeName]);
+        Add('    Result := 0;');
+        Add('end;');
+        Add('');
+        Add('function %s._AsString(Obj: pointer): string;', [T]);
+        Add('begin');
+        Add('  if Obj <> nil then');
+        Add('    Result := %s(Obj).AsString else', [FNewLseTypes[I].FPasTypeName]);
+        Add('    Result := '''';');
+        Add('end;');
+        if L.FCE <> cePascal then Add('{$ENDIF}');
+      end;
     end;
   end;
 
@@ -1666,26 +1941,68 @@ procedure TLiPasTranslater.GenerateCodes;
   procedure Add_setup_module_and_types;
   var
     I: integer;
+    L: TLiLseType;
     T: string;
   begin
-    Add('  %s := SetupModule(''%s'');', [FMyModule, FModule]);
+    I := Pos('_', FModule);
+    if I > 1 then
+      T := Copy(FModule, 1, I - 1) else
+      T := FModule;
+    Add('  %s := SetupModule(''%s'');', [FMyModule, T]);
     for I := 0 to FNewLseTypes.Count - 1 do
     begin
-      T := FNewLseTypes[I].Name;
-      Add('  my_%s := TLiType_%s.Create(''%s'', %s, nil);', [T, T, T, FMyModule]);
+      L := FNewLseTypes[I];
+      if L.FCE = ceFPC then Add('  {$IFDEF FPC}') else
+      if L.FCE = ceDelphi then Add('  {$IFNDEF FPC}');
+      if L.IsClass then
+        Add('  %s := TLiType_%s.Create(''%s'', %s, nil);',
+          [L.FMyName, L.Name, L.Name, FMyModule]) else
+      if L.FEnumItems <> '' then
+      begin
+        Add('  %s := TLiEnumType.Create(''%s'', %s, nil);',
+          [L.FMyName, L.Name, FMyModule]);
+        Add('  %s.Add([%s]);', [L.FMyName, L.FEnumItems]);
+      end
+      else Add('  %s := %s.NewEnumSetType(''%s'');',
+          [L.FMyName, FNewLseTypes.Find(TLiEnumSetType(L.FType).Source).FMyName, L.Name]);
+      if L.FCE <> cePascal then Add('  {$ENDIF}');
     end;
   end;
 
   procedure Add_setup_constants;
   var
-    I: integer;
+    I, F, D: integer;
     N, V: string;
   begin
-    for I := 0 to FConstants.Count - 1 do
+    for I := 0 to FConstants[cePascal].Count - 1 do
     begin
-      N := ExtractNameValue(FConstants[I], V);
-      Add('  %s.Contants.DefConst(''%s'', %s);', [FMyModule, N, V]);
+      N := ExtractNameValue(FConstants[cePascal][I], V);
+      Add('  %s.Consts.DefConst(''%s'', %s);', [FMyModule, N, V]);
     end;
+
+    F := FConstants[ceFPC].Count;
+    D := FConstants[ceDelphi].Count;
+
+    if F > 0 then Add('  {$IFDEF FPC}') else
+    if D > 0 then Add('  {$IFNDEF FPC}') ;
+
+    for I := 0 to FConstants[ceFPC].Count - 1 do
+    begin
+      N := ExtractNameValue(FConstants[ceFPC][I], V);
+      Add('  %s.Consts.DefConst(''%s'', %s);', [FMyModule, N, V]);
+    end;
+
+    if (F > 0) and (D > 0) then Add('  {$ELSE}');
+
+    for I := 0 to FConstants[ceDelphi].Count - 1 do
+    begin
+      N := ExtractNameValue(FConstants[ceDelphi][I], V);
+      Add('  %s.Consts.DefConst(''%s'', %s);', [FMyModule, N, V]);
+    end;
+
+    if (FConstants[ceFPC].Count > 0)
+      or (FConstants[ceDelphi].Count > 0) then
+        Add('  {$ENDIF}');
   end;
 
   procedure Add_setup_lysee_procs;
@@ -1694,6 +2011,62 @@ procedure TLiPasTranslater.GenerateCodes;
   begin
     for I := 0 to FFuncs.Count - 1 do
       FFuncs[I].GenSetupCode(FResultCodes, FMyModule);
+  end;
+
+  procedure Add_sets_procs(InInterface: boolean);
+  var
+    I, X: integer;
+    T: TLiLseType;
+    L: TStrings;
+  begin
+    I := FNewLseTypes.FirstEnumSetIndex;
+    if I < 0 then Exit;
+
+    while I < FNewLseTypes.GetCount do
+    begin
+      T := FNewLseTypes[I];
+      if T.IsEnumSet then
+      begin
+        if not InInterface then Add('');
+        if T.FCE = ceFPC then Add('{$IFDEF FPC}') else
+        if T.FCE = ceDelphi then Add('{$IFNDEF FPC}');
+        if InInterface then
+          L := nil else
+          L := FNewLseTypes.Find(TLiEnumSetType(T.FType).Source).EnumItemList;
+        try
+          Add('function Get%s(V: TLiValue): %s;', [T.Name, T.Name]);
+          if not InInterface then
+          begin
+            Add('var');
+            Add(' S: TLiEnumSet;');
+            Add('begin');
+            Add('  Result := [];');
+            Add('  S := V.AsEnumSet;');
+            for X := 0 to L.Count - 1 do
+              Add('  if S[Ord(%s)] then Include(Result, %s);', [L[X], L[X]]);
+            Add('end;');
+            Add('');
+          end;
+          Add('procedure Set%s(V: TLiValue; Value: %s);', [T.Name, T.Name]);
+          if not InInterface then
+          begin
+            Add('var');
+            Add(' S: TLiEnumSet;');
+            Add('begin');
+            Add('  S := %s.NewEnumSet;', [T.FMyName]);
+            Add('  S.SetValue(V);');
+            for X := 0 to L.Count - 1 do
+              Add('  S[Ord(%s)] := (%s in Value);', [L[X], L[X]]);
+            Add('end;');
+          end;
+        finally
+          FreeAndNil(L);
+        end;
+        if T.FCE <> cePascal then Add('{$ENDIF}');
+      end;
+      Inc(I);
+    end;
+    if InInterface then Add('');
   end;
 
 begin
@@ -1712,11 +2085,13 @@ begin
   Add('');
   Add_var;
   Add('');
+  Add_sets_procs(true);
   Add('implementation');
-  Add('');
-  Add_type_methods;
+  Add_sets_procs(false);
   Add('');
   Add_lysee_procs;
+  Add('');
+  Add_type_methods;
   Add('');
   Add('initialization');
   Add('begin');
@@ -1734,7 +2109,8 @@ function TLiPasTranslater.SymTestLast(Syms: TPascalSymbols): PLiPasToken;
 begin
   Result := Last;
   if not (Result^.sym in Syms) then
-    Throw('Unexpected symbol: %s', [Symbols[Result^.sym]]);
+    Throw('Unexpected symbol(%d, %d): %s',
+      [Result^.row, Result^.col, Symbols[Result^.sym]]);
 end;
 
 function TLiPasTranslater.SymTestNext(Syms: TPascalSymbols): PLiPasToken;

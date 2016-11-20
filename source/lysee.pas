@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2003-2015, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2003/02/28                                                      }
-{    MODIFIED: 2016/11/18                                                      }
+{    MODIFIED: 2016/11/20                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -78,6 +78,7 @@ type
   TLiVarb           = class;
   TLiVarbList       = class;
   TLiFunc           = class;
+  TLiFuncList       = class;
   TLiModule         = class;
   TLiModuleList     = class;
   TLiString         = class;
@@ -276,7 +277,7 @@ type
     FName: string;
     FTID: integer;
     FStyle: TLiTypeStyle;
-    FMethods : TList;
+    FMethods : TLiFuncList;
     FConstructer: TLiFunc;
     FOperate: array[TLiOperator] of PLiOperate;
     FCompare : PLiCompare;
@@ -580,14 +581,14 @@ type
     FParent: TLiEnumSetType;
     FSets: array of boolean;
     function GetSource: TLiEnumType;
-    function GetSize: integer;
+    function GetCount: integer;
     function Get(Index: integer): boolean;
     procedure Put(Index: integer; Value: boolean);
   public
     destructor Destroy;override;
     procedure SetValue(Value: TLiValue);
     function AsBoolean: boolean;
-    function AsString: string;
+    function AsString: string;override;
     function Equal(S: TLiEnumSet): boolean;
     function Add(S: TLiEnumSet): TLiEnumSet;
     function Dec(S: TLiEnumSet): TLiEnumSet;
@@ -595,7 +596,7 @@ type
     function NotAll: TLiEnumSet;
     property Parent: TLiEnumSetType read FParent;
     property Source: TLiEnumType read GetSource;
-    property Size: integer read GetSize;
+    property Count: integer read GetCount;
     property Sets[Index: integer]: boolean read Get write Put;default;
   end;
 
@@ -1114,7 +1115,6 @@ type
     FProc: TLiLyseeProc;
     FMinArgs: integer;
     FHasVarArg: boolean;  // last param is ...
-    procedure LeaveParentClass;
     function GetSTMTs: TLiSTMTList;
     function GetMinArgs: integer;
     function GetFullName: string;
@@ -1139,6 +1139,7 @@ type
     function AddCode(const Code: string): boolean;
     function SetCode(const Code: string): boolean;
     procedure Decompile(Level: integer; Lines: TStrings);
+    function AsString: string;override;
     property Name: string read FName;
     property HasVarArg: boolean read FHasVarArg;
     property Parent: TLiType read FParent;
@@ -1203,6 +1204,7 @@ type
     function FindSave(const AName: string; Value: TLiValue): boolean;
     function FindSaveBy(const AName: string; Value: TLiValue): boolean;
     function UseModule(const AName: string): TLiModule;
+    function AsString: string;override;
     property Modules: TLiModuleList read FModules;
     property FileName: string read FFileName write FFileName;
     property Context: TLiContext read FContext;
@@ -1245,6 +1247,7 @@ type
     constructor Create(const S: string);
     constructor CreateIncRefcount(const S: string);
     function Length: integer;
+    function AsString: string;override;
     property Value: string read FValue write FValue;
   end;
 
@@ -1315,7 +1318,7 @@ type
     function CopyRight(ItemCount: integer): TLiList;
     function First: TLiValue;
     function Last: TLiValue;
-    function AsString: string;
+    function AsString: string;override;
     property Count: integer read GetCount write SetCount;
     property Items[Index: integer]: TLiValue read GetItem;default;
   end;
@@ -1363,7 +1366,7 @@ type
     function DefConst(const Name: string; Value: int64): TLiHashItem;overload;
     function DefConst(const Name: string; Value: double): TLiHashItem;overload;
     function DefConst(const Name: string; Value: boolean): TLiHashItem;overload;
-    function AsString: string;
+    function AsString: string;override;
     property Count: integer read FCount;
     property CaseSensitive: boolean read FCaseSensitive write FCaseSensitive;
   end;
@@ -1414,6 +1417,7 @@ type
     procedure Rename(const Name, NewName: string);
     procedure Reverse;
     procedure GetEnvs;
+    function AsString: string;override;
     property Count: integer read GetCount write SetCount;
     property Values[const Name: string]: string read GetValue write SetValue;
     property StringList: TStringList read FStrings;
@@ -1534,6 +1538,11 @@ procedure ErrorConvert(AType, NewType: TLiType);
 function GetGenerate(Value: TLiValue): TLiGenerate;overload;
 function GetGenerate(V1, V2: TLiValue; Upto: boolean): TLiGenerate;overload;
 function Margin(Level: integer): string;
+function GetTReplaceFlags(V: TLiValue): TReplaceFlags;
+procedure SetTReplaceFlags(V: TLiValue; Value: TReplaceFlags);
+procedure FreeOperates(var Head: PLiOperate);
+procedure FreeCompares(var Head: PLiCompare);
+procedure FreeConverts(var Head: PLiConvert);
 
 var
 
@@ -3020,20 +3029,14 @@ end;
 procedure pp_system_stringReplace(const Param: TLiParam);
 var
   S, P, N: string;
-  F: TLiEnumSet;
   flags: TReplaceFlags;
 begin
   S := Param[0].AsString;         // string
   P := Param[1].AsString;         // patten
   N := Param[2].AsString;         // new string
   if Param.FPrmc > 3 then
-  begin
-    flags := [];
-    F := Param[3].AsEnumSet;
-    if F.Sets[Ord(rfReplaceAll)] then flags := flags + [rfReplaceAll];
-    if F.Sets[Ord(rfIgnoreCase)] then flags := flags + [rfIgnoreCase];
-  end
-  else flags := [rfReplaceAll];
+    flags := GetTReplaceFlags(Param[3]) else
+    flags := [rfReplaceAll];
   Param.FResult.SetAsString(StringReplace(S, P, N, flags));
 end;
 
@@ -4894,6 +4897,56 @@ begin
   Result := StringOfChar(' ', Level * 2);
 end;
 
+function GetTReplaceFlags(V: TLiValue): TReplaceFlags;
+var
+  S: TLiEnumSet;
+begin
+  Result := [];
+  S := V.AsEnumSet;
+  if S[Ord(rfReplaceAll)] then Include(Result, rfReplaceAll);
+  if S[Ord(rfIgnoreCase)] then Include(Result, rfIgnoreCase);
+end;
+
+procedure SetTReplaceFlags(V: TLiValue; Value: TReplaceFlags);
+var
+  S: TLiEnumSet;
+begin
+  S := my_TReplaceFlags.NewEnumSet;
+  S.SetValue(V);
+  S[Ord(rfReplaceAll)] := rfReplaceAll in Value;
+  S[Ord(rfIgnoreCase)] := rfIgnoreCase in Value;
+end;
+
+procedure FreeOperates(var Head: PLiOperate);
+begin
+  if Head <> nil then
+  begin
+    FreeOperates(Head^.o_next);
+    MemFree(Head, sizeof(RLiOperate));
+    Head := nil;
+  end;
+end;
+
+procedure FreeCompares(var Head: PLiCompare);
+begin
+  if Head <> nil then
+  begin
+    FreeCompares(Head^.c_next);
+    MemFree(Head, sizeof(RLiCompare));
+    Head := nil;
+  end;
+end;
+
+procedure FreeConverts(var Head: PLiConvert);
+begin
+  if Head <> nil then
+  begin
+    FreeConverts(Head^.c_next);
+    MemFree(Head, sizeof(RLiConvert));
+    Head := nil;
+  end;
+end;
+
 { TLiError }
 
 procedure TLiError.Clear;
@@ -5460,7 +5513,7 @@ begin
   if FModule <> nil then
   begin
     FModule.FTypeList.Add(Self);
-    FMethods := TList.Create;
+    FMethods := TLiFuncList.Create;
   end;
   FConvert := nil;
   FCompare := nil;
@@ -5468,20 +5521,13 @@ end;
 
 destructor TLiType.Destroy;
 var
-  I: integer;
-  F: TLiFunc;
+  I: TLiOperator;
 begin
-  if FMethods <> nil then
-  begin
-    for I := GetMethodCount - 1 downto 0 do
-    begin
-      F := GetMethod(I);
-      FMethods.Delete(I);
-      F.FParent := nil;
-      F.Free;
-    end;
-    FreeAndNil(FMethods);
-  end;
+  for I := Low(TLiOperator) to High(TLiOperator) do
+    FreeOperates(FOperate[I]);
+  FreeCompares(FCompare);
+  FreeConverts(FConvert);
+  FreeAndNil(FMethods);
   inherited;
 end;
 
@@ -6486,7 +6532,8 @@ constructor TLiEnumType.Create(const AName: string; AModule: TLiModule; AParent:
 begin
   inherited;
   FStyle := tsEnum;
-  AddCompare(Self, {$IFDEF FPC}@{$ENDIF}compare_enum_enum);
+  if FModule <> nil then
+    AddCompare(Self, {$IFDEF FPC}@{$ENDIF}compare_enum_enum);
 end;
 
 destructor TLiEnumType.Destroy;
@@ -6562,11 +6609,14 @@ begin
   Result := TLiEnumSetType.Create(AName, FModule, nil);
   Result.FStyle := tsEnumSet;
   Result.FSource := Self;
-  Result.AddCompare(Result, {$IFDEF FPC}@{$ENDIF}compare_enumset_enumset);
-  Result.AddOperate(opAdd, Result, {$IFDEF FPC}@{$ENDIF}enumset_add_enumset);
-  Result.AddOperate(opDec, Result, {$IFDEF FPC}@{$ENDIF}enumset_dec_enumset);
-  Result.AddOperate(opMul, Result, {$IFDEF FPC}@{$ENDIF}enumset_mul_enumset);
-  Result.AddOperate(opNot, Result, {$IFDEF FPC}@{$ENDIF}enumset_not_enumset);
+  if FModule <> nil then
+  begin
+    Result.AddCompare(Result, {$IFDEF FPC}@{$ENDIF}compare_enumset_enumset);
+    Result.AddOperate(opAdd, Result, {$IFDEF FPC}@{$ENDIF}enumset_add_enumset);
+    Result.AddOperate(opDec, Result, {$IFDEF FPC}@{$ENDIF}enumset_dec_enumset);
+    Result.AddOperate(opMul, Result, {$IFDEF FPC}@{$ENDIF}enumset_mul_enumset);
+    Result.AddOperate(opNot, Result, {$IFDEF FPC}@{$ENDIF}enumset_not_enumset);
+  end;
 end;
 
 procedure TLiEnumType.SetValue(Value: TLiValue; ItemValue: integer);
@@ -6626,7 +6676,7 @@ begin
   Result := FParent.FSource;
 end;
 
-function TLiEnumSet.GetSize: integer;
+function TLiEnumSet.GetCount: integer;
 begin
   Result := Length(FSets);
 end;
@@ -10447,7 +10497,7 @@ constructor TLiFunc.CreateMethod(const AName: string; P: TLiType; Proc: TLiLysee
 begin
   FName := AName;
   FParent := P;
-  FParent.FMethods.Add(Self);
+  FParent.FMethods.FItems.Add(Self);
   IncRefcount;
   FModule := FParent.FModule;
   FParams := TLiVarbList.Create;
@@ -10465,10 +10515,20 @@ end;
 
 destructor TLiFunc.Destroy;
 begin
-  FModule.FFuncList.FItems.Remove(Self);
-  LeaveParentClass;
+  if FModule <> nil then
+    FModule.FFuncList.FItems.Remove(Self);
+
+  if FParent <> nil then
+  begin
+    if FParent.FConstructer = Self then
+      FParent.FConstructer := nil;
+    if FParent.FMethods <> nil then
+      FParent.FMethods.FItems.Remove(Self);
+  end;
+
   FreeAndNil(FSTMTs);
   FreeAndNil(FParams);
+
   if Context <> nil then
   begin
     Context.RollbackRemove(Self);
@@ -10479,6 +10539,7 @@ begin
         Context.FMainLocals.Clear;
     end;
   end;
+
   inherited;
 end;
 
@@ -10526,6 +10587,11 @@ begin
   end;
 end;
 
+function TLiFunc.AsString: string;
+begin
+  Result := Prototype;
+end;
+
 function TLiFunc.ChangeAble: boolean;
 begin
   Result := (FName = '') and not Assigned(FProc) and not Executing;
@@ -10533,7 +10599,9 @@ end;
 
 function TLiFunc.Context: TLiContext;
 begin
-  Result := FModule.FContext;
+  if FModule <> nil then
+    Result := FModule.FContext else
+    Result := nil;
 end;
 
 function TLiFunc.GetFullName: string;
@@ -10668,21 +10736,6 @@ begin
   Result := (FResultType = my_nil);
 end;
 
-procedure TLiFunc.LeaveParentClass;
-begin
-  if FParent <> nil then
-  begin
-    if FParent.FMethods <> nil then
-    begin
-      FParent.FMethods.Remove(Self);
-      if FParent.FMethods.Count = 0 then
-        FreeAndNil(FParent.FMethods);
-    end;
-    if FParent.FConstructer = Self then
-      FParent.FConstructer := nil;
-  end;
-end;
-
 function TLiFunc.MakeMethod: TLiFunc;
 var
   P: TLiType;
@@ -10783,11 +10836,13 @@ end;
 
 procedure TLiFuncList.Delete(Index: integer);
 var
-  M: TLiFunc;
+  F: TLiFunc;
 begin
-  M := GetItem(Index);
+  F := GetItem(Index);
   FItems.Delete(Index);
-  M.Free
+  F.FModule := nil;
+  F.FParent := nil;
+  F.Free
 end;
 
 { TLiModule }
@@ -10808,6 +10863,11 @@ begin
     for I := 1 to Length(Names) - 1 do
       Result.FParams.Add(Names[I], Types[I]);
   end;
+end;
+
+function TLiModule.AsString: string;
+begin
+  Result := FName;
 end;
 
 constructor TLiModule.Create(const AName: string);
@@ -11239,6 +11299,11 @@ begin
 end;
 
 { TLiString }
+
+function TLiString.AsString: string;
+begin
+  Result := FValue;
+end;
 
 constructor TLiString.Create(const S: string);
 begin
@@ -12004,6 +12069,11 @@ begin
   end;
 end;
 
+function TLiStringList.AsString: string;
+begin
+  Result := FStrings.Text;
+end;
+
 procedure TLiStringList.BeginUpdate;
 begin
   FStrings.BeginUpdate;
@@ -12667,7 +12737,7 @@ begin
 
   my_type_seed := TID_CUSTOM;
 
-  my_TReplaceFlag := TLiEnumType.Create('TReplaceFlag', my_system, nil);
+  my_TReplaceFlag := TLiEnumType.Create('#TReplaceFlags', my_system, nil);
   my_TReplaceFlag.Add(['rfReplaceAll', 'rfIgnoreCase']);
   my_TReplaceFlags := my_TReplaceFlag.NewEnumSetType('TReplaceFlags');
 
