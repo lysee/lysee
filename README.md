@@ -1,19 +1,19 @@
-# what is lysee
+Lysee is a pure-pascal and cross platform script language written and tested in free-pascal, lazarus and delphi.
 
-Lysee is a pure-pascal and cross platform script language, it is being written and tested in lazarus and delphi.
-
-# Usage:
+## How to use it
 
 Embed it into your pascal programs, register functional routines into lysee's module, and then control your program with lysee scritp.
 
-# License:
+## License
 
 Lysee is freeware and open source under modified BSD style license.
 
-# Features:
+## Main features
 
-  - Supports module, class, function and partial functional programings.
-  - Written in pure Pascal language.
+  - Supports module, type, function, constants and partial functional programings.
   - Open source and totally free.
-  - So easy to use.
-  - Run in platforms where Free Pascal, Lazarus or Delphi exist.
+  - Run in platforms where Free Pascal, Lazarus or Delphi can run.
+
+## Syntax
+
+Lysee uses pascal-like language syntax. The main differences is lysee does not use begin and end keywords. To write child code block, you have to write statements behind the leading key word. see a sample:
