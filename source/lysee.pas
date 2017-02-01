@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2003-2015, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2003/02/28                                                      }
-{    MODIFIED: 2016/11/20                                                      }
+{    MODIFIED: 2017/01/12                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -26,7 +26,7 @@ const
   { LSE: Lysee Script Engine }
 
   LSE_NAME     = 'lysee';
-  LSE_VERSION  = '2016.11.16';
+  LSE_VERSION  = '2017.1.7';
   LSE_FILEEXT  = '.ls';
   LSE_CONFILE  = 'lysee.conf';
   LSE_SYSTE    = 'system';
@@ -48,8 +48,11 @@ const
   TID_FUNCTION = 11;
   TID_HASHLIST = 12;
   TID_LIST     = 13;
-  TID_STRLIST  = 14;
-  TID_CUSTOM   = 30;
+
+  TID_NAMES: array[TID_VARIANT..TID_LIST] of string = (
+    'variant', 'nil', 'char', 'integer', 'float', 'currency',
+    'time', 'boolean', 'type', 'string', 'module', 'function',
+    'THash', 'TList');
 
 type
 
@@ -85,13 +88,13 @@ type
   TLiGarbage        = class;
   TLiGarbageCollect = class;
   TLiList           = class;
-  TLiHashList       = class;
-  TLiStringList     = class;
+  TLiHash           = class;
   TLiGenerate       = class;
 
   { lysee procedure }
 
   TLiLyseeProc = procedure(const Param: TLiParam);
+  TLiLyseeObjectProc = procedure(const Param: TLiParam) of object;
 
   { RLiFind }
 
@@ -282,11 +285,15 @@ type
     FOperate: array[TLiOperator] of PLiOperate;
     FCompare : PLiCompare;
     FConvert: PLiConvert;
+    FProcs: array of TLiLyseeObjectProc;
     function GetFullName: string;
     function GetMethodCount: integer;
     function GetMethod(Index: integer): TLiFunc;
     procedure SetParent(const Value: TLiType);
   protected
+    function RegisterProc(AProc: TLiLyseeObjectProc): integer;
+    procedure Setup;virtual;
+  public
     function _IncRefcount(Obj: pointer): integer;virtual;
     function _DecRefcount(Obj: pointer): integer;virtual;
     function _AsString(Obj: pointer): string;virtual;
@@ -305,23 +312,44 @@ type
     function _Add(Obj: pointer; Value: TLiValue): integer;virtual;
     procedure _Validate(Obj: pointer);virtual;
   public
-    constructor Create(const AName: string; AModule: TLiModule; AParent: TLiType);virtual;
+    function FindMethod(const AName: string): TLiFunc;
+    function Method(const AName: string;
+      const AType: TLiType;
+      const ParamNames: array of string;
+      const ParamTypes: array of TLiType;
+      const AProc: TLiLyseeObjectProc): TLiFunc;overload;
+    function Method(const AName: string;
+      const ParamNames: array of string;
+      const ParamTypes: array of TLiType;
+      const AProc: TLiLyseeObjectProc): TLiFunc;overload;
+    function Method(const AName: string;
+      const AType: TLiType;
+      const AProc: TLiLyseeObjectProc): TLiFunc;overload;
+    function Method(const AName: string;
+      const AProc: TLiLyseeObjectProc): TLiFunc;overload;
+    { define property }
+    function Define(const AProp: string; const AType: TLiType;
+      const IndexNames: array of string; const IndexTypes: array of TLiType;
+      const GetProc: TLiLyseeObjectProc;
+      const SetProc: TLiLyseeObjectProc = nil): boolean;overload;
+    function Define(const AProp: string; const AType: TLiType;
+      const IndexName: string; const IndexType: TLiType;
+      const GetProc: TLiLyseeObjectProc;
+      const SetProc: TLiLyseeObjectProc = nil): boolean;overload;
+    function Define(const AProp: string; const AType: TLiType;
+      const GetProc: TLiLyseeObjectProc;
+      const SetProc: TLiLyseeObjectProc = nil): boolean;overload;
+  public
+    constructor Create(const AName: string; AModule: TLiModule; AParent: TLiType = nil);virtual;
     destructor Destroy;override;
     function Prototype(const AName: string): string;
-    function IsChildOf(AType: TLiType): boolean;
+    function IsTypeOf(AType: TLiType): boolean;
+    function IsChildTypeOf(AType: TLiType): boolean;
     function IsBasicValue: boolean;
     function IsEnum: boolean;
     function IsEnumSet: boolean;
     function IsObject: boolean;
     function IsNil: boolean;
-    function AddMethod(const Names: array of string; const Types: array of TLiType;
-      Proc: TLiLyseeProc; MakeModuleFunc: boolean = false): TLiFunc;
-    procedure SetupProp(const AName: string; AType: TLiType;
-      const IndexNames: array of string; const IndexTypes: array of TLiType;
-      Read, Write: TLiLyseeProc);overload;
-    procedure SetupProp(const AName: string; AType: TLiType;
-      Read, Write: TLiLyseeProc);overload;
-    function FindMethod(const AName: string): TLiFunc;
     function AddOperate(OP: TLiOperator; AType: TLiType; AProc: TLiOperateProc): PLiOperate;
     function FindOperate(OP: TLiOperator; AType: TLiType): PLiOperate;
     function AddCompare(AType: TLiType; AFunc: TLiCompareFunc): PLiCompare;
@@ -342,7 +370,7 @@ type
   { TLiType_variant }
 
   TLiType_variant = class(TLiType)
-  protected
+  public
     procedure _Convert(Value: TLiValue);override;
     procedure _SetDefault(Value: TLiValue);override;
   end;
@@ -350,7 +378,7 @@ type
   { TLiType_nil }
 
   TLiType_nil = class(TLiType)
-  protected
+  public
     function _IncRefcount(Obj: pointer): integer;override;
     function _DecRefcount(Obj: pointer): integer;override;
     function _AsString(Obj: pointer): string;override;
@@ -367,7 +395,7 @@ type
   { TLiType_char }
 
   TLiType_char = class(TLiType)
-  protected
+  public
     function _AsString(Obj: pointer): string;override;
     function _AsChar(Obj: pointer): char;override;
     function _AsInteger(Obj: pointer): int64;override;
@@ -381,7 +409,7 @@ type
   { TLiType_integer }
 
   TLiType_integer = class(TLiType)
-  protected
+  public
     function _AsString(Obj: pointer): string;override;
     function _AsChar(Obj: pointer): char;override;
     function _AsInteger(Obj: pointer): int64;override;
@@ -397,7 +425,7 @@ type
   { TLiType_float }
 
   TLiType_float = class(TLiType)
-  protected
+  public
     function _AsString(Obj: pointer): string;override;
     function _AsInteger(Obj: pointer): int64;override;
     function _AsFloat(Obj: pointer): double;override;
@@ -411,7 +439,7 @@ type
   { TLiType_currency }
 
   TLiType_currency = class(TLiType)
-  protected
+  public
     function _AsString(Obj: pointer): string;override;
     function _AsInteger(Obj: pointer): int64;override;
     function _AsFloat(Obj: pointer): double;override;
@@ -425,7 +453,7 @@ type
   { TLiType_time }
 
   TLiType_time = class(TLiType)
-  protected
+  public
     function _AsString(Obj: pointer): string;override;
     function _AsInteger(Obj: pointer): int64;override;
     function _AsFloat(Obj: pointer): double;override;
@@ -438,7 +466,7 @@ type
   { TLiType_boolean }
 
   TLiType_boolean = class(TLiType)
-  protected
+  public
     function _AsString(Obj: pointer): string;override;
     function _AsInteger(Obj: pointer): int64;override;
     function _AsBoolean(Obj: pointer): boolean;override;
@@ -450,6 +478,21 @@ type
 
   TLiType_type = class(TLiType)
   protected
+    procedure MyName(const Param: TLiParam);
+    procedure MyParent(const Param: TLiParam);
+    procedure MyModule(const Param: TLiParam);
+    procedure MyMethods(const Param: TLiParam);
+    procedure MyIsTypeOf(const Param: TLiParam);
+    procedure MyIsChildTypeOf(const Param: TLiParam);
+    procedure MyIsObject(const Param: TLiParam);
+    procedure MyIsNil(const Param: TLiParam);
+    procedure MyIsEnum(const Param: TLiParam);
+    procedure MyIsEnumSet(const Param: TLiParam);
+    procedure MyItemValues(const Param: TLiParam);
+    procedure MyPrototype(const Param: TLiParam);
+    procedure MyFindMethod(const Param: TLiParam);
+    procedure Setup;override;
+  public
     function _AsString(Obj: pointer): string;override;
     procedure _Convert(Value: TLiValue);override;
   end;
@@ -458,6 +501,9 @@ type
 
   TLiType_string = class(TLiType)
   protected
+    procedure MyGet(const Param: TLiParam);
+    procedure Setup;override;
+  public
     function _IncRefcount(Obj: pointer): integer;override;
     function _DecRefcount(Obj: pointer): integer;override;
     function _AsString(Obj: pointer): string;override;
@@ -472,23 +518,35 @@ type
     function _Length(Obj: pointer): int64;override;
   end;
 
-  { TLiType_strlist }
-
-  TLiType_strlist = class(TLiType)
-  protected
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    function _Generate(Obj: pointer): TLiGenerate;override;
-    function _Length(Obj: pointer): int64;override;
-    function _Clear(Obj: pointer): boolean;override;
-    function _Add(Obj: pointer; Value: TLiValue): integer;override;
-  end;
-
   { TLiType_func }
 
   TLiType_func = class(TLiType)
   protected
+    procedure MyName(const Param: TLiParam);
+    procedure MyPrototype(const Param: TLiParam);
+    procedure MyParent(const Param: TLiParam);
+    procedure MyModule(const Param: TLiParam);
+    procedure MyIsMainFunc(const Param: TLiParam);
+    procedure MyIsMethod(const Param: TLiParam);
+    procedure MyIsConstructor(const Param: TLiParam);
+    procedure MyIsChangeAble(const Param: TLiParam);
+    procedure MyParamCount(const Param: TLiParam);
+    procedure MyGetParamName(const Param: TLiParam);
+    procedure MySetParamName(const Param: TLiParam);
+    procedure MyGetParamType(const Param: TLiParam);
+    procedure MySetParamType(const Param: TLiParam);
+    procedure MyParamNames(const Param: TLiParam);
+    procedure MyParamTypes(const Param: TLiParam);
+    procedure MyClear(const Param: TLiParam);
+    procedure MyClearParams(const Param: TLiParam);
+    procedure MyClearCodes(const Param: TLiParam);
+    procedure MyAddParam(const Param: TLiParam);
+    procedure MyAddCode(const Param: TLiParam);
+    procedure MySetCode(const Param: TLiParam);
+    procedure MyGetResultType(const Param: TLiParam);
+    procedure MySetResultType(const Param: TLiParam);
+    procedure Setup;override;
+  public
     function _IncRefcount(Obj: pointer): integer;override;
     function _DecRefcount(Obj: pointer): integer;override;
     function _AsString(Obj: pointer): string;override;
@@ -498,6 +556,14 @@ type
 
   TLiType_module = class(TLiType)
   protected
+    procedure MyName(const Param: TLiParam);
+    procedure MyConsts(const Param: TLiParam);
+    procedure MyTypes(const Param: TLiParam);
+    procedure MyFuncs(const Param: TLiParam);
+    procedure MyUsings(const Param: TLiParam);
+    procedure MyFind(const Param: TLiParam);
+    procedure Setup;override;
+  public
     function _IncRefcount(Obj: pointer): integer;override;
     function _DecRefcount(Obj: pointer): integer;override;
     function _AsString(Obj: pointer): string;override;
@@ -507,6 +573,27 @@ type
 
   TLiType_list = class(TLiType)
   protected
+    procedure MyCreate(const Param: TLiParam);
+    procedure MyIsEmpty(const Param: TLiParam);
+    procedure MyClear(const Param: TLiParam);
+    procedure MyDelete(const Param: TLiParam);
+    procedure MyRemove(const Param: TLiParam);
+    procedure MyExchange(const Param: TLiParam);
+    procedure MyMove(const Param: TLiParam);
+    procedure MySort(const Param: TLiParam);
+    procedure MyInsert(const Param: TLiParam);
+    procedure MyAdd(const Param: TLiParam);
+    procedure MyIndexOf(const Param: TLiParam);
+    procedure MyCopy(const Param: TLiParam);
+    procedure MyLeft(const Param: TLiParam);
+    procedure MyRight(const Param: TLiParam);
+    procedure MyAssign(const Param: TLiParam);
+    procedure MyGetCount(const Param: TLiParam);
+    procedure MySetCount(const Param: TLiParam);
+    procedure MyGet(const Param: TLiParam);
+    procedure MySet(const Param: TLiParam);
+    procedure Setup;override;
+  public
     function _IncRefcount(Obj: pointer): integer;override;
     function _DecRefcount(Obj: pointer): integer;override;
     function _AsString(Obj: pointer): string;override;
@@ -521,6 +608,17 @@ type
 
   TLiType_hash = class(TLiType)
   protected
+    procedure MyCreate(const Param: TLiParam);
+    procedure MyIsEmpty(const Param: TLiParam);
+    procedure MyClear(const Param: TLiParam);
+    procedure MyHas(const Param: TLiParam);
+    procedure MyRemove(const Param: TLiParam);
+    procedure MyKeys(const Param: TLiParam);
+    procedure MyValues(const Param: TLiParam);
+    procedure MyGet(const Param: TLiParam);
+    procedure MySet(const Param: TLiParam);
+    procedure Setup;override;
+  public
     function _IncRefcount(Obj: pointer): integer;override;
     function _DecRefcount(Obj: pointer): integer;override;
     function _AsString(Obj: pointer): string;override;
@@ -550,7 +648,7 @@ type
     function GetCount: integer;
     function GetItem(Index: integer): TLiEnumItem;
     function GetDefValue: TLiEnumItem;
-  protected
+  public
     function _IncRefcount(Obj: pointer): integer;override;
     function _DecRefcount(Obj: pointer): integer;override;
     function _AsString(Obj: pointer): string;override;
@@ -607,7 +705,7 @@ type
     FSource: TLiEnumType;
     FDefValue: TLiEnumSet;
     function GetDefValue: TLiEnumSet;
-  protected
+  public
     function _IncRefcount(Obj: pointer): integer;override;
     function _DecRefcount(Obj: pointer): integer;override;
     function _AsString(Obj: pointer): string;override;
@@ -650,9 +748,8 @@ type
     function GetAsString: string;
     function GetAsFunc: TLiFunc;
     function GetAsList: TLiList;
-    function GetAsHashList: TLiHashList;
+    function GetAsHash: TLiHash;
     function GetAsModule: TLiModule;
-    function GetAsStringList: TLiStringList;
     function GetAsEnum: TLiEnumItem;
     function GetAsEnumSet: TLiEnumSet;
     procedure SetAsString(const Value: string);
@@ -665,18 +762,17 @@ type
     procedure SetAsType(Value: TLiType);
     procedure SetAsFunc(Value: TLiFunc);
     procedure SetAsList(Value: TLiList);
-    procedure SetAsHashList(Value: TLiHashList);
+    procedure SetAsHash(Value: TLiHash);
     procedure SetAsModule(Value: TLiModule);
-    procedure SetAsStringList(Value: TLiStringList);
     procedure SetAsEnum(Value: TLiEnumItem);
     procedure SetAsEnumSet(Value: TLiEnumSet);
-    procedure MarkForSurvive;
     procedure SetParentType(VT: TLiType);
   public
     constructor Create;virtual;
     destructor Destroy;override;
     function IncRefcount: integer;
     function DecRefcount: integer;
+    procedure MarkForSurvive;
     procedure SetValue(Value: TLiValue);
     procedure SetNil;
     procedure SetDefault(AType: TLiType);
@@ -697,19 +793,19 @@ type
     function GetFunc: TLiFunc;
     function GetModule: TLiModule;
     function GetList: TLiList;
-    function GetHashed: TLiHashList;
+    function GetHashed: TLiHash;
     function GetSelf(var Aobj): boolean;
     function Operate(OP: TLiOperator; Value: TLiValue): boolean;
     function Compare(Value: TLiValue): TLiCompare;overload;
     function Compare(Value: TLiValue; Wanted: TLiCompares): boolean;overload;
     function Same(Value: TLiValue): boolean;
+    function NewList: TLiList;
     property VType: TLiType read FType write SetParentType;
     property AsModule: TLiModule read GetAsModule write SetAsModule;
     property AsFunc: TLiFunc read GetAsFunc write SetAsFunc;
     property AsList: TLiList read GetAsList write SetAsList;
-    property AsHashList: TLiHashList read GetAsHashList write SetAsHashList;
+    property AsHash: TLiHash read GetAsHash write SetAsHash;
     property AsString: string read GetAsString write SetAsString;
-    property AsStringList: TLiStringList read GetAsStringList write SetAsStringList;
     property AsChar: char read GetAsChar write SetAsChar;
     property AsInteger: int64 read GetAsInteger write SetAsInteger;
     property AsBoolean: boolean read GetAsBoolean write SetAsBoolean;
@@ -747,6 +843,7 @@ type
     procedure EndExec(Mark: integer);
     function GetVarbValue(Index: integer; var VT: TLiType): TLiValue;
     function GetSelf(var Aobj): boolean;
+    function GetChangeAbleFunc(var F: TLiFunc): boolean;
     property Context: TLiContext read FContext;
     property Func: TLiFunc read FFunc;
     property Params: TLiList read FParams;
@@ -1074,6 +1171,8 @@ type
     constructor Create(const AName: string; AType: TLiType);
     destructor Destroy;override;
     function Prototype: string;
+    property Name: string read FName;
+    property ValueType: TLiType read FType;
   end;
 
   { TLiVarbList}
@@ -1111,10 +1210,11 @@ type
     FParent: TLiType;
     FParams: TLiVarbList;
     FResultType: TLiType;
-    FSTMTs: TLiSTMTList;
     FProc: TLiLyseeProc;
+    FData: pointer;
+    FHasVarArg: boolean; // last param is ...
     FMinArgs: integer;
-    FHasVarArg: boolean;  // last param is ...
+    FSTMTs: TLiSTMTList;
     function GetSTMTs: TLiSTMTList;
     function GetMinArgs: integer;
     function GetFullName: string;
@@ -1147,7 +1247,9 @@ type
     property MinArgs: integer read GetMinArgs;
     property Module: TLiModule read FModule;
     property ResultType: TLiType read FResultType write FResultType;
+    property Params: TLiVarbList read FParams;
     property Proc: TLiLyseeProc read FProc write FProc;
+    property Data: pointer read FData;
     property STMTs: TLiSTMTList read GetSTMTs;
   end;
 
@@ -1178,18 +1280,35 @@ type
     FFileName: string;
     FTypeList: TList;
     FFuncList: TLiFuncList;
-    FConstants: TLiHashList;
+    FConsts: TLiHash;
+    FNeedSetup: boolean;
     procedure InitModule;
     procedure DeleteFunctions;
     procedure DeleteTypes;
   public
+    function AddFunc(const AName: string; T: TLiType;
+      const ParamNames: array of string; const ParamTypes: array of TLiType;
+      const Proc: TLiLyseeProc;
+      const Data: pointer = nil): TLiFunc;overload;
+    function AddFunc(const AName: string;
+      const ParamNames: array of string; const ParamTypes: array of TLiType;
+      const Proc: TLiLyseeProc;
+      const Data: pointer = nil): TLiFunc;overload;
+    function AddFunc(const AName: string; T: TLiType;
+      const Proc: TLiLyseeProc;
+      const Data: pointer = nil): TLiFunc;overload;
+    function AddFunc(const AName: string;
+      const Proc: TLiLyseeProc;
+      const Data: pointer = nil): TLiFunc;overload;
+  public
     constructor Create(const AName: string);override;
     constructor CreateEx(const AName: string; AContext: TLiContext);
     destructor Destroy;override;
+    procedure Setup;virtual;
     procedure Use(M: TLiModule);
     function EnsureName(const AName: string): string;
-    function AddFunc(const Names: array of string;
-      const Types: array of TLiType; Proc: TLiLyseeProc): TLiFunc;
+    function AddEnumType(const AName: string;
+      const ItemNames: array of string): TLiEnumType;
     function IsMainModule: boolean;
     function SetupType(const T: TLiType): boolean;
     function TypeCount: integer;
@@ -1208,7 +1327,7 @@ type
     property Modules: TLiModuleList read FModules;
     property FileName: string read FFileName write FFileName;
     property Context: TLiContext read FContext;
-    property Consts: TLiHashList read FConstants;
+    property Consts: TLiHash read FConsts;
   end;
 
   { TLiModuleList }
@@ -1223,6 +1342,7 @@ type
   public
     constructor Create(AContext: TLiContext);
     destructor Destroy;override;
+    procedure Setup;
     function IndexOf(AModule: TLiModule): integer;overload;
     function IndexOf(const Name: string): integer;overload;
     function Has(AModule: TLiModule): boolean;overload;
@@ -1309,6 +1429,7 @@ type
     procedure GetFirstTwo(var V1, V2: TLiValue);
     procedure PrepareFor(Func: TLiFunc);
     procedure Sort;
+    procedure AddStrings(List: TStrings);
     function Add(Value: TLiValue = nil): TLiValue;
     function AddList: TLiList;
     function Insert(Index: integer; Value: TLiValue = nil): TLiValue;
@@ -1334,9 +1455,9 @@ type
     property Key: string read FKey;
   end;
 
-  { TLiHashList }
+  { TLiHash }
 
-  TLiHashList = class(TLiGarbage)
+  TLiHash = class(TLiGarbage)
   private
     FBuckets: array of TLiHashItem;
     FCount: integer;
@@ -1348,7 +1469,6 @@ type
     function BucketCount: integer;
     function MatchName(const N1, N2: string): boolean;
     function HashIndex(const Name: string): integer;
-    function SetupItemList: TList;
   public
     constructor Create;override;
     destructor Destroy;override;
@@ -1362,6 +1482,7 @@ type
     function Has(const Name: string): boolean;
     function Remove(const Name: string): boolean;
     function IsEmpty: boolean;
+    function SetupItemList: TList;
     function DefConst(const Name, Value: string): TLiHashItem;overload;
     function DefConst(const Name: string; Value: int64): TLiHashItem;overload;
     function DefConst(const Name: string; Value: double): TLiHashItem;overload;
@@ -1369,58 +1490,6 @@ type
     function AsString: string;override;
     property Count: integer read FCount;
     property CaseSensitive: boolean read FCaseSensitive write FCaseSensitive;
-  end;
-
-  { TLiStringList }
-
-  TLiChangeString = function(const S: string): string;
-  TLiChangeStringList = procedure(List: TLiStringList; Index: integer);
-  TLiChangeStringListObject = procedure(List: TLiStringList; Index: integer) of object;
-
-  TLiStringList = class(TLiGarbage)
-  private
-    FStrings: TStringList;
-    function GetValue(const Name: string): string;
-    procedure SetValue(const Name, Value: string);
-    function GetCount: integer;
-    procedure SetCount(Value: integer);
-  protected
-    procedure MarkForSurvive;override;
-  public
-    constructor Create;override;
-    destructor Destroy;override;
-    procedure BeginUpdate;
-    procedure EndUpdate;
-    procedure Assign(Source: TLiStringList);
-    procedure ChangeString(ChangeFunc: TLiChangeString);
-    procedure ChangeStringList(ChangeFunc: TLiChangeStringList);
-    procedure ChangeStringListObject(ChangeFunc: TLiChangeStringListObject);
-    procedure Clear;override;
-    procedure ClearObjects;
-    procedure Delete(Index: integer);
-    procedure DeleteLast;
-    procedure DeleteEmptyLines;
-    procedure Remove(const S: string; ByName: boolean);
-    procedure Unique;
-    procedure Pack;
-    procedure Insert(Index: Integer; const S: string; V: TLiValue);
-    function Add(const S: string; V: TLiValue): integer;
-    procedure AddHashed(Hashed: TLiHashList);
-    procedure AddList(List: TLiList);
-    function MatchStrs(const S1, S2: string): boolean;
-    function IndexOfValue(const S: string): integer;
-    function Copy(Index, ItemCount: integer): TLiStringList;
-    function CopyLeft(ItemCount: integer): TLiStringList;
-    function CopyRight(ItemCount: integer): TLiStringList;
-    function SelectMatched(const Patten: string): TLiStringList;
-    procedure DeleteMatched(const Patten: string);
-    procedure Rename(const Name, NewName: string);
-    procedure Reverse;
-    procedure GetEnvs;
-    function AsString: string;override;
-    property Count: integer read GetCount write SetCount;
-    property Values[const Name: string]: string read GetValue write SetValue;
-    property StringList: TStringList read FStrings;
   end;
 
   { TLiGenerate }
@@ -1521,8 +1590,8 @@ type
 
 function AcquireLock: boolean;
 function ReleaseLock: boolean;
-function SetupModule(const Name: string): TLiModule;
-procedure Command;
+function AddModule(const Name: string): TLiModule;
+function Command: integer;
 function MatchID(const ID1, ID2: string): boolean;overload;
 function MatchID(const ID: string; const IDList: array of string): boolean;overload;
 function OperatorStr(OP: TLiOperator): string;
@@ -1538,51 +1607,92 @@ procedure ErrorConvert(AType, NewType: TLiType);
 function GetGenerate(Value: TLiValue): TLiGenerate;overload;
 function GetGenerate(V1, V2: TLiValue; Upto: boolean): TLiGenerate;overload;
 function Margin(Level: integer): string;
-function GetTReplaceFlags(V: TLiValue): TReplaceFlags;
-procedure SetTReplaceFlags(V: TLiValue; Value: TReplaceFlags);
 procedure FreeOperates(var Head: PLiOperate);
 procedure FreeCompares(var Head: PLiCompare);
 procedure FreeConverts(var Head: PLiConvert);
+function ParamOK(const Names: array of string; const Types: array of TLiType;
+  IsMethod: boolean; var HasVarArg: boolean): boolean;
+
+function AddFunc(const Name: string; T: TLiType;
+  const ParamNames: array of string; const ParamTypes: array of TLiType;
+  Proc: TLiLyseeProc; Data: pointer = nil): TLiFunc;overload;
+
+function AddFunc(const Name: string;
+  const ParamNames: array of string; const ParamTypes: array of TLiType;
+  Proc: TLiLyseeProc; Data: pointer = nil): TLiFunc;overload;
+
+function AddFunc(const Name: string; T: TLiType;
+  Proc: TLiLyseeProc; Data: pointer = nil): TLiFunc;overload;
+
+function AddFunc(const Name: string;
+  Proc: TLiLyseeProc; Data: pointer = nil): TLiFunc;overload;
+
+function AddMethod(const AClass: TLiType; const AName: string;
+  const AType: TLiType; const ParamNames: array of string;
+  const ParamTypes: array of TLiType; const AProc: TLiLyseeProc): TLiFunc;overload;
+
+function AddMethod(const AClass: TLiType; const AName: string;
+  const ParamNames: array of string;
+  const ParamTypes: array of TLiType; const AProc: TLiLyseeProc): TLiFunc;overload;
+
+function AddMethod(const AClass: TLiType; const AName: string;
+  const AType: TLiType; const AProc: TLiLyseeProc): TLiFunc;overload;
+
+function AddMethod(const AClass: TLiType; const AName: string;
+  const AProc: TLiLyseeProc): TLiFunc;overload;
+
+function SetupProp(const AClass: TLiType;
+  const AName: string; const AType: TLiType;
+  const IndexNames: array of string;
+  const IndexTypes: array of TLiType;
+  const GetProc, SetProc: TLiLyseeProc;
+  var GetFunc, SetFunc: TLiFunc): boolean;overload;
+
+function SetupProp(const AClass: TLiType;
+  const AName: string; const AType: TLiType;
+  const IndexNames: array of string;
+  const IndexTypes: array of TLiType;
+  const GetProc: TLiLyseeProc;
+  var GetFunc: TLiFunc): boolean;overload;
+
+function SetupProp(const AClass: TLiType;
+  const AName: string; const AType: TLiType;
+  const IndexNames: array of string;
+  const IndexTypes: array of TLiType;
+  const GetProc: TLiLyseeProc;
+  const SetProc: TLiLyseeProc = nil): boolean;overload;
+
+function SetupProp(const AClass: TLiType;
+  const AName: string; const AType: TLiType;
+  const GetProc: TLiLyseeProc;
+  const SetProc: TLiLyseeProc = nil): boolean;overload;
 
 var
-
-  my_program      : string;            {<--program file name}
-  my_kernel       : string;            {<--kernel file name}
-  my_gcman        : TLiGarbageCollect; {<--unique garbage collection manager}
-  my_system       : TLiModule;         {<--System module}
-  my_classes      : TLiModule;         {<--Classes module}
-  my_sysutils     : TLiModule;         {<--SysUtils module}
-  my_modules      : TLiModuleList;     {<--public module list}
-  my_types        : array[TID_VARIANT..TID_STRLIST] of TLiType;
-  my_knpath       : string;            {<--kernel file path}
-  my_kndir        : string;            {<--kernel file directory}
-  my_home         : string;            {<--home path}
-  my_tmpath       : string;            {<--temporary path}
-  my_search_path  : string;            {<--module search path list}
-  my_variant      : TLiType_variant;
-  my_nil          : TLiType_nil;
-  my_char         : TLiType_char;
-  my_int          : TLiType_integer;
-  my_float        : TLiType_float;
-  my_curr         : TLiType_currency;
-  my_time         : TLiType_time;
-  my_bool         : TLiType_boolean;
-  my_type         : TLiType_type;
-  my_string       : TLiType_string;
-  my_module       : TLiType_module;
-  my_func         : TLiType_func;
-  my_hash         : TLiType_hash;
-  my_list         : TLiType_list;
-  my_strlist      : TLiType_strlist;
-  my_TReplaceFlag : TLiEnumType;
-  my_TReplaceFlags: TLiEnumSetType;
-
-const
-
-  SystemTypeNames: array[TID_VARIANT..TID_STRLIST] of string = (
-    'variant', 'nil', 'char', 'integer', 'float', 'currency',
-    'time', 'boolean', 'type', 'string', 'module', 'function',
-    'THashList', 'TList', 'TStringList');
+  my_program    : string;            {<--program file name}
+  my_kernel     : string;            {<--kernel file name}
+  my_gcman      : TLiGarbageCollect; {<--unique garbage collection manager}
+  my_system     : TLiModule;         {<--System module}
+  my_modules    : TLiModuleList;     {<--public module list}
+  my_types      : array[TID_VARIANT..TID_LIST] of TLiType;
+  my_knpath     : string;            {<--kernel file path}
+  my_kndir      : string;            {<--kernel file directory}
+  my_home       : string;            {<--home path}
+  my_tmpath     : string;            {<--temporary path}
+  my_search_path: string;            {<--module search path list}
+  my_variant    : TLiType_variant;
+  my_nil        : TLiType_nil;
+  my_char       : TLiType_char;
+  my_int        : TLiType_integer;
+  my_float      : TLiType_float;
+  my_curr       : TLiType_currency;
+  my_time       : TLiType_time;
+  my_bool       : TLiType_boolean;
+  my_type       : TLiType_type;
+  my_string     : TLiType_string;
+  my_module     : TLiType_module;
+  my_func       : TLiType_func;
+  my_hash       : TLiType_hash;
+  my_list       : TLiType_list;
 
 implementation
 
@@ -1701,12 +1811,10 @@ const
 
 var
 
-  my_spinlock  : Syncobjs.TCriticalSection;
-  my_random    : integer = 0;
-  my_keywords  : string;
-  my_hilights  : string;
-  my_type_seed : integer = TID_CUSTOM;
-  my_empty_char: char = #0;
+  my_spinlock: Syncobjs.TCriticalSection;
+  my_keywords: string;
+  my_hilights: string;
+  my_TID_seed: integer = 0;
 
 function IsVarArg(const ID: string; T: TLiType): boolean;
 begin
@@ -1718,32 +1826,9 @@ begin
   Result := (T <> nil) and (T <> my_nil) and (IsID(ID) or IsVarArg(ID, T));
 end;
 
-function ParamOK(const Names: array of string; const Types: array of TLiType;
-                  IsMethod: boolean; var HasVarArg: boolean): boolean;
-var
-  I, L, X: integer;
+procedure LyseeObjectProc(const Param: TLiParam);
 begin
-  Result := false;
-  HasVarArg := false;
-  L := Length(Names);
-  if (L > 0) and (L = Length(Types)) then
-  begin
-    for I := 0 to L - 1 do
-    begin
-      if Types[I] = nil then Exit;
-      if IsMethod and MatchID('self', Names[I]) then Exit;
-      if IsID(Names[I]) then
-      begin
-        for X := I + 1 to L - 1 do
-          if MatchID(Names[I], Names[X]) then Exit;
-      end
-      else
-      if (I = L - 1) and IsVarArg(Names[I], Types[I]) then
-        HasVarArg := true else
-        Exit;
-    end;
-    Result := true;
-  end;
+  Param.FFunc.FParent.FProcs[PtrToInt(Param.FFunc.FData)](Param);
 end;
 
 // operator --------------------------------------------------------------------
@@ -1762,7 +1847,7 @@ end;
 
 procedure variant_is_type(V1, V2: TLiValue);
 begin
-  V1.SetAsBoolean(V1.AsType = V2.AsType);
+  V1.SetAsBoolean(V1.AsType.IsTypeOf(V2.AsType));
 end;
 
 procedure variant_as_type(V1, V2: TLiValue);
@@ -1827,9 +1912,9 @@ end;
 
 procedure string_in_hashed(V1, V2: TLiValue);
 var
-  H: TLiHashList;
+  H: TLiHash;
 begin
-  H := V2.AsHashList;
+  H := V2.AsHash;
   V1.SetAsBoolean((H <> nil) and H.Has(V1.AsString));
 end;
 
@@ -2185,32 +2270,6 @@ begin
   end;
 end;
 
-procedure strlist_shi_variant(V1, V2: TLiValue);
-var
-  L: TLiStringList;
-begin
-  if V1.GetSelf(L) then
-    L.FStrings.Add(V2.AsString);
-end;
-
-procedure strlist_fill_variant(V1, V2: TLiValue);
-var
-  L: TLiStringList;
-  G: TLiGenerate;
-begin
-  if V1.GetSelf(L) then
-  begin
-    G := GetGenerate(V2);
-    if G <> nil then
-    try
-      while G.GetNext do
-        L.FStrings.Add(G.AsString);
-    finally
-      G.Free;
-    end;
-  end;
-end;
-
 procedure enumset_add_enumset(V1, V2: TLiValue);
 begin
   V1.AsEnumSet.Add(V2.AsEnumSet).SetValue(V1);
@@ -2351,63 +2410,6 @@ begin
     Result := crDiff;
 end;
 
-// convert ---------------------------------------------------------------------
-
-procedure strlist_as_list(Value: TLiValue);
-var
-  A: TLiList;
-  L: TLiStringList;
-  I: integer;
-begin
-  A := TLiList.Create;
-  L := TLiStringList(Value.FValue.VObject);
-  if L <> nil then
-    for I := 0 to L.FStrings.Count - 1 do
-      A.Add.SetAsString(L.FStrings[I]);
-  Value.SetAsList(A);
-end;
-
-procedure strlist_as_hashed(Value: TLiValue);
-var
-  H: TLiHashList;
-  L: TLiStringList;
-  I: integer;
-begin
-  H := TLiHashList.Create;
-  L := TLiStringList(Value.FValue.VObject);
-  if L <> nil then
-    for I := 0 to L.FStrings.Count - 1 do
-      H.Add(L.FStrings[I]).SetValue(TLiValue(L.FStrings.Objects[I]));
-  Value.SetAsHashList(H);
-end;
-
-procedure string_as_strlist(Value: TLiValue);
-var
-  L: TLiStringList;
-begin
-  L := TLiStringList.Create;
-  L.FStrings.Text := Value.AsString;
-  Value.SetAsStringList(L);
-end;
-
-procedure list_as_strlist(Value: TLiValue);
-var
-  L: TLiStringList;
-begin
-  L := TLiStringList.Create;
-  L.AddList(TLiList(Value.FValue.VObject));
-  Value.SetAsStringList(L);
-end;
-
-procedure hashed_as_strlist(Value: TLiValue);
-var
-  L: TLiStringList;
-begin
-  L := TLiStringList.Create;
-  L.AddHashed(TLiHashList(Value.FValue.VObject));
-  Value.SetAsStringList(L);
-end;
-
 // system.function -------------------------------------------------------------
 
 procedure pp_system_halt(const Param: TLiParam);
@@ -2451,7 +2453,7 @@ begin
   if Param.FPrmc = 1 then
   begin
     F := Param.FContext.Compile(Param[0].AsString);
-    Param.FResult.SetAsFunc(F);
+    Param.Result.AsFunc := F;
   end
   else
   begin
@@ -2473,7 +2475,7 @@ begin
         for I := 0 to L.Count - 1 do
           F.FParams.Add(L[I], my_variant);
         F.FHasVarArg := V;
-        Param.FResult.SetAsFunc(F);
+        Param.Result.AsFunc := F;
       end
       else Param.Error('invalid arguments: ''%s''', [Param[1].AsString]);
     finally
@@ -2494,7 +2496,7 @@ begin
     if func <> nil then
       Param.FToken.ExecFunc(func, Param, Param.FResult, nil);
   end
-  else Param.FResult.SetNil;
+  else Param.Result.SetNil;
 end;
 
 procedure pp_system_find(const Param: TLiParam);
@@ -2504,33 +2506,12 @@ begin
   S := Trim(Param[0].AsString);
   if Param.FContext.CodeFunc.FindSave(S, Param, Param.FResult) = fiNone then
     if not Param.FContext.Resolve(S, Param.FResult) then
-      Param.FResult.SetNil;
-end;
-
-procedure pp_system_sleep(const Param: TLiParam);
-var
-  T: integer;
-begin
-  T := Param[0].AsInteger;
-  if T > 0 then Sleep(T);
+      Param.Result.SetNil;
 end;
 
 procedure pp_system_typeof(const Param: TLiParam);
 begin
-  Param.FResult.SetAsType(Param[0].AsType);
-end;
-
-procedure pp_system_nameof(const Param: TLiParam);
-var
-  clss: TLiType;
-  vobj: pointer;
-begin
-  clss := Param[0].GetTOA(vobj);
-  if vobj = nil then Param.FResult.SetAsString('') else
-  if clss = my_func then Param.FResult.SetAsString(TLiFunc(vobj).Name) else
-  if clss = my_module then Param.FResult.SetAsString(TLiModule(vobj).Name) else
-  if clss = my_type then Param.FResult.SetAsString(TLiType(vobj).FName) else
-    Param.FResult.SetAsString('');
+  Param.Result.AsType := Param[0].AsType;
 end;
 
 procedure pp_system_moduleof(const Param: TLiParam);
@@ -2540,7 +2521,7 @@ begin
   M := Param[0].AsModule;
   if M = nil then
     M := Param[0].FType.FModule;
-  Param.FResult.SetAsModule(M);
+  Param.Result.AsModule := M;
 end;
 
 procedure pp_system_fileof(const Param: TLiParam);
@@ -2550,21 +2531,12 @@ begin
   M := Param[0].AsModule;
   if M = nil then
     M := Param[0].FType.FModule;
-  Param.FResult.SetAsString(M.FFileName);
+  Param.Result.AsString := M.FFileName;
 end;
 
 procedure pp_system_collectGarbage(const Param: TLiParam);
 begin
-  Param.FResult.SetAsInteger(my_gcman.Collect);
-end;
-
-procedure pp_system_pos(const Param: TLiParam);
-var
-  Sub, Str: string;
-begin
-  Sub := Param[0].AsString;
-  Str := Param[1].AsString;
-  Param.FResult.SetAsInteger(System.Pos(Sub, Str));
+  Param.Result.AsInteger := my_gcman.Collect;
 end;
 
 procedure pp_system_inc(const Param: TLiParam);
@@ -2635,7 +2607,7 @@ begin
     T._Convert(V);
     Param.Result.SetValue(V);
   end
-  else Param.Result.SetAsString(S);
+  else Param.Result.AsString := S;
 end;
 
 procedure pp_system_write(const Param: TLiParam);
@@ -2649,57 +2621,13 @@ begin
   Param.FContext.Write(sLineBreak);
 end;
 
-procedure pp_system_now(const Param: TLiParam);
-begin
-  Param.FResult.SetAsTime(Now);
-end;
-
 procedure pp_system_length(const Param: TLiParam);
 var
   O: pointer;
   T: TLiType;
 begin
   T := Param[0].GetTOA(O);
-  Param.FResult.SetAsInteger(T._Length(O));
-end;
-
-procedure pp_system_random(const Param: TLiParam);
-const
-  Mask   = $00FFFFFF;
-  Range  = $01000000;
-var
-  R: integer;
-begin
-  if Param.FPrmc = 1 then
-    R := Max(Param[0].AsInteger, 2) else
-    R := Range;
-  Inc(my_random, Random(Range) + (PtrToInt(@R) and Mask));
-  Param.FResult.SetAsInteger(my_random mod R);
-  my_random := my_random mod Range;
-end;
-
-procedure pp_system_getenv(const Param: TLiParam);
-var
-  ID: string;
-begin
-  ID := Param[0].AsString;
-  if ID <> '' then
-    Param.FResult.SetAsString(GetEnv(ID)) else
-    Param.FResult.SetAsString('');
-end;
-
-procedure pp_system_getEnvStrings(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  L := TLiStringList.Create;
-  Param.FResult.SetAsStringList(L);
-  L.GetEnvs;
-end;
-
-procedure pp_system_genid(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(GenID);
+  Param.Result.AsInteger := T._Length(O);
 end;
 
 procedure pp_system_pass(const Param: TLiParam);
@@ -2707,1812 +2635,22 @@ begin
   { do nothing }
 end;
 
-procedure pp_system_format(const Param: TLiParam);
-var
-  fmts, line: string;
-  list: TLiList;
-  args: array of TVarRec;
-  exts: array of Extended;
-  argc, extc, X: integer;
-  data: TLiValue;
-  fmtc: char;
-  pstr: pchar;
-
-  function format_chars(const Fmt: pchar; var Extends: integer): string;
-  var
-    next: pchar;
-  begin
-    Result := '';
-    Extends := 0;
-    next := SeekChar(Fmt, ['%']);
-    while next <> nil do
-    begin
-      Inc(next);
-      if next^ <> '%' then
-      begin
-        while (next^ <> #0) and CharInSet(next^, ['-', ':', '.', '0'..'9']) do Inc(next);
-        if not CharInSet(next^, CS_FORMAT) then
-          Throw('invalid format string: ''%s''', [Fmt]);
-        Result := Result + next^;
-        if CharInSet(next^, CS_FMTFLOAT) then
-          Inc(Extends);
-      end;
-      Inc(next);
-      next := SeekChar(next, ['%']);
-    end;
-  end;
-
-begin
-  line := Param[0].AsString;
-  fmts := format_chars(PChar(line), extc);
-  if fmts = '' then
-  begin
-    Param.FResult.SetAsString(line);
-    Exit;
-  end;
-
-  list := Param[1].AsList;
-  argc := Min(list.GetCount, Length(fmts));
-  if argc < Length(fmts) then
-  begin
-    Param.Error('need %d more formating arguments', [Length(fmts) - argc]);
-    Exit;
-  end;
-
-  if list.Refcount > 1 then list := list.Copy(0, argc);
-  SetLength(args, argc);
-  SetLength(exts, extc);
-  try
-    extc := 0;
-    for X := 0 to argc - 1 do
-    begin
-      data := list.GetItem(X);
-      fmtc := fmts[X + 1];
-      if CharInSet(fmtc, CS_FMTSTRING) then
-      begin
-        my_string._Convert(data);
-        if data.FValue.VObject <> nil then
-          pstr := pchar(TLiString(data.FValue.VObject).FValue) else
-          pstr := @my_empty_char;
-        {$IFDEF UNICODE}
-        args[X].VType := vtPWideChar;
-        args[X].VPWideChar := pstr;
-        {$ELSE}
-        args[X].VType := vtPChar;
-        args[X].VPChar := pstr;
-        {$ENDIF}
-      end
-      else
-      if CharInSet(fmtc, CS_FMTCHAR) then
-      begin
-        my_char._Convert(data);
-        args[X].VType := vtChar;
-        {$IFDEF UNICODE}
-        args[X].VType := vtWideChar;
-        args[X].VWideChar := data.FValue.VChar[0];
-        {$ELSE}
-        args[X].VType := vtChar;
-        args[X].VChar := data.FValue.VChar[0];
-        {$ENDIF}
-      end
-      else
-      if CharInSet(fmtc, CS_FMTINT) then
-      begin
-        my_int._Convert(data);
-        args[X].VType := vtInt64;
-        args[X].VInt64 := @data.FValue.VInteger;
-      end
-      else
-      if CharInSet(fmtc, CS_FMTFLOAT) then
-      begin
-        my_float._Convert(data);
-        exts[extc] := data.FValue.VFloat;
-        args[X].VType := vtExtended;
-        args[X].VExtended := @exts[extc];
-        Inc(extc);
-      end
-      else
-      if CharInSet(fmtc, CS_FMTPTR) then
-      begin
-        args[X].VType := vtPointer;
-        if data.FType.IsObject then
-          args[X].VPointer := data.FValue.VObject else
-          args[X].VPointer := nil;
-      end
-      else
-      begin
-        Param.Error('unknown format: ''%s''', [fmtc]);
-        Break;
-      end;
-    end;
-    if Param.FContext.StatusOK then
-      Param.FResult.SetAsString(Format(line, args));
-  finally
-    SetLength(args, 0);
-    SetLength(exts, 0);
-    if list.Refcount = 0 then list.Free;
-  end;
-end;
-
-procedure pp_system_max(const Param: TLiParam);
-var
-  V, T: TLiValue;
-  L: TLiList;
-  I: integer;
-begin
-  V := Param[0];
-  T := Param[1];
-  if V.Compare(T, [crLess]) then V := T;
-  L := Param[2].AsList;
-  if L <> nil then
-    for I := 0 to L.Count - 1 do
-      if V.Compare(L[I], [crLess]) then
-        V := L[I];
-  Param.FResult.SetValue(V);
-end;
-
-procedure pp_system_min(const Param: TLiParam);
-var
-  V, T: TLiValue;
-  L: TLiList;
-  I: integer;
-begin
-  V := Param[0];
-  T := Param[1];
-  if V.Compare(T, [crMore]) then V := T;
-  L := Param[2].AsList;
-  if L <> nil then
-    for I := 0 to L.Count - 1 do
-      if V.Compare(L[I], [crMore]) then
-        V := L[I];
-  Param.FResult.SetValue(V);
-end;
-
-procedure pp_system_leap(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(IsLeapYear(Param[0].AsInteger));
-end;
-
-procedure pp_system_tmpfname(const Param: TLiParam);
-var
-  fname: string;
-begin
-  fname := my_tmpath + GenID + Param[0].GetFileName;
-  Param.FResult.SetAsString(fname);
-end;
-
-procedure pp_system_incPD(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(IncPD(Param[0].GetFileName));
-end;
-
-procedure pp_system_excPD(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(ExcPD(Param[0].GetFileName));
-end;
-
-procedure pp_system_veryPD(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(Param[0].GetFileName);
-end;
-
-procedure pp_system_abs(const Param: TLiParam);
-var
-  data: TLiValue;
-  clss: TLiType;
-begin
-  data := Param[0];
-  clss := data.FType;
-  case clss.FTID of
-    TID_INTEGER  : Param.FResult.SetAsInteger(Abs(data.FValue.VInteger));
-    TID_FLOAT: Param.FResult.SetAsFloat(Abs(data.FValue.VFloat));
-    TID_CURRENCY: Param.FResult.SetAsCurrency(Abs(data.FValue.VCurrency));
-    else Param.FResult.SetValue(data);
-  end;
-end;
-
-procedure pp_system_itos(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(IntToStr(Param[0].AsInteger));
-end;
-
-procedure pp_system_stoi(const Param: TLiParam);
-begin
-  Param.FResult.SetAsInteger(StrToInt64(Param[0].AsString));
-end;
-
-procedure pp_system_itox(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(IntToHex(Param[0].AsInteger, Max(0, Param[1].AsInteger)));
-end;
-
-procedure pp_system_xtoi(const Param: TLiParam);
-begin
-  Param.FResult.SetAsInteger(StrToInt64('$' + Param[0].AsString));
-end;
-
-procedure pp_system_ord(const Param: TLiParam);
-var
-  data: TLiValue;
-  clss: TLiType;
-begin
-  data := Param[0];
-  clss := data.FType;
-  case clss.FTID of
-    TID_INTEGER : Param.FResult.SetValue(data);
-    TID_CHAR: Param.FResult.SetAsInteger(Ord(data.FValue.VChar[0]));
-    TID_BOOLEAN: Param.FResult.SetAsInteger(Ord(data.FValue.VBoolean));
-    else Param.FResult.SetAsInteger(0);
-  end;
-end;
-
-procedure pp_system_chr(const Param: TLiParam);
-begin
-  Param.FResult.SetAsChar(char(Param[0].AsInteger));
-end;
-
-procedure pp_system_compareText(const Param: TLiParam);
-begin
-  Param.FResult.SetAsInteger(SysUtils.CompareText(Param[0].AsString, Param[1].AsString));
-end;
-
-procedure pp_system_sameText(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(SysUtils.SameText(Param[0].AsString, Param[1].AsString));
-end;
-
-procedure pp_system_compareStr(const Param: TLiParam);
-begin
-  Param.FResult.SetAsInteger(SysUtils.CompareStr(Param[0].AsString, Param[1].AsString));
-end;
-
-procedure pp_system_sameStr(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(SysUtils.CompareStr(Param[0].AsString, Param[1].AsString) = 0);
-end;
-
-procedure pp_system_expandFileName(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(ExpandFileName(Param[0].GetFileName));
-end;
-
-procedure pp_system_filePath(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(ExtractFilePath(Param[0].GetFileName));
-end;
-
-procedure pp_system_fileName(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(ExtractFileName(Param[0].GetFileName));
-end;
-
-procedure pp_system_fileExt(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(ExtractFileExt(Param[0].GetFileName));
-end;
-
-procedure pp_system_changeExt(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(ChangeFileExt(Param[0].GetFileName, Param[1].GetFileName));
-end;
-
-procedure pp_system_trim(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(Trim(Param[0].AsString));
-end;
-
-procedure pp_system_trimLeft(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(TrimLeft(Param[0].AsString));
-end;
-
-procedure pp_system_trimRight(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(TrimRight(Param[0].AsString));
-end;
-
-procedure pp_system_trimAll(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(TrimAll(Param[0].AsString));
-end;
-
-procedure pp_system_lower(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(LowerCase(Param[0].AsString));
-end;
-
-procedure pp_system_upper(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(UpperCase(Param[0].AsString));
-end;
-
-procedure pp_system_stringReplace(const Param: TLiParam);
-var
-  S, P, N: string;
-  flags: TReplaceFlags;
-begin
-  S := Param[0].AsString;         // string
-  P := Param[1].AsString;         // patten
-  N := Param[2].AsString;         // new string
-  if Param.FPrmc > 3 then
-    flags := GetTReplaceFlags(Param[3]) else
-    flags := [rfReplaceAll];
-  Param.FResult.SetAsString(StringReplace(S, P, N, flags));
-end;
-
-procedure pp_system_isIdent(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(IsID(Param[0].AsString));
-end;
-
-procedure pp_system_isAlpha(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(InChars(Param[0].AsString, CS_ALPHA));
-end;
-
-procedure pp_system_isAlnum(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(InChars(Param[0].AsString, CS_ALNUM));
-end;
-
-procedure pp_system_isCntrl(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(InChars(Param[0].AsString, CS_CONTROL));
-end;
-
-procedure pp_system_isDigit(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(InChars(Param[0].AsString, CS_DIGIT));
-end;
-
-procedure pp_system_isSpace(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(InChars(Param[0].AsString, CS_SPACE));
-end;
-
-procedure pp_system_isHex(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(InChars(Param[0].AsString, CS_HEX));
-end;
-
-procedure pp_system_isLower(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(InChars(Param[0].AsString, CS_LOWER));
-end;
-
-procedure pp_system_isUpper(const Param: TLiParam);
-begin
-  Param.FResult.SetAsBoolean(InChars(Param[0].AsString, CS_UPPER));
-end;
-
-procedure pp_system_fileText(const Param: TLiParam);
-begin
-  Param.FResult.SetAsString(FileCode(Param[0].GetFileName));
-end;
-
-procedure pp_system_saveFileText(const Param: TLiParam);
-var
-  L: TStrings;
-begin
-  L := TStringList.Create;
-  try
-    L.Add(Param[0].AsString);
-    L.SaveToFile(Param[1].GetFileName);
-  finally
-    L.Free;
-  end;
-end;
-
 procedure pp_system_decompile(const Param: TLiParam);
 var
-  L: TLiStringList;
+  L: TStringList;
   T: TLiType;
   O: pointer;
 begin
-  L := TLiStringList.Create;
-  Param.FResult.SetAsStringList(L);
-  T := Param[0].GetTOA(O);
-  if O <> nil then
-  if T = my_func then
-    TLiFunc(O).Decompile(0, L.FStrings);
-end;
-
-// system.string ---------------------------------------------------------------
-
-procedure pp_string_pos(const Param: TLiParam);
-var
-  Sub, Str: string;
-begin
-  Str := Param[0].AsString;
-  Sub := Param[1].AsString;
-  Param.FResult.SetAsInteger(System.Pos(Sub, Str));
-end;
-
-procedure pp_string_replace(const Param: TLiParam);
-var
-  S, P, N: string;
-begin
-  S := Param[0].AsString; // string
-  P := Param[1].AsString; // patten
-  N := Param[2].AsString; // new string
-  Param.FResult.SetAsString(StringReplace(S, P, N, [rfReplaceAll]));
-end;
-
-procedure pp_string_delete(const Param: TLiParam);
-var
-  S: string;
-  N: int64;
-begin
-  S := Param[0].AsString;
-  if Param.FPrmc > 2 then N := Max(0, Param[2].AsInteger) else N := 1;
-  if N > 0 then
-    System.Delete(S, Param[1].AsInteger, N);
-  Param.FResult.SetAsString(S);
-end;
-
-procedure pp_string_insert(const Param: TLiParam);
-var
-  S: string;
-begin
-  S := Param[0].AsString;
-  System.Insert(Param[1].AsString, S, Param[2].AsInteger);
-  Param.FResult.SetAsString(S);
-end;
-
-procedure pp_string_lines(const Param: TLiParam);
-var
-  A: TLiList;
-  I: integer;
-  L: TStrings;
-begin
-  A := TLiList.Create;
-  Param.FResult.SetAsList(A);
   L := TStringList.Create;
   try
-    L.Text := Param[0].AsString;
-    for I := 0 to L.Count - 1 do
-      A.Add.SetAsString(L[I]);
+    T := Param[0].GetTOA(O);
+    if O <> nil then
+      if T = my_func then
+        TLiFunc(O).Decompile(0, L);
+    Param.Result.AsString := L.Text;
   finally
     L.Free;
   end;
-end;
-
-procedure pp_string_chars(const Param: TLiParam);
-var
-  A: TLiList;
-  S: string;
-  I: integer;
-begin
-  S := Param[0].AsString;
-  A := TLiList.Create;
-  Param.FResult.SetAsList(A);
-  for I := 1 to Length(S) do
-    A.Add.SetAsChar(S[I]);
-end;
-
-// system.type -----------------------------------------------------------------
-
-procedure pp_type_name(const Param: TLiParam);
-var
-  T: TLiType;
-begin
-  T := Param[0].AsType;
-  Param.FResult.SetAsString(T.FName);
-end;
-
-procedure pp_type_parent(const Param: TLiParam);
-var
-  T: TLiType;
-begin
-  T := Param[0].AsType;
-  Param.FResult.SetAsType(T.FParent);
-end;
-
-procedure pp_type_module(const Param: TLiParam);
-var
-  T: TLiType;
-begin
-  T := Param[0].AsType;
-  Param.FResult.SetAsModule(T.FModule);
-end;
-
-procedure pp_type_methods(const Param: TLiParam);
-var
-  T: TLiType;
-  A: TLiList;
-  I: integer;
-begin
-  T := Param[0].AsType;
-  A := TLiList.Create;
-  Param.FResult.SetAsList(A);
-  for I := 0 to T.GetMethodCount - 1 do
-    A.Add.SetAsFunc(T.GetMethod(I));
-end;
-
-procedure pp_type_isObject(const Param: TLiParam);
-var
-  T: TLiType;
-begin
-  T := Param[0].AsType;
-  Param.FResult.SetAsBoolean(T.IsObject);
-end;
-
-procedure pp_type_isNil(const Param: TLiParam);
-var
-  T: TLiType;
-begin
-  T := Param[0].AsType;
-  Param.FResult.SetAsBoolean(T.IsNil);
-end;
-
-procedure pp_type_itemValues(const Param: TLiParam);
-var
-  T: TLiType;
-  O: TLiEnumType;
-  L: TLiList;
-  I: integer;
-begin
-  L := TLiList.Create;
-  Param.FResult.SetAsList(L);
-  T := Param[0].AsType;
-  if T.IsEnum then
-  begin
-    O := TLiEnumType(T);
-    for I := 0 to O.GetCount - 1 do
-      L.Add.SetTOA(O, O[I]);
-  end;
-end;
-
-procedure pp_type_prototype(const Param: TLiParam);
-var
-  T: TLiType;
-begin
-  T := Param[0].AsType;
-  Param.FResult.SetAsString(T.Prototype(Param[1].AsString));
-end;
-
-procedure pp_type_get(const Param: TLiParam);
-var
-  T: TLiType;
-  F: TLiFunc;
-begin
-  T := Param[0].AsType;
-  F := T.FindMethod(Param[1].AsString);
-  Param.FResult.SetAsFunc(F);
-end;
-
-// system.module ---------------------------------------------------------------
-
-procedure pp_module_name(const Param: TLiParam);
-var
-  M: TLiModule;
-begin
-  if Param.GetSelf(M) then
-    Param.FResult.SetAsString(M.FName);
-end;
-
-procedure pp_module_consts(const Param: TLiParam);
-var
-  M: TLiModule;
-  L: TLiList;
-begin
-  if Param.GetSelf(M) then
-  begin
-    L := TLiList.Create;
-    Param.FResult.SetAsList(L);
-    M.FConstants.ListKeys(L);
-  end;
-end;
-
-procedure pp_module_funcs(const Param: TLiParam);
-var
-  M: TLiModule;
-  L: TLiList;
-  I: integer;
-begin
-  if Param.GetSelf(M) then
-  begin
-    L := TLiList.Create;
-    Param.FResult.SetAsList(L);
-    for I := 0 to M.FFuncList.Count - 1 do
-      L.Add.SetAsFunc(TLiFunc(M.FFuncList[I]));
-  end;
-end;
-
-procedure pp_module_types(const Param: TLiParam);
-var
-  M: TLiModule;
-  L: TLiList;
-  X: integer;
-begin
-  if Param.GetSelf(M) then
-  begin
-    L := TLiList.Create;
-    Param.FResult.SetAsList(L);
-    for X := 0 to M.TypeCount - 1 do
-      L.Add.SetAsType(M.GetType(X));
-  end;
-end;
-
-procedure pp_module_usings(const Param: TLiParam);
-var
-  M: TLiModule;
-begin
-  if Param.GetSelf(M) then
-    if M.FModules <> nil then
-      Param.FResult.SetAsList(M.FModules.ToList) else
-      Param.FResult.SetAsList(TLiList.Create);
-end;
-
-procedure pp_module_get(const Param: TLiParam);
-var
-  M: TLiModule;
-begin
-  if Param.GetSelf(M) then
-    M.FindSave(Param[1].AsString, Param.FResult);
-end;
-
-// system.func -----------------------------------------------------------------
-
-procedure pp_func_name(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsString(F.FName);
-end;
-
-procedure pp_func_prototype(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsString(F.Prototype);
-end;
-
-procedure pp_func_isMainFunc(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsBoolean(F.IsMainFunc);
-end;
-
-procedure pp_func_isMethod(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsBoolean(F.IsMethod);
-end;
-
-procedure pp_func_isConstructor(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsBoolean(F.IsConstructor);
-end;
-
-procedure pp_func_changeAble(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsBoolean(F.ChangeAble);
-end;
-
-procedure pp_func_pcount(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsInteger(F.FParams.ParamCount);
-end;
-
-procedure pp_func_parent(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsType(F.FParent);
-end;
-
-procedure pp_func_module(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsModule(F.FModule);
-end;
-
-procedure pp_func_pnames(const Param: TLiParam);
-var
-  F: TLiFunc;
-  L: TLiList;
-  I: integer;
-begin
-  if Param.GetSelf(F) then
-  begin
-    L := TLiList.Create;
-    Param.FResult.SetAsList(L);
-    for I := 0 to F.FParams.ParamCount - 1 do
-      L.Add.SetAsString(F.FParams[I].FName);
-  end;
-end;
-
-procedure pp_func_ptypes(const Param: TLiParam);
-var
-  F: TLiFunc;
-  L: TLiList;
-  I: integer;
-begin
-  if Param.GetSelf(F) then
-  begin
-    L := TLiList.Create;
-    Param.FResult.SetAsList(L);
-    for I := 0 to F.FParams.ParamCount - 1 do
-      L.Add.SetAsType(F.FParams[I].FType);
-  end;
-end;
-
-procedure pp_func_clear(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) and Param.TestChangeFunc(F) then
-  begin
-    F.FHasVarArg := false;
-    F.FMinArgs := -1;
-    F.FParams.Clear;
-    F.FSTMTs.Clear;
-  end;
-end;
-
-procedure pp_func_clearParams(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) and Param.TestChangeFunc(F) then
-  begin
-    F.FHasVarArg := false;
-    F.FMinArgs := -1;
-    F.FParams.Clear;
-  end;
-end;
-
-procedure pp_func_clearCodes(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) and Param.TestChangeFunc(F) then
-    F.FSTMTs.Clear;
-end;
-
-procedure pp_func_addParam(const Param: TLiParam);
-var
-  F: TLiFunc;
-  S: string;
-  T: TLiType;
-begin
-  if Param.GetSelf(F) then
-    if F.ChangeAble and not F.FHasVarArg and (F.FParams.LocalCount = 0) then
-    begin
-      S := Param[1].AsString;
-      if Param.Prmc > 2 then
-        T := Param[2].AsType else
-        T := my_variant;
-      if IsParam(S, T) and not F.FindInside(S) then
-      begin
-        F.FParams.Add(S, T);
-        F.FHasVarArg := (S = '...');
-        F.FMinArgs := -1;
-        Param.FResult.SetAsBoolean(true);
-      end;
-    end;
-end;
-
-procedure pp_func_addCode(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsBoolean(F.AddCode(TrimRight(Param[1].AsString)));
-end;
-
-procedure pp_func_setCode(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsBoolean(F.SetCode(TrimRight(Param[1].AsString)));
-end;
-
-procedure pp_func_getType(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsType(F.FResultType);
-end;
-
-procedure pp_func_setType(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) and Param.TestChangeFunc(F) then
-    F.FResultType := Param[1].AsType;
-end;
-
-procedure pp_func_getParamName(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsString(F.FParams[Param[1].AsInteger].FName);
-end;
-
-procedure pp_func_getParamType(const Param: TLiParam);
-var
-  F: TLiFunc;
-begin
-  if Param.GetSelf(F) then
-    Param.FResult.SetAsType(F.FParams[Param[1].AsInteger].FType);
-end;
-
-// system.list -----------------------------------------------------------------
-
-procedure pp_list_create(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  L := TLiList.Create;
-  Param.FResult.SetAsList(L);
-  if Param.FPrmc > 0 then
-    L.Count := Max(0, Param[0].AsInteger);
-end;
-
-{ function array.length: integer }
-procedure pp_list_getCount(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsInteger(L.Count);
-end;
-
-{ procedure array.set_length(newLength: integer) }
-procedure pp_list_setCount(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  if Param.GetSelf(L) then
-    L.SetCount(Param[1].AsInteger);
-end;
-
-{ function array.get[](index: integer): variant }
-procedure pp_list_get(const Param: TLiParam);
-var
-  L: TLiList;
-  X: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    X := ResetIndex(Param[1].AsInteger, L.Count, true);
-    Param.FResult.SetValue(L[X]);
-  end;
-end;
-
-{ procedure array.set[](index:integer; value:variant) }
-procedure pp_list_set(const Param: TLiParam);
-var
-  L: TLiList;
-  X: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    X := ResetIndex(Param[1].AsInteger, L.Count, true);
-    L[X].SetValue(Param[2]);
-  end;
-end;
-
-procedure pp_list_isEmpty(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsBoolean((L.Count = 0));
-end;
-
-procedure pp_list_clear(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  if Param.GetSelf(L) then
-    L.Clear;
-end;
-
-procedure pp_list_delete(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  if Param.GetSelf(L) then
-    L.Delete(Param[1].AsInteger);
-end;
-
-procedure pp_list_remove(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  if Param.GetSelf(L) then
-    L.Remove(Param[1]);
-end;
-
-procedure pp_list_exchange(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  if Param.GetSelf(L) then
-    L.Exchange(Param[1].AsInteger, Param[2].AsInteger);
-end;
-
-procedure pp_list_move(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  if Param.GetSelf(L) then
-    L.Move(Param[1].AsInteger, Param[2].AsInteger);
-end;
-
-procedure pp_list_sort(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  if Param.GetSelf(L) then
-    L.Sort;
-end;
-
-procedure pp_list_insert(const Param: TLiParam);
-var
-  L: TLiList;
-  X: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    X := Param[1].AsInteger;
-    L.Insert(X, Param[2]);
-  end;
-end;
-
-procedure pp_list_add(const Param: TLiParam);
-var
-  L, A: TLiList;
-  I: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    L.Add(Param[1]);
-    Param.FResult.SetAsInteger(L.Count - 1);
-    A := Param[2].AsList;
-    if A <> nil then
-      for I := 0 to A.Count - 1 do
-        L.Add(A[I]);
-  end;
-end;
-
-procedure pp_list_indexOf(const Param: TLiParam);
-var
-  L: TLiList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsInteger(L.IndexOf(Param[1]));
-end;
-
-procedure pp_list_copy(const Param: TLiParam);
-var
-  L: TLiList;
-  X: integer;
-  N: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    X := Param[1].AsInteger;
-    N := Param[2].AsInteger;
-    Param.FResult.SetAsList(L.Copy(X, N));
-  end;
-end;
-
-procedure pp_list_left(const Param: TLiParam);
-var
-  L: TLiList;
-  N: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    N := Param[1].AsInteger;
-    Param.FResult.SetAsList(L.CopyLeft(N));
-  end;
-end;
-
-procedure pp_list_right(const Param: TLiParam);
-var
-  L: TLiList;
-  N: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    N := Param[1].AsInteger;
-    Param.FResult.SetAsList(L.CopyRight(N));
-  end;
-end;
-
-procedure pp_list_assign(const Param: TLiParam);
-var
-  L, R: TLiList;
-  I: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    L.Clear;
-    R := Param[1].AsList;
-    if (R <> nil) and (R <> L) then
-      for I := 0 to R.Count - 1 do
-        L.Add(R[I]);
-  end;
-end;
-
-// system.hashed ---------------------------------------------------------------
-
-procedure pp_hashed_create(const Param: TLiParam);
-var
-  H: TLiHashList;
-begin
-  H := TLiHashList.Create;
-  Param.FResult.SetAsHashList(H);
-end;
-
-procedure pp_hashed_isEmpty(const Param: TLiParam);
-var
-  H: TLiHashList;
-begin
-  if Param.GetSelf(H) then
-    Param.FResult.SetAsBoolean(H.IsEmpty);
-end;
-
-procedure pp_hashed_has(const Param: TLiParam);
-var
-  H: TLiHashList;
-begin
-  if Param.GetSelf(H) then
-    Param.FResult.SetAsBoolean(H.Has(Param[1].AsString));
-end;
-
-procedure pp_hashed_get(const Param: TLiParam);
-var
-  H: TLiHashList;
-  V: TLiValue;
-begin
-  if Param.GetSelf(H) then
-  begin
-    V := H.Get(Param[1].AsString);
-    if V <> nil then
-      Param.FResult.SetValue(V);
-  end;
-end;
-
-procedure pp_hashed_set(const Param: TLiParam);
-var
-  H: TLiHashList;
-begin
-  if Param.GetSelf(H) then
-    H.Add(Param[1].AsString).SetValue(Param[2]);
-end;
-
-procedure pp_hashed_remove(const Param: TLiParam);
-var
-  H: TLiHashList;
-begin
-  if Param.GetSelf(H) then
-    H.Remove(Param[1].AsString);
-end;
-
-procedure pp_hashed_clear(const Param: TLiParam);
-var
-  H: TLiHashList;
-begin
-  if Param.GetSelf(H) then
-    H.Clear;
-end;
-
-procedure pp_hashed_keys(const Param: TLiParam);
-var
-  H: TLiHashList;
-  L: TLiList;
-begin
-  if Param.GetSelf(H) then
-  begin
-    L := TLiList.Create;
-    Param.FResult.SetAsList(L);
-    H.ListKeys(L);
-  end;
-end;
-
-procedure pp_hashed_values(const Param: TLiParam);
-var
-  H: TLiHashList;
-  L: TLiList;
-begin
-  if Param.GetSelf(H) then
-  begin
-    L := TLiList.Create;
-    Param.FResult.SetAsList(L);
-    H.ListValues(L);
-  end;
-end;
-
-// system.strlist --------------------------------------------------------------
-
-procedure pp_strlist_create(const Param: TLiParam);
-begin
-  Param.FResult.SetAsStringList(TLiStringList.Create);
-end;
-
-procedure pp_strlist_isEmpty(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsBoolean(L.FStrings.Count = 0);
-end;
-
-procedure pp_strlist_loadFromFile(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.LoadFromFile(Param[1].GetFileName);
-end;
-
-procedure pp_strlist_saveToFile(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.SaveToFile(Param[1].GetFileName);
-end;
-
-procedure pp_strlist_beginUpdate(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.BeginUpdate;
-end;
-
-procedure pp_strlist_endUpdate(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.EndUpdate;
-end;
-
-procedure pp_strlist_unique(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then L.Unique;
-end;
-
-procedure pp_strlist_pack(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then L.Pack;
-end;
-
-procedure pp_strlist_clear(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then L.Clear;
-end;
-
-procedure pp_strlist_clearObjects(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then L.ClearObjects;
-end;
-
-procedure pp_strlist_delete(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.Delete(Param[1].AsInteger);
-end;
-
-procedure pp_strlist_deleteLast(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then L.DeleteLast;
-end;
-
-procedure pp_strlist_deleteEmptyLines(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then L.DeleteEmptyLines;
-end;
-
-procedure pp_strlist_remove(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.Remove(Param[1].AsString, false);
-end;
-
-procedure pp_strlist_removeByName(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.Remove(Param[1].AsString, true);
-end;
-
-procedure pp_strlist_deleteMatched(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.DeleteMatched(Param[1].AsString);
-end;
-
-procedure pp_strlist_reverse(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then L.Reverse;
-end;
-
-procedure pp_strlist_add(const Param: TLiParam);
-var
-  L: TLiStringList;
-  A: TLiList;
-  I: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    Param.FResult.SetAsInteger(L.Add(Param[1].AsString, nil));
-    A := Param[2].AsList;
-    if A <> nil then
-      for I := 0 to A.Count - 1 do
-        L.Add(A[I].AsString, nil);
-  end;
-end;
-
-procedure pp_strlist_addObject(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsInteger(L.Add(Param[1].AsString, Param[2]));
-end;
-
-procedure pp_strlist_insert(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.Insert(Param[1].AsInteger, Param[2].AsString, nil);
-end;
-
-procedure pp_strlist_insertObject(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.Insert(Param[1].AsInteger, Param[2].AsString, Param[3]);
-end;
-
-procedure pp_strlist_exchange(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.Exchange(Param[1].AsInteger, Param[2].AsInteger);
-end;
-
-procedure pp_strlist_move(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.Move(Param[1].AsInteger, Param[2].AsInteger);
-end;
-
-procedure pp_strlist_sort(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.Sort;
-end;
-
-procedure pp_strlist_indexOf(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsInteger(L.FStrings.IndexOf(Param[1].AsString));
-end;
-
-procedure pp_strlist_indexOfObject(const Param: TLiParam);
-var
-  L: TLiStringList;
-  V: TLiValue;
-  I: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    V := Param[1];
-    for I := 0 to L.FStrings.Count - 1 do
-      if L.FStrings.Objects[I] <> nil then
-        if V.Same(TLiValue(L.FStrings.Objects[I])) then
-        begin
-          Param.FResult.SetAsInteger(I);
-          Exit;
-        end;
-    Param.FResult.SetAsInteger(-1);
-  end;
-end;
-
-procedure pp_strlist_indexOfName(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsInteger(L.FStrings.IndexOfName(Param[1].AsString));
-end;
-
-procedure pp_strlist_indexOfValue(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsInteger(L.IndexOfValue(Param[1].AsString));
-end;
-
-procedure pp_strlist_find(const Param: TLiParam);
-var
-  L: TLiStringList;
-  I: integer;
-  V: TLiValue;
-  T: TLiType;
-begin
-  if Param.GetSelf(L) then
-  begin
-    I := L.FStrings.IndexOf(Param[1].AsString);
-    Param.FResult.SetAsBoolean(I >= 0);
-    if I >= 0 then
-    begin
-      V := Param.GetVarbValue(2, T);
-      if V <> nil then
-        V.SetAsInteger(I);
-    end;
-  end
-  else Param.FResult.SetAsBoolean(false);
-end;
-
-procedure pp_strlist_rename(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.Rename(Param[1].AsString, Param[2].AsString);
-end;
-
-procedure pp_strlist_assign(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.Assign(TLiStringList(Param[1].GetOA(my_strlist)));
-end;
-
-procedure pp_strlist_equals(const Param: TLiParam);
-var
-  L, S: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-  begin
-    S := TLiStringList(Param[1].GetOA(my_strlist));
-    Param.FResult.SetAsBoolean((S <> nil) and L.FStrings.Equals(S.FStrings));
-  end
-  else Param.FResult.SetAsBoolean(false);
-end;
-
-procedure pp_strlist_trim(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.ChangeString({$IFDEF FPC}@{$ENDIF}SysUtils.Trim);
-end;
-
-procedure pp_strlist_trimAll(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.ChangeString({$IFDEF FPC}@{$ENDIF}basic.TrimAll);
-end;
-
-procedure pp_strlist_trimLeft(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.ChangeString({$IFDEF FPC}@{$ENDIF}SysUtils.TrimLeft);
-end;
-
-procedure pp_strlist_trimRight(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.ChangeString({$IFDEF FPC}@{$ENDIF}SysUtils.TrimRight);
-end;
-
-procedure pp_strlist_copy(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsStringList(
-      L.Copy(Param[1].AsInteger, Param[2].AsInteger));
-end;
-
-procedure pp_strlist_left(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsStringList(L.CopyLeft(Param[1].AsInteger));
-end;
-
-procedure pp_strlist_right(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsStringList(L.CopyRight(Param[1].AsInteger));
-end;
-
-procedure pp_strlist_select(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsStringList(L.SelectMatched(Param[1].AsString));
-end;
-
-procedure pp_strlist_getCount(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsInteger(L.FStrings.Count);
-end;
-
-procedure pp_strlist_setCount(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.SetCount(Param[1].AsInteger);
-end;
-
-procedure pp_strlist_get(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsString(L.FStrings[Param[1].AsInteger]);
-end;
-
-procedure pp_strlist_set(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings[Param[1].AsInteger] := Param[2].AsString;
-end;
-
-procedure pp_strlist_names(const Param: TLiParam);
-var
-  L, N: TLiStringList;
-  I: integer;
-begin
-  if Param.GetSelf(L) then
-  begin
-    N := TLiStringList.Create;
-    Param.FResult.SetAsStringList(N);
-    for I := 0 to L.Count - 1 do
-      N.FStrings.Add(L.FStrings.Names[I]);
-  end;
-end;
-
-procedure pp_strlist_getName(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsString(L.FStrings.Names[Param[1].AsInteger]);
-end;
-
-procedure pp_strlist_getValue(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsString(L.FStrings.Values[Param[1].AsString]);
-end;
-
-procedure pp_strlist_setValue(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.SetValue(Param[1].AsString, Param[2].AsString);
-end;
-
-procedure pp_strlist_getObject(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetValue(TLiValue(L.FStrings.Objects[Param[1].AsInteger]));
-end;
-
-procedure pp_strlist_setObject(const Param: TLiParam);
-var
-  L: TLiStringList;
-  I: integer;
-  V: TLiValue;
-begin
-  if Param.GetSelf(L) then
-  begin
-    I := Param[1].AsInteger;
-    V := TLiValue(L.FStrings.Objects[I]);
-    if V = nil then
-    begin
-      V := TLiValue.Create;
-      L.FStrings.Objects[I] := V;
-    end;
-    V.SetValue(Param[2]);
-  end;
-end;
-
-procedure pp_strlist_valueFromIndex(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsString(L.FStrings.ValueFromIndex[Param[1].AsInteger]);
-end;
-
-procedure pp_strlist_getText(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsString(L.FStrings.Text);
-end;
-
-procedure pp_strlist_setText(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.Text := Param[1].AsString;
-end;
-
-procedure pp_strlist_getCommaText(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsString(L.FStrings.CommaText);
-end;
-
-procedure pp_strlist_setCommaText(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.CommaText := Param[1].AsString;
-end;
-
-procedure pp_strlist_getDelimiter(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsChar(L.FStrings.Delimiter);
-end;
-
-procedure pp_strlist_setDelimiter(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.Delimiter := Param[1].AsChar;
-end;
-
-procedure pp_strlist_getDelimitedText(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsString(L.FStrings.DelimitedText);
-end;
-
-procedure pp_strlist_setDelimitedText(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.DelimitedText := Param[1].AsString;
-end;
-
-procedure pp_strlist_getLineBreak(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsString(L.FStrings.LineBreak);
-end;
-
-procedure pp_strlist_setLineBreak(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.LineBreak := Param[1].AsString;
-end;
-
-procedure pp_strlist_getNameValueSeparator(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsChar(L.FStrings.NameValueSeparator);
-end;
-
-procedure pp_strlist_setNameValueSeparator(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.NameValueSeparator := Param[1].AsChar;
-end;
-
-procedure pp_strlist_getQuoteChar(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsChar(L.FStrings.QuoteChar);
-end;
-
-procedure pp_strlist_setQuoteChar(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.QuoteChar := Param[1].AsChar;
-end;
-
-procedure pp_strlist_getStrictDelimiter(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsBoolean(L.FStrings.StrictDelimiter);
-end;
-
-procedure pp_strlist_setStrictDelimiter(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.StrictDelimiter := Param[1].AsBoolean;
-end;
-
-{$IFNDEF FPC}
-procedure pp_strlist_getWriteBOM(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsBoolean(L.FStrings.WriteBOM);
-end;
-
-procedure pp_strlist_setWriteBOM(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.WriteBOM := Param[1].AsBoolean;
-end;
-{$ENDIF}
-
-procedure pp_strlist_getSorted(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsBoolean(L.FStrings.Sorted);
-end;
-
-procedure pp_strlist_setSorted(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.Sorted := Param[1].AsBoolean;
-end;
-
-procedure pp_strlist_getCaseSensitive(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsBoolean(L.FStrings.CaseSensitive);
-end;
-
-procedure pp_strlist_setCaseSensitive(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings.CaseSensitive := Param[1].AsBoolean;
-end;
-
-procedure pp_strlist_getFirst(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsString(L.FStrings[0]);
-end;
-
-procedure pp_strlist_setFirst(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings[0] := Param[1].AsString;
-end;
-
-procedure pp_strlist_getLast(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    Param.FResult.SetAsString(L.FStrings[L.FStrings.Count - 1]);
-end;
-
-procedure pp_strlist_setLast(const Param: TLiParam);
-var
-  L: TLiStringList;
-begin
-  if Param.GetSelf(L) then
-    L.FStrings[L.FStrings.Count - 1] := Param[1].AsString;
 end;
 
 // kernel ----------------------------------------------------------------------
@@ -4529,7 +2667,7 @@ begin
   if Result then my_spinlock.Release;
 end;
 
-function SetupModule(const Name: string): TLiModule;
+function AddModule(const Name: string): TLiModule;
 begin
   if IsID(Name) then
   begin
@@ -4540,7 +2678,7 @@ begin
   else Result := nil;
 end;
 
-procedure Command;
+function Command: integer;
 var
   E: TLiContext;
   spath, code, line, temp: string;
@@ -4617,6 +2755,7 @@ var
   end;
 
 begin
+  Result := 0; // OK
   pause := false;
   spath := '';
   index := 1;
@@ -4641,6 +2780,7 @@ begin
       if index = ParamCount then
       begin
         Writeln('Error: search path is not specified.');
+        Result := 1;
         Exit;
       end;
       Inc(index);
@@ -4686,6 +2826,7 @@ begin
           code := line;
       until E.FHalted;
     end;
+    if E.Excepted then Result := 1;
   finally
     E.Free;
   end;
@@ -4764,10 +2905,10 @@ begin
       L.CommaText := Keywords;
       L.Add(LSE_SYSTE);
       L.Add(LSE_MAIN);
-      L.Add(SystemTypeNames[TID_STRING]);
-      L.Add(SystemTypeNames[TID_BOOLEAN]);
-      L.Add(SystemTypeNames[TID_VARIANT]);
-      L.Add(SystemTypeNames[TID_TYPE]);
+      L.Add(TID_NAMES[TID_STRING]);
+      L.Add(TID_NAMES[TID_BOOLEAN]);
+      L.Add(TID_NAMES[TID_VARIANT]);
+      L.Add(TID_NAMES[TID_TYPE]);
       L.Sort;
       my_hilights := L.CommaText;
     finally
@@ -4897,26 +3038,6 @@ begin
   Result := StringOfChar(' ', Level * 2);
 end;
 
-function GetTReplaceFlags(V: TLiValue): TReplaceFlags;
-var
-  S: TLiEnumSet;
-begin
-  Result := [];
-  S := V.AsEnumSet;
-  if S[Ord(rfReplaceAll)] then Include(Result, rfReplaceAll);
-  if S[Ord(rfIgnoreCase)] then Include(Result, rfIgnoreCase);
-end;
-
-procedure SetTReplaceFlags(V: TLiValue; Value: TReplaceFlags);
-var
-  S: TLiEnumSet;
-begin
-  S := my_TReplaceFlags.NewEnumSet;
-  S.SetValue(V);
-  S[Ord(rfReplaceAll)] := rfReplaceAll in Value;
-  S[Ord(rfIgnoreCase)] := rfIgnoreCase in Value;
-end;
-
 procedure FreeOperates(var Head: PLiOperate);
 begin
   if Head <> nil then
@@ -4945,6 +3066,222 @@ begin
     MemFree(Head, sizeof(RLiConvert));
     Head := nil;
   end;
+end;
+
+function ParamOK(const Names: array of string;
+                 const Types: array of TLiType;
+                 IsMethod: boolean;
+                 var HasVarArg: boolean): boolean;
+var
+  I, L, X: integer;
+begin
+  Result := false;
+  HasVarArg := false;
+  L := Length(Names);
+  if L = Length(Types) then
+  begin
+    for I := 0 to L - 1 do
+    begin
+      if Types[I] = nil then Exit;
+      if IsMethod and MatchID('Self', Names[I]) then Exit;
+      if IsID(Names[I]) then
+      begin
+        for X := I + 1 to L - 1 do
+          if MatchID(Names[I], Names[X]) then Exit;
+      end
+      else
+      if (I = L - 1) and IsVarArg(Names[I], Types[I]) then
+        HasVarArg := true else
+        Exit;
+    end;
+    Result := true;
+  end;
+end;
+
+function AddFunc(const Name: string; T: TLiType;
+  const ParamNames: array of string; const ParamTypes: array of TLiType;
+  Proc: TLiLyseeProc; Data: pointer): TLiFunc;
+begin
+  Result := my_system.AddFunc(Name, T, ParamNames, ParamTypes, Proc, Data);
+end;
+
+function AddFunc(const Name: string;
+  const ParamNames: array of string; const ParamTypes: array of TLiType;
+  Proc: TLiLyseeProc; Data: pointer): TLiFunc;
+begin
+  Result := AddFunc(Name, my_nil, ParamNames, ParamTypes, Proc, Data);
+end;
+
+function AddFunc(const Name: string; T: TLiType;
+  Proc: TLiLyseeProc; Data: pointer): TLiFunc;
+begin
+  Result := AddFunc(Name, T, [], [], Proc, Data);
+end;
+
+function AddFunc(const Name: string;
+  Proc: TLiLyseeProc; Data: pointer): TLiFunc;
+begin
+  Result := AddFunc(Name, my_nil, [], [], Proc, Data);
+end;
+
+function AddMethod(const AClass: TLiType;
+                   const AName: string;
+                   const AType: TLiType;
+                   const ParamNames: array of string;
+                   const ParamTypes: array of TLiType;
+                   const AProc: TLiLyseeProc): TLiFunc;
+var
+  I: integer;
+  E: boolean;
+begin
+  Result := nil;
+  E := false;
+  if (AClass <> nil) and AClass.IsObject then
+    if (AType <> nil) and (AName <> '') and Assigned(AProc) then
+      if AClass.FindMethod(AName) = nil then
+        if ParamOK(ParamNames, ParamTypes, true, E) then
+          if not MatchID(AName, 'Create') or (AType = AClass) then
+          begin
+            Result := TLiFunc.CreateMethod(AName, AClass, AProc);
+            Result.FResultType := AType;
+            Result.FHasVarArg := E;
+            if MatchID(AName, 'Create') then
+              AClass.FConstructer := Result else
+              Result.FParams.Add('Self', AClass);
+            for I := 0 to Length(ParamNames) - 1 do
+              Result.FParams.Add(ParamNames[I], ParamTypes[I]);
+          end;
+end;
+
+function AddMethod(const AClass: TLiType;
+                   const AName: string;
+                   const ParamNames: array of string;
+                   const ParamTypes: array of TLiType;
+                   const AProc: TLiLyseeProc): TLiFunc;
+begin
+  Result := AddMethod(AClass, AName, my_nil, ParamNames, ParamTypes, AProc);
+end;
+
+function AddMethod(const AClass: TLiType;
+                   const AName: string;
+                   const AType: TLiType;
+                   const AProc: TLiLyseeProc): TLiFunc;
+begin
+  Result := AddMethod(AClass, AName, AType, [], [], AProc);
+end;
+
+function AddMethod(const AClass: TLiType;
+                   const AName: string;
+                   const AProc: TLiLyseeProc): TLiFunc;
+begin
+  Result := AddMethod(AClass, AName, my_nil, [], [], AProc);
+end;
+
+function SetupProp(const AClass: TLiType;
+                   const AName: string;
+                   const AType: TLiType;
+                   const IndexNames: array of string;
+                   const IndexTypes: array of TLiType;
+                   const GetProc, SetProc: TLiLyseeProc;
+                     var GetFunc, SetFunc: TLiFunc): boolean;
+
+  procedure setup_get(const FuncName: string);
+  var
+    I: integer;
+  begin
+    if AClass.FindMethod(FuncName) = nil then
+    begin
+      GetFunc := TLiFunc.CreateMethod(FuncName, AClass, GetProc);
+      GetFunc.FResultType := AType;
+      GetFunc.FParams.Add('Self', AClass);
+      for I := 0 to Length(IndexNames) - 1 do
+        GetFunc.Params.Add(IndexNames[I], IndexTypes[I]);
+    end;
+  end;
+
+  procedure setup_set(const FuncName: string);
+  var
+    I: integer;
+  begin
+    if GetFunc <> nil then
+      if Assigned(SetProc) and (AClass.FindMethod(FuncName) = nil) then
+      begin
+        SetFunc := TLiFunc.CreateMethod(FuncName, AClass, SetProc);
+        SetFunc.FResultType := my_nil;
+        SetFunc.FParams.Add('Self', AClass);
+        for I := 0 to Length(IndexNames) - 1 do
+          SetFunc.FParams.Add(IndexNames[I], IndexTypes[I]);
+        SetFunc.FParams.Add('NewValue', AType);
+      end;
+  end;
+
+var
+  E: boolean;
+  L: integer;
+begin
+  GetFunc := nil;
+  SetFunc := nil;
+  E := false;
+  L := Length(IndexNames);
+  if (AClass <> nil) and AClass.IsObject then
+    if (AType <> nil) and (AType <> my_nil) and Assigned(GetProc) then
+      if IsID(AName) or ((AName = '') and (L > 0)) then
+        if ParamOK(IndexNames, IndexTypes, true, E) and not E then
+          if L = 0 then      // (expression).prop
+          begin
+            setup_get(AName);
+            setup_set('set_' + AName);
+          end
+          else
+          if AName = '' then // (expression)[...]
+          begin
+            setup_get('get[]');
+            setup_set('set[]');
+          end
+          else               // (expression).prop[...]
+          begin
+            setup_get('get_' + AName + '[]');
+            setup_set('set_' + AName + '[]');
+          end;
+  Result := (GetFunc <> nil);
+end;
+
+function SetupProp(const AClass: TLiType;
+                   const AName: string;
+                   const AType: TLiType;
+                   const IndexNames: array of string;
+                   const IndexTypes: array of TLiType;
+                   const GetProc: TLiLyseeProc;
+                     var GetFunc: TLiFunc): boolean;
+var
+  S: TLiFunc;
+begin
+  Result := SetupProp(AClass, AName, AType, IndexNames, IndexTypes,
+                      GetProc, nil, GetFunc, S);
+end;
+
+function SetupProp(const AClass: TLiType;
+                   const AName: string;
+                   const AType: TLiType;
+                   const IndexNames: array of string;
+                   const IndexTypes: array of TLiType;
+                   const GetProc, SetProc: TLiLyseeProc): boolean;
+var
+  G, S: TLiFunc;
+begin
+  Result := SetupProp(AClass, AName, AType, IndexNames, IndexTypes,
+                      GetProc, SetProc, G, S);
+end;
+
+function SetupProp(const AClass: TLiType;
+                   const AName: string;
+                   const AType: TLiType;
+                   const GetProc, SetProc: TLiLyseeProc): boolean;
+var
+  G, S: TLiFunc;
+begin
+  Result := SetupProp(AClass, AName, AType, [], [],
+                      GetProc, SetProc, G, S);
 end;
 
 { TLiError }
@@ -5128,7 +3465,7 @@ begin
   begin
     M := FModules[I];
     if M.FContext = Self then
-      M.FConstants.MarkForSurvive;
+      M.FConsts.MarkForSurvive;
   end;
 end;
 
@@ -5451,42 +3788,11 @@ begin
   FConvert := Result;
 end;
 
-function TLiType.AddMethod(const Names: array of string; const Types: array of TLiType;
-  Proc: TLiLyseeProc; MakeModuleFunc: boolean): TLiFunc;
-var
-  I: integer;
-  F: TLiFunc;
-  E: boolean;
+function TLiType.RegisterProc(AProc: TLiLyseeObjectProc): integer;
 begin
-  Result := nil;
-  E := false;
-  if ParamOK(Names, Types, true, E) and (FindMethod(Names[0]) = nil) then
-    if not MatchID(Names[0], 'create') or (Types[0] = Self) then
-    begin
-      Result := TLiFunc.CreateMethod(Names[0], Self, Proc);
-      Result.FResultType := Types[0];
-      Result.FHasVarArg := E;
-      if MatchID(Names[0], 'create') then
-        FConstructer := Result else
-        Result.FParams.Add('self', Self);
-      for I := 1 to Length(Names) - 1 do
-        Result.FParams.Add(Names[I], Types[I]);
-      if FConstructer = Result then
-      begin
-        F := TLiFunc.Create(FName + '_create', FModule, Proc);
-        F.FResultType := Result.FResultType;
-        F.FParams.Assign(Result.FParams);
-        F.FHasVarArg := E;
-      end
-      else
-      if MakeModuleFunc and not FModule.Find(Names[0]) then
-      begin
-        F := TLiFunc.Create(Names[0], FModule, Proc);
-        F.FResultType := Result.FResultType;
-        F.FParams.Assign(Result.FParams);
-        F.FHasVarArg := E;
-      end;
-    end;
+  Result := Length(FProcs);
+  SetLength(FProcs, Result + 1);
+  FProcs[Result] := AProc;
 end;
 
 function TLiType.AddOperate(OP: TLiOperator; AType: TLiType; AProc: TLiOperateProc): PLiOperate;
@@ -5505,18 +3811,25 @@ begin
     if ClassType.ClassParent = AParent.ClassType then
       FParent := AParent else
       Throw('%s is not parent of %s', [AParent.FName, AName]);
+
   FName := AName;
-  Inc(my_type_seed);
-  FTID := my_type_seed;
   FStyle := tsObject;
+  FTID := my_TID_seed;
+  Inc(my_TID_seed);
   FModule := AModule;
   if FModule <> nil then
   begin
     FModule.FTypeList.Add(Self);
+    FModule.FNeedSetup := true;
     FMethods := TLiFuncList.Create;
   end;
-  FConvert := nil;
-  FCompare := nil;
+end;
+
+function TLiType.Define(const AProp: string; const AType: TLiType;
+  const IndexName: string; const IndexType: TLiType;
+  const GetProc, SetProc: TLiLyseeObjectProc): boolean;
+begin
+  Result := Define(AProp, AType, [IndexName], [IndexType], GetProc, SetProc);
 end;
 
 destructor TLiType.Destroy;
@@ -5578,11 +3891,9 @@ begin
   Result := (FStyle = tsEnumSet);
 end;
 
-function TLiType.IsChildOf(AType: TLiType): boolean;
+function TLiType.IsChildTypeOf(AType: TLiType): boolean;
 begin
-  Result := (Self <> nil) and (AType <> nil) and (Self <> AType) and
-            (ClassType <> AType.ClassType) and
-            (Self is AType.ClassType);
+  Result := (FParent <> nil) and FParent.IsTypeOf(AType);
 end;
 
 function TLiType.IsNil: boolean;
@@ -5593,6 +3904,48 @@ end;
 function TLiType.IsObject: boolean;
 begin
   Result := (FStyle in [tsObject, tsEnum, tsEnumSet]);
+end;
+
+function TLiType.IsTypeOf(AType: TLiType): boolean;
+begin
+  Result := (Self = AType) or IsChildTypeOf(AType);
+end;
+
+function TLiType.Method(const AName: string;
+                        const AProc: TLiLyseeObjectProc): TLiFunc;
+begin
+  Result := Method(AName, my_nil, [], [], AProc);
+end;
+
+function TLiType.Method(const AName: string;
+                        const ParamNames: array of string;
+                        const ParamTypes: array of TLiType;
+                        const AProc: TLiLyseeObjectProc): TLiFunc;
+begin
+  Result := Method(AName, my_nil, ParamNames, ParamTypes, AProc);
+end;
+
+function TLiType.Method(const AName: string;
+                        const AType: TLiType;
+                        const ParamNames: array of string;
+                        const ParamTypes: array of TLiType;
+                        const AProc: TLiLyseeObjectProc): TLiFunc;
+begin
+  Result := nil;
+  if Assigned(AProc) then
+  begin
+    Result := AddMethod(Self, AName, AType, ParamNames, ParamTypes,
+                        {$IFDEF FPC}@{$ENDIF}LyseeObjectProc);
+    if Result <> nil then
+      Result.FData := IntToPtr(RegisterProc(AProc));
+  end;
+end;
+
+function TLiType.Method(const AName: string;
+                        const AType: TLiType;
+                        const AProc: TLiLyseeObjectProc): TLiFunc;
+begin
+  Result := Method(AName, AType, [], [], AProc);
 end;
 
 function TLiType._Add(Obj: pointer; Value: TLiValue): integer;
@@ -5688,18 +4041,11 @@ var
   I: integer;
 begin
   if Self <> nil then
-  begin
     for I := 0 to FMethods.Count - 1 do
     begin
       Result := GetMethod(I);
       if MatchID(AName, Result.FName) then Exit;
     end;
-    if FParent <> nil then
-    begin
-      Result := FParent.FindMethod(AName);
-      if Result <> nil then Exit;
-    end;
-  end;
   Result := nil;
 end;
 
@@ -5749,69 +4095,33 @@ begin
       Throw('%s is not parent of %s', [Value.FName, FName]);
 end;
 
-procedure TLiType.SetupProp(const AName: string; AType: TLiType;
-  Read, Write: TLiLyseeProc);
+procedure TLiType.Setup;
 begin
-  SetupProp(AName, AType, [], [], Read, Write);
+  { do nothing }
 end;
 
-procedure TLiType.SetupProp(const AName: string; AType: TLiType;
-                           const IndexNames: array of string;
-                           const IndexTypes: array of TLiType;
-                           Read, Write: TLiLyseeProc);
-
-  function setup_get(const FuncName: string): TLiFunc;
-  var
-    I: integer;
-  begin
-    Result := nil;
-    if FindMethod(FuncName) = nil then
-    begin
-      Result := TLiFunc.CreateMethod(FuncName, Self, Read);
-      Result.FResultType := AType;
-      Result.FParams.Add('self', Self);
-      for I := 0 to Length(IndexNames) - 1 do
-        Result.FParams.Add(IndexNames[I], IndexTypes[I]);
-    end;
-  end;
-
-  function setup_set(const FuncName: string): TLiFunc;
-  begin
-    Result := nil;
-    if Assigned(Write) and (FindMethod(FuncName) = nil) then
-    begin
-      Result := setup_get(FuncName);
-      Result.FResultType := my_nil;
-      Result.FProc := Write;
-      Result.FParams.Add('newValue', AType);
-    end;
-  end;
-
+function TLiType.Define(const AProp: string; const AType: TLiType;
+  const IndexNames: array of string; const IndexTypes: array of TLiType;
+  const GetProc, SetProc: TLiLyseeObjectProc): boolean;
 var
-  E: boolean;
-  L: integer;
+  G, S: TLiFunc;
+  F, P: TLiLyseeProc;
 begin
-  E := false;
-  L := Length(IndexNames);
-  if (L = 0) or (ParamOK(IndexNames, IndexTypes, true, E) and not E) then
-    if (AType <> nil) and (AType <> my_nil) then
-      if IsID(AName) or ((AName = '') and (L > 0)) then
-        if AName = '' then // (expression)[...]
-        begin
-          setup_get('get[]');
-          setup_set('set[]');
-        end
-        else
-        if Length(IndexNames) = 0 then // (expression).prop
-        begin
-          setup_get(AName);
-          setup_set('set_' + AName);
-        end
-        else // (expression).prop[...]
-        begin
-          setup_get('get_' + AName + '[]');
-          setup_set('set_' + AName + '[]');
-        end;
+  Result := Assigned(GetProc);
+  if Result then
+  begin
+    G := nil;
+    S := nil;
+    F := {$IFDEF FPC}@{$ENDIF}LyseeObjectProc;
+    if Assigned(SetProc) then P := F else P := nil;
+    Result := SetupProp(Self, AProp, AType, IndexNames, IndexTypes, F, P, G, S);
+    if Result then
+    begin
+      G.FData := IntToPtr(RegisterProc(GetProc));
+      if S <> nil then
+        S.FData := IntToPtr(RegisterProc(SetProc));
+    end;
+  end;
 end;
 
 procedure TLiType._SetDefault(Value: TLiValue);
@@ -5837,6 +4147,12 @@ begin
       Value.SetParentType(Self) else // allow inherited
       R^.c_convert(Value);
   end;
+end;
+
+function TLiType.Define(const AProp: string; const AType: TLiType;
+  const GetProc, SetProc: TLiLyseeObjectProc): boolean;
+begin
+  Result := Define(AProp, AType, [], [], GetProc, SetProc);
 end;
 
 { TLiType_variant }
@@ -5963,6 +4279,20 @@ end;
 
 { TLiType_string }
 
+procedure TLiType_string.MyGet(const Param: TLiParam);
+var
+  S: string;
+begin
+  S := Param[0].AsString;
+  Param.Result.AsChar := S[Param[1].AsInteger];
+end;
+
+procedure TLiType_string.Setup;
+begin
+  Define('', my_char, 'Index', my_int, {$IFDEF FPC}@{$ENDIF}MyGet);
+  inherited;
+end;
+
 function TLiType_string._AsBoolean(Obj: pointer): boolean;
 begin
   Result := (Obj <> nil) and (TLiString(Obj).FValue <> '');
@@ -6042,55 +4372,6 @@ begin
     Value.FType := Self;
     Value.FValue.VObject := TLiString.CreateIncRefcount(tmpv);
   end;
-end;
-
-{ TLiType_strlist }
-
-function TLiType_strlist._Add(Obj: pointer; Value: TLiValue): integer;
-begin
-  Result := TLiStringList(Obj).FStrings.Add(Value.AsString);
-end;
-
-function TLiType_strlist._AsString(Obj: pointer): string;
-begin
-  if Obj <> nil then
-    Result := TLiStringList(Obj).FStrings.Text else
-    Result := '';
-end;
-
-function TLiType_strlist._Clear(Obj: pointer): boolean;
-begin
-  Result := (Obj <> nil);
-  if Result then
-    TLiStringList(Obj).Clear;
-end;
-
-function TLiType_strlist._DecRefcount(Obj: pointer): integer;
-begin
-  if Obj <> nil then
-    Result := TLiStringList(Obj).DecRefcount else
-    Result := 0;
-end;
-
-function TLiType_strlist._Generate(Obj: pointer): TLiGenerate;
-begin
-  if (Obj <> nil) and (TLiStringList(Obj).FStrings.Count > 0) then
-    Result := TLiGenerate_strlist.CreateIn(TLiStringList(Obj).FStrings) else
-    Result := nil;
-end;
-
-function TLiType_strlist._IncRefcount(Obj: pointer): integer;
-begin
-  if Obj <> nil then
-    Result := TLiStringList(Obj).IncRefcount else
-    Result := 0;
-end;
-
-function TLiType_strlist._Length(Obj: pointer): int64;
-begin
-  if Obj <> nil then
-    Result := TLiStringList(Obj).FStrings.Count else
-    Result := 0;
 end;
 
 { TLiType_integer }
@@ -6342,6 +4623,112 @@ end;
 
 { TLiType_type }
 
+procedure TLiType_type.MyFindMethod(const Param: TLiParam);
+begin
+  Param.Result.AsFunc := Param[0].AsType.FindMethod(Param[1].AsString);
+end;
+
+procedure TLiType_type.MyIsChildTypeOf(const Param: TLiParam);
+begin
+  Param.Result.AsBoolean := Param[0].AsType.IsChildTypeOf(Param[1].AsType);
+end;
+
+procedure TLiType_type.MyIsEnum(const Param: TLiParam);
+begin
+  Param.Result.AsBoolean := Param[0].AsType.IsEnum;
+end;
+
+procedure TLiType_type.MyIsEnumSet(const Param: TLiParam);
+begin
+  Param.Result.AsBoolean := Param[0].AsType.IsEnumSet;
+end;
+
+procedure TLiType_type.MyIsNil(const Param: TLiParam);
+begin
+  Param.Result.AsBoolean := Param[0].AsType.IsNil;
+end;
+
+procedure TLiType_type.MyIsObject(const Param: TLiParam);
+begin
+  Param.Result.AsBoolean := Param[0].AsType.IsObject;
+end;
+
+procedure TLiType_type.MyIsTypeOf(const Param: TLiParam);
+begin
+  Param.Result.AsBoolean := Param[0].AsType.IsTypeOf(Param[1].AsType);
+end;
+
+procedure TLiType_type.MyItemValues(const Param: TLiParam);
+var
+  T: TLiType;
+  O: TLiEnumType;
+  L: TLiList;
+  I: integer;
+begin
+  L := Param.Result.NewList;
+  T := Param[0].AsType;
+  if T.IsEnum then
+  begin
+    O := TLiEnumType(T);
+    for I := 0 to O.GetCount - 1 do
+      L.Add.SetTOA(O, O[I]);
+  end;
+end;
+
+procedure TLiType_type.MyMethods(const Param: TLiParam);
+var
+  T: TLiType;
+  L: TLiList;
+  I: integer;
+begin
+  L := Param.Result.NewList;
+  T := Param[0].AsType;
+  for I := 0 to T.GetMethodCount - 1 do
+    L.Add.AsFunc := T.GetMethod(I);
+end;
+
+procedure TLiType_type.MyModule(const Param: TLiParam);
+begin
+  Param.Result.AsModule := Param[0].AsType.Module;
+end;
+
+procedure TLiType_type.MyName(const Param: TLiParam);
+begin
+  Param.Result.AsString := Param[0].AsType.Name;
+end;
+
+procedure TLiType_type.MyParent(const Param: TLiParam);
+begin
+  Param.Result.AsType := Param[0].AsType.Parent;
+end;
+
+procedure TLiType_type.MyPrototype(const Param: TLiParam);
+begin
+  Param.Result.AsString := Param[0].AsType.Prototype(Param[1].AsString);
+end;
+
+procedure TLiType_type.Setup;
+begin
+  Method('Name', my_string, {$IFDEF FPC}@{$ENDIF}MyName);
+  Method('Parent', Self, {$IFDEF FPC}@{$ENDIF}MyParent);
+  Method('Module', my_module, {$IFDEF FPC}@{$ENDIF}MyModule);
+  Method('Methods', my_list, {$IFDEF FPC}@{$ENDIF}MyMethods);
+  Method('IsTypeOf', my_bool, ['AType'], [my_type],
+         {$IFDEF FPC}@{$ENDIF}MyIsTypeOf);
+  Method('IsChildTypeOf', my_bool, ['AType'], [my_type],
+         {$IFDEF FPC}@{$ENDIF}MyIsChildTypeOf);
+  Method('IsObject', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsObject);
+  Method('IsNil', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsNil);
+  Method('IsEnum', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsEnum);
+  Method('IsEnumSet', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsEnumSet);
+  Method('ItemValues', my_list, {$IFDEF FPC}@{$ENDIF}MyItemValues);
+  Method('Prototype', my_string, ['Name'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyPrototype);
+  Method('FindMethod', my_func, ['Name'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyFindMethod);
+  inherited;
+end;
+
 function TLiType_type._AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
@@ -6363,6 +4750,285 @@ begin
 end;
 
 { TLiType_func }
+
+procedure TLiType_func.MyIsConstructor(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsBoolean := F.IsConstructor;
+end;
+
+procedure TLiType_func.MyIsMainFunc(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsBoolean := F.IsMainFunc;
+end;
+
+procedure TLiType_func.MyIsMethod(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsBoolean := F.IsMethod;
+end;
+
+procedure TLiType_func.MyAddCode(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetChangeAbleFunc(F) then
+    Param.Result.AsBoolean := F.AddCode(Param[1].AsString);
+end;
+
+procedure TLiType_func.MyAddParam(const Param: TLiParam);
+var
+  F: TLiFunc;
+  S: string;
+  T: TLiType;
+begin
+  if Param.GetChangeAbleFunc(F) then
+    if not F.FHasVarArg and (F.FParams.LocalCount = 0) then
+    begin
+      S := Param[1].AsString;
+      if Param.Prmc > 2 then
+        T := Param[2].AsType else
+        T := my_variant;
+      if IsParam(S, T) and not F.FindInside(S) then
+      begin
+        F.FParams.Add(S, T);
+        F.FHasVarArg := (S = '...');
+        F.FMinArgs := -1;
+        Param.Result.AsBoolean := true;
+      end;
+    end;
+end;
+
+procedure TLiType_func.MyClear(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetChangeAbleFunc(F) then
+  begin
+    F.FHasVarArg := false;
+    F.FMinArgs := -1;
+    F.FParams.Clear;
+    F.FSTMTs.Clear;
+  end;
+end;
+
+procedure TLiType_func.MyClearCodes(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetChangeAbleFunc(F) then
+    F.FSTMTs.Clear;
+end;
+
+procedure TLiType_func.MyClearParams(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetChangeAbleFunc(F) then
+  begin
+    F.FHasVarArg := false;
+    F.FMinArgs := -1;
+    F.FParams.Clear;
+  end;
+end;
+
+procedure TLiType_func.MyGetParamName(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsString := F.Params[Param[1].AsInteger].FName;
+end;
+
+procedure TLiType_func.MyGetParamType(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsType := F.Params[Param[1].AsInteger].FType;
+end;
+
+procedure TLiType_func.MyGetResultType(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsType := F.ResultType;
+end;
+
+procedure TLiType_func.MyIsChangeAble(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsBoolean := F.ChangeAble;
+end;
+
+procedure TLiType_func.MyModule(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsModule := F.FModule;
+end;
+
+procedure TLiType_func.MyName(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsString := F.Name;
+end;
+
+procedure TLiType_func.MyParamCount(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsInteger := F.Params.ParamCount;
+end;
+
+procedure TLiType_func.MyParamNames(const Param: TLiParam);
+var
+  F: TLiFunc;
+  L: TLiList;
+  I: integer;
+begin
+  if Param.GetSelf(F) then
+  begin
+    L := Param.Result.NewList;
+    for I := 0 to F.Params.ParamCount - 1 do
+      L.Add.AsString := F.Params[I].FName;
+  end;
+end;
+
+procedure TLiType_func.MyParamTypes(const Param: TLiParam);
+var
+  F: TLiFunc;
+  L: TLiList;
+  I: integer;
+begin
+  if Param.GetSelf(F) then
+  begin
+    L := Param.Result.NewList;
+    for I := 0 to F.FParams.ParamCount - 1 do
+      L.Add.AsType := F.Params[I].FType;
+  end;
+end;
+
+procedure TLiType_func.MyParent(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsType := F.FParent;
+end;
+
+procedure TLiType_func.MyPrototype(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsString := F.Prototype;
+end;
+
+procedure TLiType_func.MySetCode(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetChangeAbleFunc(F) then
+    Param.Result.AsBoolean := F.SetCode(Param[1].AsString);
+end;
+
+procedure TLiType_func.MySetParamName(const Param: TLiParam);
+var
+  F: TLiFunc;
+  S: string;
+  X: integer;
+begin
+  if Param.GetChangeAbleFunc(F) then
+  begin
+    X := Param[1].AsInteger;
+    S := Param[2].AsString;
+    if not MatchID(S, F.Params[X].FName) then
+      if IsParam(S, my_int) and not F.FindInside(S) then
+      begin
+        F.Params[X].FName := S;
+        F.FMinArgs := -1;
+        if X = F.Params.ParamCount - 1 then
+          F.FHasVarArg := (S = '...');
+      end
+      else Param.Error('invalid param name: ' + S);
+  end;
+end;
+
+procedure TLiType_func.MySetParamType(const Param: TLiParam);
+var
+  F: TLiFunc;
+  X: integer;
+  T: TLiType;
+begin
+  if Param.GetChangeAbleFunc(F) then
+  begin
+    X := Param[1].AsInteger;
+    T := Param[2].AsType;
+    if T <> F.Params[X].FType then
+      if T = my_nil then
+        Param.Error('invalid param type: nil') else
+      if F.Params[X].FName = '...' then
+        Param.Error('invalid VarArg type: %s', [T.FullName]) else
+        F.Params[X].FType := T;
+  end;
+end;
+
+procedure TLiType_func.MySetResultType(const Param: TLiParam);
+var
+  F: TLiFunc;
+begin
+  if Param.GetChangeAbleFunc(F) then
+    F.ResultType := Param[1].AsType;
+end;
+
+procedure TLiType_func.Setup;
+begin
+  Method('Name', my_string, {$IFDEF FPC}@{$ENDIF}MyName);
+  Method('Prototype', my_string, {$IFDEF FPC}@{$ENDIF}MyPrototype);
+  Method('Parent', my_type, {$IFDEF FPC}@{$ENDIF}MyParent);
+  Method('Module', my_module, {$IFDEF FPC}@{$ENDIF}MyModule);
+  Method('IsMainFunc', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsMainFunc);
+  Method('IsMethod', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsMethod);
+  Method('IsConstructor', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsConstructor);
+  Method('IsChangeAble', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsChangeAble);
+  Method('ParamCount', my_int, {$IFDEF FPC}@{$ENDIF}MyParamCount);
+  Method('ParamNames', my_list, {$IFDEF FPC}@{$ENDIF}MyParamNames);
+  Method('ParamTypes', my_list, {$IFDEF FPC}@{$ENDIF}MyParamTypes);
+  Method('Clear', {$IFDEF FPC}@{$ENDIF}MyClear);
+  Method('Clear', {$IFDEF FPC}@{$ENDIF}MyClearParams);
+  Method('ClearCodes', {$IFDEF FPC}@{$ENDIF}MyClearCodes);
+  Method('AddParam', my_bool, ['Name', '_Type'], [my_string, my_type],
+         {$IFDEF FPC}@{$ENDIF}MyAddParam);
+  Method('AddCode', my_bool, ['Code'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyAddCode);
+  Method('SetCode', my_bool, ['Code'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MySetCode);
+  Define('ResultType', my_type,
+         {$IFDEF FPC}@{$ENDIF}MyGetResultType,
+         {$IFDEF FPC}@{$ENDIF}MySetResultType);
+  Define('ParamNames', my_string, 'Index', my_int,
+         {$IFDEF FPC}@{$ENDIF}MyGetParamName,
+         {$IFDEF FPC}@{$ENDIF}MySetParamName);
+  Define('ParamTypes', my_type, 'Index', my_int,
+         {$IFDEF FPC}@{$ENDIF}MyGetParamType,
+         {$IFDEF FPC}@{$ENDIF}MySetParamType);
+  inherited;
+end;
 
 function TLiType_func._AsString(Obj: pointer): string;
 begin
@@ -6387,6 +5053,79 @@ end;
 
 { TLiType_module }
 
+procedure TLiType_module.MyConsts(const Param: TLiParam);
+var
+  M: TLiModule;
+begin
+  if Param.GetSelf(M) then
+    M.FConsts.ListKeys(Param.Result.NewList);
+end;
+
+procedure TLiType_module.MyFuncs(const Param: TLiParam);
+var
+  M: TLiModule;
+  L: TLiList;
+  I: integer;
+begin
+  if Param.GetSelf(M) then
+  begin
+    L := Param.Result.NewList;
+    for I := 0 to M.FFuncList.Count - 1 do
+      L.Add.SetAsFunc(TLiFunc(M.FFuncList[I]));
+  end;
+end;
+
+procedure TLiType_module.MyFind(const Param: TLiParam);
+var
+  M: TLiModule;
+begin
+  if Param.GetSelf(M) then
+    M.FindSave(Param[1].AsString, Param.FResult);
+end;
+
+procedure TLiType_module.MyName(const Param: TLiParam);
+var
+  M: TLiModule;
+begin
+  if Param.GetSelf(M) then
+    Param.Result.AsString := M.FName;
+end;
+
+procedure TLiType_module.MyTypes(const Param: TLiParam);
+var
+  M: TLiModule;
+  L: TLiList;
+  I: integer;
+begin
+  if Param.GetSelf(M) then
+  begin
+    L := Param.Result.NewList;
+    for I := 0 to M.TypeCount - 1 do
+      L.Add.AsType := M.GetType(I);
+  end;
+end;
+
+procedure TLiType_module.MyUsings(const Param: TLiParam);
+var
+  M: TLiModule;
+begin
+  if Param.GetSelf(M) then
+    if M.FModules <> nil then
+      Param.Result.AsList := M.FModules.ToList else
+      Param.Result.NewList;
+end;
+
+procedure TLiType_module.Setup;
+begin
+  Method('Name', my_string, {$IFDEF FPC}@{$ENDIF}MyName);
+  Method('Consts', my_list, {$IFDEF FPC}@{$ENDIF}MyConsts);
+  Method('Types', my_list, {$IFDEF FPC}@{$ENDIF}MyTypes);
+  Method('Funcs', my_list, {$IFDEF FPC}@{$ENDIF}MyFuncs);
+  Method('Usings', my_list, {$IFDEF FPC}@{$ENDIF}MyUsings);
+  Method('Find', my_variant, ['Name'], [my_string], {$IFDEF FPC}@{$ENDIF}MyFind);
+  inherited;
+end;
+
 function TLiType_module._AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
@@ -6409,6 +5148,220 @@ begin
 end;
 
 { TLiType_list }
+
+procedure TLiType_list.MyAdd(const Param: TLiParam);
+var
+  L, A: TLiList;
+  I: integer;
+begin
+  if Param.GetSelf(L) then
+  begin
+    L.Add(Param[1]);
+    Param.Result.AsInteger := L.Count - 1;
+    A := Param[2].AsList;
+    if A <> nil then
+      for I := 0 to A.Count - 1 do
+        L.Add(A[I]);
+  end;
+end;
+
+procedure TLiType_list.MyAssign(const Param: TLiParam);
+var
+  L, R: TLiList;
+  I: integer;
+begin
+  if Param.GetSelf(L) then
+  begin
+    R := Param[1].AsList;
+    if L <> R then
+    begin
+      L.Clear;
+      if R <> nil then
+        for I := 0 to R.Count - 1 do
+          L.Add(R[I]);
+    end;
+  end;
+end;
+
+procedure TLiType_list.MyClear(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then L.Clear;
+end;
+
+procedure TLiType_list.MyCopy(const Param: TLiParam);
+var
+  L: TLiList;
+  X: integer;
+  N: integer;
+begin
+  if Param.GetSelf(L) then
+  begin
+    X := Param[1].AsInteger;
+    N := Param[2].AsInteger;
+    Param.Result.AsList := L.Copy(X, N);
+  end;
+end;
+
+procedure TLiType_list.MyCreate(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  L := TLiList.Create;
+  Param.Result.AsList := L;
+  L.Count := Max(0, Param[0].AsInteger);
+end;
+
+procedure TLiType_list.MyDelete(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then
+    L.Delete(Param[1].AsInteger);
+end;
+
+procedure TLiType_list.MyExchange(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then
+    L.Exchange(Param[1].AsInteger, Param[2].AsInteger);
+end;
+
+procedure TLiType_list.MyGet(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then
+    Param.Result.SetValue(L[Param[1].AsInteger]);
+end;
+
+procedure TLiType_list.MyGetCount(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then
+    Param.Result.AsInteger := L.Count;
+end;
+
+procedure TLiType_list.MyIndexOf(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then
+    Param.Result.AsInteger := L.IndexOf(Param[1]);
+end;
+
+procedure TLiType_list.MyInsert(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then
+    L.Insert(Param[1].AsInteger, Param[2]);
+end;
+
+procedure TLiType_list.MyIsEmpty(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then
+    Param.Result.AsBoolean := (L.Count = 0);
+end;
+
+procedure TLiType_list.MyLeft(const Param: TLiParam);
+var
+  L: TLiList;
+  N: integer;
+begin
+  if Param.GetSelf(L) then
+  begin
+    N := Param[1].AsInteger;
+    Param.Result.AsList := L.CopyLeft(N);
+  end;
+end;
+
+procedure TLiType_list.MyMove(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then
+    L.Move(Param[1].AsInteger, Param[2].AsInteger);
+end;
+
+procedure TLiType_list.MyRemove(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then L.Remove(Param[1]);
+end;
+
+procedure TLiType_list.MyRight(const Param: TLiParam);
+var
+  L: TLiList;
+  N: integer;
+begin
+  if Param.GetSelf(L) then
+  begin
+    N := Param[1].AsInteger;
+    Param.Result.AsList := L.CopyRight(N);
+  end;
+end;
+
+procedure TLiType_list.MySet(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then
+    L[Param[1].AsInteger].SetValue(Param[2]);
+end;
+
+procedure TLiType_list.MySetCount(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then
+    L.SetCount(Param[1].AsInteger);
+end;
+
+procedure TLiType_list.MySort(const Param: TLiParam);
+var
+  L: TLiList;
+begin
+  if Param.GetSelf(L) then L.Sort;
+end;
+
+procedure TLiType_list.Setup;
+begin
+  Method('Create', Self, ['_Count'], [my_int], {$IFDEF FPC}@{$ENDIF}MyCreate);
+  Method('IsEmpty', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsEmpty);
+  Method('Clear', {$IFDEF FPC}@{$ENDIF}MyClear);
+  Method('Delete', ['Index'], [my_int], {$IFDEF FPC}@{$ENDIF}MyDelete);
+  Method('Remove', ['Value'], [my_variant], {$IFDEF FPC}@{$ENDIF}MyRemove);
+  Method('Exchange', ['X1', 'X2'], [my_int, my_int],
+         {$IFDEF FPC}@{$ENDIF}MyExchange);
+  Method('Move', ['FromX', 'ToX'], [my_int, my_int],
+         {$IFDEF FPC}@{$ENDIF}MyMove);
+  Method('Sort', {$IFDEF FPC}@{$ENDIF}MySort);
+  Method('Insert', ['X', '_Value'], [my_int, my_variant],
+         {$IFDEF FPC}@{$ENDIF}MyInsert);
+  Method('Add', my_int, ['_Value', '...'], [my_variant, Self],
+         {$IFDEF FPC}@{$ENDIF}MyAdd);
+  Method('IndexOf', my_int, ['Value'], [my_variant],
+         {$IFDEF FPC}@{$ENDIF}MyIndexOf);
+  Method('Copy', Self, ['Index', 'Count'], [my_int, my_int],
+         {$IFDEF FPC}@{$ENDIF}MyCopy);
+  Method('Left', Self, ['Count'], [my_int], {$IFDEF FPC}@{$ENDIF}MyLeft);
+  Method('Right', Self, ['Count'], [my_int], {$IFDEF FPC}@{$ENDIF}MyRight);
+  Method('Assign', ['Source'], [Self], {$IFDEF FPC}@{$ENDIF}MyAssign);
+  Define('Count', my_int,
+         {$IFDEF FPC}@{$ENDIF}MyGetCount,
+         {$IFDEF FPC}@{$ENDIF}MySetCount);
+  Define('', my_variant, 'Index', my_int,
+         {$IFDEF FPC}@{$ENDIF}MyGet,
+         {$IFDEF FPC}@{$ENDIF}MySet);
+  inherited;
+end;
 
 function TLiType_list._Add(Obj: pointer; Value: TLiValue): integer;
 var
@@ -6468,10 +5421,108 @@ end;
 
 { TLiType_hash }
 
+procedure TLiType_hash.MyClear(const Param: TLiParam);
+var
+  H: TLiHash;
+begin
+  if Param.GetSelf(H) then H.Clear;
+end;
+
+procedure TLiType_hash.MyCreate(const Param: TLiParam);
+begin
+  Param.Result.AsHash := TLiHash.Create;
+end;
+
+procedure TLiType_hash.MyGet(const Param: TLiParam);
+var
+  H: TLiHash;
+  V: TLiValue;
+begin
+  if Param.GetSelf(H) then
+  begin
+    V := H.Get(Param[1].AsString);
+    if V <> nil then
+      Param.Result.SetValue(V);
+  end;
+end;
+
+procedure TLiType_hash.MyHas(const Param: TLiParam);
+var
+  H: TLiHash;
+begin
+  if Param.GetSelf(H) then
+    Param.Result.AsBoolean := H.Has(Param[1].AsString);
+end;
+
+procedure TLiType_hash.MyIsEmpty(const Param: TLiParam);
+var
+  H: TLiHash;
+begin
+  if Param.GetSelf(H) then
+    Param.Result.AsBoolean := H.IsEmpty;
+end;
+
+procedure TLiType_hash.MyKeys(const Param: TLiParam);
+var
+  H: TLiHash;
+  L: TLiList;
+begin
+  if Param.GetSelf(H) then
+  begin
+    L := TLiList.Create;
+    Param.Result.AsList := L;
+    H.ListKeys(L);
+  end;
+end;
+
+procedure TLiType_hash.MyRemove(const Param: TLiParam);
+var
+  H: TLiHash;
+begin
+  if Param.GetSelf(H) then
+    H.Remove(Param[1].AsString);
+end;
+
+procedure TLiType_hash.MySet(const Param: TLiParam);
+var
+  H: TLiHash;
+begin
+  if Param.GetSelf(H) then
+    H.Add(Param[1].AsString).SetValue(Param[2]);
+end;
+
+procedure TLiType_hash.MyValues(const Param: TLiParam);
+var
+  H: TLiHash;
+  L: TLiList;
+begin
+  if Param.GetSelf(H) then
+  begin
+    L := TLiList.Create;
+    Param.Result.AsList := L;
+    H.ListValues(L);
+  end;
+end;
+
+procedure TLiType_hash.Setup;
+begin
+  Method('Create', Self, {$IFDEF FPC}@{$ENDIF}MyCreate);
+  Method('IsEmpty', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsEmpty);
+  Method('Clear', {$IFDEF FPC}@{$ENDIF}MyClear);
+  Method('Has', my_bool, ['Key'], [my_string], {$IFDEF FPC}@{$ENDIF}MyHas);
+  Method('Remove', ['Key'], [my_string], {$IFDEF FPC}@{$ENDIF}MyRemove);
+  Method('Keys', my_list, {$IFDEF FPC}@{$ENDIF}MyKeys);
+  Method('Values', my_list, {$IFDEF FPC}@{$ENDIF}MyValues);
+  Define('', my_variant, 'Key', my_string,
+         {$IFDEF FPC}@{$ENDIF}MyGet,
+         {$IFDEF FPC}@{$ENDIF}MySet);
+  inherited;
+end;
+
 function TLiType_hash._AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiHashList(Obj).AsString else
+    Result := TLiHash(Obj).AsString else
     Result := '';
 end;
 
@@ -6479,25 +5530,25 @@ function TLiType_hash._Clear(Obj: pointer): boolean;
 begin
   Result := (Obj <> nil);
   if Result then
-    TLiHashList(Obj).Clear;
+    TLiHash(Obj).Clear;
 end;
 
 function TLiType_hash._DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiHashList(Obj).DecRefcount else
+    Result := TLiHash(Obj).DecRefcount else
     Result := 0;
 end;
 
 procedure TLiType_hash._GcMark(Obj: pointer);
 begin
-  if Obj <> nil then TLiHashList(Obj).MarkForSurvive;
+  if Obj <> nil then TLiHash(Obj).MarkForSurvive;
 end;
 
 function TLiType_hash._IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiHashList(Obj).IncRefcount else
+    Result := TLiHash(Obj).IncRefcount else
     Result := 0;
 end;
 
@@ -6523,7 +5574,7 @@ begin
       FItems[I].FParent := Self;
       FItems[I].FName := ItemNames[I];
       FItems[I].FValue := I;
-      FModule.FConstants.Add(ItemNames[I]).SetTOA(Self, FItems[I]);
+      FModule.FConsts.Add(ItemNames[I]).SetTOA(Self, FItems[I]);
     end;
   end;
 end;
@@ -6938,6 +5989,15 @@ begin
   FType._GcMark(FValue.VObject);
 end;
 
+function TLiValue.NewList: TLiList;
+begin
+  SetNil;
+  Result := TLiList.Create;
+  Result.IncRefcount;
+  FType := my_list;
+  FValue.VObject := Result;
+end;
+
 function TLiValue.Operate(OP: TLiOperator; Value: TLiValue): boolean;
 var
   R: PLiOperate;
@@ -6962,10 +6022,10 @@ begin
     Result := nil;
 end;
 
-function TLiValue.GetHashed: TLiHashList;
+function TLiValue.GetHashed: TLiHash;
 begin
   if FType = my_hash then
-    Result := TLiHashList(FValue.VObject) else
+    Result := TLiHash(FValue.VObject) else
     Result := nil;
 end;
 
@@ -6992,10 +6052,9 @@ end;
 
 procedure TLiValue.SetParentType(VT: TLiType);
 begin
-  if FType <> VT then
-    if FType.IsChildOf(VT) then
-      FType := VT else
-      ErrorConvert(FType, VT);
+  if FType.IsTypeOf(VT) then
+    FType := VT else
+    ErrorConvert(FType, VT);
 end;
 
 function TLiValue.Compare(Value: TLiValue): TLiCompare;
@@ -7081,12 +6140,12 @@ begin
   Result := nil;
   if (Wanted = nil) or (Wanted = FType) or (Wanted = my_variant) then
     case FType.FTID of
-      TID_NIL  : Result := nil;
-      TID_CHAR : Result := @FValue.VChar[0];
-      TID_INTEGER  : Result := @FValue.VInteger;
-      TID_FLOAT: Result := @FValue.VFloat;
+      TID_NIL     : Result := nil;
+      TID_CHAR    : Result := @FValue.VChar[0];
+      TID_INTEGER : Result := @FValue.VInteger;
+      TID_FLOAT   : Result := @FValue.VFloat;
       TID_CURRENCY: Result := @FValue.VCurrency;
-      TID_TIME : Result := @FValue.VTime;
+      TID_TIME    : Result := @FValue.VTime;
       TID_BOOLEAN : Result := @FValue.VBoolean;
       else Result := FValue.VObject;
     end;
@@ -7106,9 +6165,9 @@ begin
   end;
 end;
 
-function TLiValue.GetAsHashList: TLiHashList;
+function TLiValue.GetAsHash: TLiHash;
 begin
-  if FType = my_hash then Result := TLiHashList(FValue.VObject) else
+  if FType = my_hash then Result := TLiHash(FValue.VObject) else
   begin
     Result := nil;
     ErrorConvert(FType, my_hash);
@@ -7169,15 +6228,6 @@ end;
 function TLiValue.GetAsString: string;
 begin
   Result := FType._AsString(GetOA);
-end;
-
-function TLiValue.GetAsStringList: TLiStringList;
-begin
-  if FType = my_strlist then Result := TLiStringList(FValue.VObject) else
-  begin
-    Result := nil;
-    ErrorConvert(FType, my_strlist);
-  end;
 end;
 
 procedure TLiValue.SetAsEnum(Value: TLiEnumItem);
@@ -7269,13 +6319,6 @@ begin
   TLiString(FValue.VObject).IncRefcount;
 end;
 
-procedure TLiValue.SetAsStringList(Value: TLiStringList);
-begin
-  my_strlist._IncRefcount(Value);
-  my_strlist._SetDefault(Self);
-  FValue.VObject := Value;
-end;
-
 procedure TLiValue.SetAsTime(Value: TDateTime);
 begin
   FType._DecRefcount(FValue.VObject);
@@ -7327,7 +6370,7 @@ begin
   FValue.VObject := Value;
 end;
 
-procedure TLiValue.SetAsHashList(Value: TLiHashList);
+procedure TLiValue.SetAsHash(Value: TLiHash);
 begin
   my_hash._IncRefcount(Value);
   my_hash._SetDefault(Self);
@@ -7425,6 +6468,13 @@ begin
   if R = nil then
     Error('unknown operation: %s %s', [OperatorStr(OP), L.FName]) else
     Error('unknown operation: %s %s %s', [L.FName, OperatorStr(OP), R.FName]);
+end;
+
+function TLiParam.GetChangeAbleFunc(var F: TLiFunc): boolean;
+begin
+  F := GetItem(0).AsFunc;
+  my_func._Validate(F);
+  Result := (F <> nil) and TestChangeFunc(F);
 end;
 
 function TLiParam.GetCount: integer;
@@ -7920,7 +6970,7 @@ begin
       try
         if F.FParent <> nil then
           if not F.IsConstructor then
-            if (F.FParent = Host.FType) or Host.FType.IsChildOf(F.FParent) then
+            if Host.FType.IsTypeOf(F.FParent) then
               A.Add(Host);
         Result := ExecFunc(F, Param, Outv, A);
       finally
@@ -8032,12 +7082,12 @@ var
 
   procedure exec_hash;
   var
-    hash: TLiHashList;
+    hash: TLiHash;
     I, N: integer;
     key: string;
   begin
-    hash := TLiHashList.Create;
-    Outv.SetAsHashList(hash);
+    hash := TLiHash.Create;
+    Outv.SetAsHash(hash);
     N := GetParamCount;
     I := 0;
     while I < N do
@@ -9007,7 +8057,7 @@ begin
     L := FLast;
     SymTestNext([syEQ]);
     FFunc := TLiFunc.Create('', FModule, nil);
-    FModule.FConstants.Add(L.FName).SetAsFunc(FFunc);
+    FModule.FConsts.Add(L.FName).SetAsFunc(FFunc);
     S := FFunc.GetSTMTs.Add(ssConst) as TLiSTMT_assign;
     S.FVarb := L.FName;
     S.FExpr := ParseExpr(false, [sySemic], true);
@@ -9974,7 +9024,7 @@ begin
   if FExpr.Execute(Param, Param.FResult) then
   begin
     Param.FFunc.FResultType._Convert(Param.FResult);
-    Param.FFunc.FModule.FConstants.Add(FVarb).SetValue(Param.FResult);
+    Param.FFunc.FModule.FConsts.Add(FVarb).SetValue(Param.FResult);
   end;
 end;
 
@@ -10750,6 +9800,7 @@ begin
       Result.FResultType := FResultType;
       Result.FParams.Assign(FParams);
       Result.FHasVarArg := FHasVarArg;
+      Result.FData := FData;
     end;
   end;
 end;
@@ -10847,22 +9898,39 @@ end;
 
 { TLiModule }
 
-function TLiModule.AddFunc(const Names: array of string;
-  const Types: array of TLiType; Proc: TLiLyseeProc): TLiFunc;
+function TLiModule.AddEnumType(const AName: string;
+  const ItemNames: array of string): TLiEnumType;
+begin
+  Result := TLiEnumType.Create(AName, Self, nil);
+  Result.Add(ItemNames);
+end;
+
+function TLiModule.AddFunc(const AName: string; T: TLiType;
+  const ParamNames: array of string; const ParamTypes: array of TLiType;
+  const Proc: TLiLyseeProc; const Data: pointer): TLiFunc;
 var
   I: integer;
   E: boolean;
 begin
   Result := nil;
   E := false;
-  if ParamOK(Names, Types, false, E) and not Find(Names[0]) then
-  begin
-    Result := TLiFunc.Create(Names[0], Self, Proc);
-    Result.FResultType := Types[0];
-    Result.FHasVarArg := E;
-    for I := 1 to Length(Names) - 1 do
-      Result.FParams.Add(Names[I], Types[I]);
-  end;
+  if (T <> nil) and (AName <> '') and Assigned(Proc) then
+    if not Find(AName) and ParamOK(ParamNames, ParamTypes, false, E) then
+    begin
+      Result := TLiFunc.Create(AName, Self, Proc);
+      Result.FResultType := T;
+      Result.FHasVarArg := E;
+      Result.FData := Data;
+      for I := 0 to Length(ParamNames) - 1 do
+        Result.FParams.Add(ParamNames[I], ParamTypes[I]);
+    end;
+end;
+
+function TLiModule.AddFunc(const AName: string;
+  const ParamNames: array of string; const ParamTypes: array of TLiType;
+  const Proc: TLiLyseeProc; const Data: pointer): TLiFunc;
+begin
+  Result := AddFunc(AName, my_nil, ParamNames, ParamTypes, Proc, Data);
 end;
 
 function TLiModule.AsString: string;
@@ -10875,6 +9943,7 @@ begin
   inherited;
   InitModule;
   my_modules.Add(Self);
+  FNeedSetup := true;
 end;
 
 constructor TLiModule.CreateEx(const AName: string; AContext: TLiContext);
@@ -10888,11 +9957,12 @@ begin
     FModules := TLiModuleList.Create(FContext);
     FModules.FImporter := Self;
     FImporters := TList.Create;
-    if FContext <> nil then
-      if FContext.FRollbacks <> nil then
-        FContext.FRollbacks.Add(Self);
+    if FContext.FRollbacks <> nil then
+      FContext.FRollbacks.Add(Self);
+    Use(my_system);
   end
   else my_modules.Add(Self);
+  FNeedSetup := true;
 end;
 
 procedure TLiModule.InitModule;
@@ -10901,8 +9971,8 @@ begin
   FFileName := my_kernel;
   FTypeList := TList.Create;
   FFuncList := TLiFuncList.Create;
-  FConstants := TLiHashList.Create;
-  FConstants.CaseSensitive := false;
+  FConsts := TLiHash.Create;
+  FConsts.CaseSensitive := false;
 end;
 
 destructor TLiModule.Destroy;
@@ -10929,7 +9999,7 @@ begin
   DeleteFunctions;
   FreeAndNil(FFuncList);
   FreeAndNil(FTypeList);
-  FreeAndNil(FConstants);
+  FreeAndNil(FConsts);
   my_modules.FModules.Remove(Self);
   inherited;
 end;
@@ -11002,6 +10072,7 @@ begin
       if M.FImporters <> nil then
         M.FImporters.Add(Self);
     end;
+  if M.FNeedSetup then M.Setup;
 end;
 
 function TLiModule.IsMainModule: boolean;
@@ -11084,6 +10155,20 @@ begin
   end;
 end;
 
+procedure TLiModule.Setup;
+var
+  I: integer;
+  T: TLiType;
+begin
+  FNeedSetup := false;
+  for I := 0 to FTypeList.Count - 1 do
+  begin
+    T := GetType(I);
+    if T.IsObject and (T.MethodCount = 0) then
+      T.Setup;
+  end;
+end;
+
 function TLiModule.SetupType(const T: TLiType): boolean;
 begin
   Result := (T <> nil) and IsID(T.FName) and not Find(T.FName);
@@ -11104,7 +10189,7 @@ begin
   rec^.VModule := FindModule(ID, false);
   if rec^.VModule = nil then
   begin
-    rec^.VValue := FConstants.Get(ID);
+    rec^.VValue := FConsts.Get(ID);
     if rec^.VValue = nil then
     begin
       rec^.VFunc := FindFunc(ID);
@@ -11176,6 +10261,18 @@ begin
   Use(Result);
 end;
 
+function TLiModule.AddFunc(const AName: string; T: TLiType;
+  const Proc: TLiLyseeProc; const Data: pointer): TLiFunc;
+begin
+  Result := AddFunc(AName, T, [], [], Proc, Data);
+end;
+
+function TLiModule.AddFunc(const AName: string; const Proc: TLiLyseeProc;
+  const Data: pointer): TLiFunc;
+begin
+  Result := AddFunc(AName, my_nil, [], [], Proc, Data);
+end;
+
 { TLiModuleList }
 
 function TLiModuleList.Add(AModule: TLiModule): integer;
@@ -11201,7 +10298,7 @@ var
 begin
   if FImporter = nil then
     for I := 0 to GetCount - 1 do
-      GetModule(I).FConstants.Clear;
+      GetModule(I).FConsts.Clear;
 end;
 
 constructor TLiModuleList.Create(AContext: TLiContext);
@@ -11273,6 +10370,14 @@ begin
       end;
     end;
   Result := -1;
+end;
+
+procedure TLiModuleList.Setup;
+var
+  I: integer;
+begin
+  for I := 0 to GetCount - 1 do
+    GetModule(I).Setup;
 end;
 
 function TLiModuleList.IndexOf(AModule: TLiModule): integer;
@@ -11517,6 +10622,14 @@ begin
   V.FValue.VObject := Result;
 end;
 
+procedure TLiList.AddStrings(List: TStrings);
+var
+  I: integer;
+begin
+  for I := 0 to List.Count - 1 do
+    Add.AsString := List[I];
+end;
+
 function TLiList.AsString: string;
 var
   X, N: integer;
@@ -11702,9 +10815,9 @@ begin
   Result := FormatString(FKey) + ':' + FormatValue(Self);
 end;
 
-{ TLiHashList }
+{ TLiHash }
 
-function TLiHashList.Add(const Name: string): TLiHashItem;
+function TLiHash.Add(const Name: string): TLiHashItem;
 var
   I: integer;
 begin
@@ -11721,7 +10834,7 @@ begin
   end;
 end;
 
-function TLiHashList.AsString: string;
+function TLiHash.AsString: string;
 var
   H: TLiHashItem;
   L: TList;
@@ -11755,36 +10868,36 @@ begin
   else Result := '[:::]';
 end;
 
-function TLiHashList.DefConst(const Name, Value: string): TLiHashItem;
+function TLiHash.DefConst(const Name, Value: string): TLiHashItem;
 begin
   Result := Add(Name);
-  Result.SetAsString(Value);
+  Result.AsString := Value;
 end;
 
-function TLiHashList.DefConst(const Name: string; Value: int64): TLiHashItem;
+function TLiHash.DefConst(const Name: string; Value: int64): TLiHashItem;
 begin
   Result := Add(Name);
-  Result.SetAsInteger(Value);
+  Result.AsInteger := Value;
 end;
 
-function TLiHashList.DefConst(const Name: string; Value: double): TLiHashItem;
+function TLiHash.DefConst(const Name: string; Value: double): TLiHashItem;
 begin
   Result := Add(Name);
-  Result.SetAsFloat(Value);
+  Result.AsFloat := Value;
 end;
 
-function TLiHashList.DefConst(const Name: string; Value: boolean): TLiHashItem;
+function TLiHash.DefConst(const Name: string; Value: boolean): TLiHashItem;
 begin
   Result := Add(Name);
   Result.SetAsBoolean(Value);
 end;
 
-function TLiHashList.BucketCount: integer;
+function TLiHash.BucketCount: integer;
 begin
   Result := Length(FBuckets);
 end;
 
-procedure TLiHashList.Clear;
+procedure TLiHash.Clear;
 var
   I: integer;
   H: TLiHashItem;
@@ -11800,32 +10913,32 @@ begin
   inherited;
 end;
 
-constructor TLiHashList.Create;
+constructor TLiHash.Create;
 begin
   inherited;
   SetLength(FBuckets, 1);
   FBuckets[0] := nil;
 end;
 
-destructor TLiHashList.Destroy;
+destructor TLiHash.Destroy;
 begin
   Clear;
   SetLength(FBuckets, 0);
   inherited;
 end;
 
-procedure TLiHashList.FreeItem(H: TLiHashItem);
+procedure TLiHash.FreeItem(H: TLiHashItem);
 begin
   Dec(FCount);
   H.Free;
 end;
 
-function TLiHashList.Has(const Name: string): boolean;
+function TLiHash.Has(const Name: string): boolean;
 begin
   Result := (Get(Name) <> nil);
 end;
 
-function TLiHashList.HashIndex(const Name: string): integer;
+function TLiHash.HashIndex(const Name: string): integer;
 var
   N: integer;
 begin
@@ -11836,12 +10949,12 @@ begin
     Result := (basic.HashOf(LowerCase(Name)) mod N);
 end;
 
-function TLiHashList.IsEmpty: boolean;
+function TLiHash.IsEmpty: boolean;
 begin
   Result := (FCount = 0);
 end;
 
-function TLiHashList.Get(const Name: string): TLiHashItem;
+function TLiHash.Get(const Name: string): TLiHashItem;
 begin
   Result := FBuckets[HashIndex(Name)];
   while Result <> nil do
@@ -11851,7 +10964,7 @@ begin
   end;
 end;
 
-function TLiHashList.GetValue(const Name: string; Value: TLiValue): boolean;
+function TLiHash.GetValue(const Name: string; Value: TLiValue): boolean;
 var
   V: TLiValue;
 begin
@@ -11861,7 +10974,7 @@ begin
     Value.SetValue(V);
 end;
 
-procedure TLiHashList.ListKeys(List: TLiList);
+procedure TLiHash.ListKeys(List: TLiList);
 var
   I: integer;
   L: TList;
@@ -11878,7 +10991,7 @@ begin
   end;
 end;
 
-procedure TLiHashList.ListValues(List: TLiList);
+procedure TLiHash.ListValues(List: TLiList);
 var
   I: integer;
   L: TList;
@@ -11895,7 +11008,7 @@ begin
   end;
 end;
 
-procedure TLiHashList.MarkForSurvive;
+procedure TLiHash.MarkForSurvive;
 var
   H: TLiHashItem;
   I: integer;
@@ -11915,14 +11028,14 @@ begin
   end;
 end;
 
-function TLiHashList.MatchName(const N1, N2: string): boolean;
+function TLiHash.MatchName(const N1, N2: string): boolean;
 begin
   if FCaseSensitive then
     Result := (N1 = N2) else
     Result := SysUtils.SameText(N1, N2);
 end;
 
-function TLiHashList.Remove(const Name: string): boolean;
+function TLiHash.Remove(const Name: string): boolean;
 var
   X: cardinal;
   H, T: TLiHashItem;
@@ -11951,7 +11064,7 @@ begin
   end;
 end;
 
-procedure TLiHashList.Resize(NewSize: integer);
+procedure TLiHash.Resize(NewSize: integer);
 var
   L: TList;
   I, X: integer;
@@ -11979,7 +11092,7 @@ begin
   end;
 end;
 
-function TLiHashList.SetupItemList: TList;
+function TLiHash.SetupItemList: TList;
 var
   I: integer;
   H: TLiHashItem;
@@ -11993,438 +11106,6 @@ begin
       Result.Add(H);
       H := H.FNext;
     end;
-  end;
-end;
-
-{ TLiStringList }
-
-procedure TLiStringList.AddHashed(Hashed: TLiHashList);
-var
-  L: TList;
-  I: integer;
-  V: TLiHashItem;
-begin
-  if Hashed <> nil then
-  begin
-    L := Hashed.SetupItemList;
-    BeginUpdate;
-    try
-      for I := 0 to L.Count - 1 do
-      begin
-        V := TLiHashItem(L[I]);
-        Add(V.FKey, V);
-      end;
-    finally
-      EndUpdate;
-      L.Free;
-    end;
-  end;
-end;
-
-procedure TLiStringList.AddList(List: TLiList);
-var
-  I: integer;
-begin
-  if List <> nil then
-  begin
-    BeginUpdate;
-    try
-      for I := 0 to List.Count - 1 do
-        FStrings.Add(List[I].AsString);
-    finally
-      EndUpdate;
-    end;
-  end;
-end;
-
-function TLiStringList.Add(const S: string; V: TLiValue): integer;
-var
-  T: TLiValue;
-begin
-  if (V <> nil) and not V.IsNil then
-  begin
-    T := TLiValue.Create;
-    Result := FStrings.AddObject(S, T);
-    T.SetValue(V);
-  end
-  else Result := FStrings.Add(S);
-end;
-
-procedure TLiStringList.Assign(Source: TLiStringList);
-var
-  I: integer;
-begin
-  if Self <> Source then
-  begin
-    BeginUpdate;
-    try
-      Clear;
-      if Source <> nil then
-        for I := 0 to Source.FStrings.Count - 1 do
-          Add(Source.FStrings[I],
-            TLiValue(Source.FStrings.Objects[I]));
-    finally
-      EndUpdate;
-    end;
-  end;
-end;
-
-function TLiStringList.AsString: string;
-begin
-  Result := FStrings.Text;
-end;
-
-procedure TLiStringList.BeginUpdate;
-begin
-  FStrings.BeginUpdate;
-end;
-
-procedure TLiStringList.Clear;
-var
-  I: integer;
-begin
-  BeginUpdate;
-  try
-    for I := FStrings.Count - 1 downto 0 do
-      Delete(I);
-    FStrings.Clear;
-  finally
-    EndUpdate;
-  end;
-end;
-
-procedure TLiStringList.ClearObjects;
-var
-  I: integer;
-  V: TLiValue;
-begin
-  BeginUpdate;
-  try
-    for I := FStrings.Count - 1 downto 0 do
-      if FStrings.Objects[I] <> nil then
-      begin
-        V := TLiValue(FStrings.Objects[I]);
-        FStrings.Objects[I] := nil;
-        V.Free;
-      end;
-  finally
-    EndUpdate;
-  end;
-end;
-
-function TLiStringList.Copy(Index, ItemCount: integer): TLiStringList;
-var
-  I: integer;
-begin
-  Result := TLiStringList.Create;
-  if Index < 0 then
-  begin
-    Inc(ItemCount, Index);
-    Index := 0;
-  end;
-  ItemCount := Max(0, Min(FStrings.Count - Index, ItemCount));
-  for I := 1 to ItemCount do
-  begin
-    Result.Add(FStrings[Index], TLiValue(FStrings.Objects[Index]));
-    Inc(Index);
-  end;
-end;
-
-constructor TLiStringList.Create;
-begin
-  inherited;
-  FStrings := TStringList.Create;
-end;
-
-procedure TLiStringList.Delete(Index: integer);
-var
-  V: TLiValue;
-begin
-  V := TLiValue(FStrings.Objects[Index]);
-  FStrings.Delete(Index);
-  if V <> nil then V.Free;
-end;
-
-procedure TLiStringList.DeleteEmptyLines;
-var
-  I: integer;
-begin
-  BeginUpdate;
-  try
-    for I := FStrings.Count - 1 downto 0 do
-      if FStrings[I] = '' then
-        Delete(I);
-  finally
-    EndUpdate;
-  end;
-end;
-
-procedure TLiStringList.DeleteLast;
-begin
-  Delete(FStrings.Count - 1);
-end;
-
-destructor TLiStringList.Destroy;
-begin
-  Clear;
-  FreeAndNil(FStrings);
-  inherited;
-end;
-
-procedure TLiStringList.ChangeString(ChangeFunc: TLiChangeString);
-var
-  I: integer;
-begin
-  BeginUpdate;
-  try
-    for I := FStrings.Count - 1 downto 0 do
-      FStrings[I] := ChangeFunc(FStrings[I]);
-  finally
-    EndUpdate;
-  end;
-end;
-
-procedure TLiStringList.ChangeStringList(ChangeFunc: TLiChangeStringList);
-var
-  I: integer;
-begin
-  BeginUpdate;
-  try
-    for I := FStrings.Count - 1 downto 0 do
-      ChangeFunc(Self, I);
-  finally
-    EndUpdate;
-  end;
-end;
-
-procedure TLiStringList.ChangeStringListObject(ChangeFunc: TLiChangeStringListObject);
-var
-  I: integer;
-begin
-  BeginUpdate;
-  try
-    for I := FStrings.Count - 1 downto 0 do
-      ChangeFunc(Self, I);
-  finally
-    EndUpdate;
-  end;
-end;
-
-procedure TLiStringList.EndUpdate;
-begin
-  FStrings.EndUpdate;
-end;
-
-function TLiStringList.GetCount: integer;
-begin
-  Result := FStrings.Count;
-end;
-
-procedure TLiStringList.GetEnvs;
-var
-  {$IFDEF FPC}
-  I, N: integer;
-  {$ELSE}
-  H, P: PChar;
-  {$ENDIF}
-begin
-  {$IFDEF FPC}
-  N := SysUtils.GetEnvironmentVariableCount;
-  for I := 1 to N do
-    FStrings.Add(SysUtils.GetEnvironmentString(I));
-  {$ELSE}
-  P := GetEnvironmentStrings;
-  H := P;
-  if H <> nil then
-    while H^ <> #0 do
-    begin
-      FStrings.Add(H);
-      H := H + StrLen(H) + 1;
-    end;
-  FreeEnvironmentStrings(P);
-  {$ENDIF}
-end;
-
-function TLiStringList.GetValue(const Name: string): string;
-begin
-  Result := FStrings.Values[Name];
-end;
-
-function TLiStringList.IndexOfValue(const S: string): integer;
-var
-  I: integer;
-begin
-  for I := 0 to FStrings.Count - 1 do
-    if MatchStrs(S, FStrings.ValueFromIndex[I]) then
-    begin
-      Result := I;
-      Exit;
-    end;
-  Result := -1;
-end;
-
-procedure TLiStringList.Insert(Index: Integer; const S: string; V: TLiValue);
-var
-  T: TLiValue;
-begin
-  if (V <> nil) and not V.IsNil then
-  begin
-    T := TLiValue.Create;
-    FStrings.InsertObject(Index, S, T);
-    T.SetValue(V);
-  end
-  else FStrings.Insert(Index, S);
-end;
-
-function TLiStringList.CopyLeft(ItemCount: integer): TLiStringList;
-begin
-  Result := Copy(0, ItemCount);
-end;
-
-procedure TLiStringList.MarkForSurvive;
-var
-  I: integer;
-  V: TLiValue;
-begin
-  if (Self <> nil) and not FSurvived then
-  begin
-    FSurvived := true;
-    for I := 0 to FStrings.Count - 1 do
-      if FStrings.Objects[I] <> nil then
-      begin
-        V := TLiValue(FStrings.Objects[I]);
-        V.MarkForSurvive;
-      end;
-  end;
-end;
-
-function TLiStringList.MatchStrs(const S1, S2: string): boolean;
-begin
-  if FStrings.CaseSensitive then
-    Result := (SysUtils.CompareStr(S1, S2) = 0) else
-    Result := SysUtils.SameText(S1, S2);
-end;
-
-procedure TLiStringList.Pack;
-begin
-  BeginUpdate;
-  try
-    ChangeString({$IFDEF FPC}@{$ENDIF}SysUtils.TrimRight);
-    DeleteEmptyLines;
-  finally
-    EndUpdate;
-  end;
-end;
-
-procedure TLiStringList.Remove(const S: string; ByName: boolean);
-var
-  I: integer;
-begin
-  if ByName then
-    I := FStrings.IndexOfName(S) else
-    I := FStrings.IndexOf(S);
-  if I >= 0 then Delete(I);
-end;
-
-procedure TLiStringList.Rename(const Name, NewName: string);
-var
-  I, X: integer;
-  V: string;
-begin
-  if not MatchStrs(Name, NewName) then
-  begin
-    I := FStrings.IndexOfName(Name);
-    if I >= 0 then
-    begin
-      BeginUpdate;
-      try
-        X := FStrings.IndexOfName(NewName);
-        if X >= 0 then
-        begin
-          Delete(X);
-          if X < I then Dec(I);
-        end;
-        V := FStrings.ValueFromIndex[I];
-        FStrings[I] := NewName + FStrings.NameValueSeparator + V;
-      finally
-        EndUpdate;
-      end;
-    end;
-  end;
-end;
-
-procedure TLiStringList.Reverse;
-var
-  L, R: integer;
-begin
-  FStrings.Sorted := false;
-  L := 0;
-  R := FStrings.Count - 1;
-  while L < R do
-  begin
-    FStrings.Exchange(L, R);
-    Inc(L);
-    Dec(R);
-  end;
-end;
-
-function TLiStringList.CopyRight(ItemCount: integer): TLiStringList;
-begin
-  Result := Copy(FStrings.Count - ItemCount, ItemCount);
-end;
-
-procedure TLiStringList.DeleteMatched(const Patten: string);
-var
-  I: integer;
-begin
-  BeginUpdate;
-  try
-    for I := FStrings.Count - 1 downto 0 do
-      if MatchPatten(FStrings[I], Patten) then
-        Delete(I);
-  finally
-    EndUpdate;
-  end;
-end;
-
-function TLiStringList.SelectMatched(const Patten: string): TLiStringList;
-var
-  I: integer;
-begin
-  Result := TLiStringList.Create;
-  for I := 0 to FStrings.Count - 1 do
-    if MatchPatten(FStrings[I], Patten) then
-      Result.Add(FStrings[I], TLiValue(FStrings.Objects[I]));
-end;
-
-procedure TLiStringList.SetCount(Value: integer);
-begin
-  if Value < 1 then Clear else
-  begin
-    while Value > GetCount do FStrings.Add('');
-    while Value < GetCount do DeleteLast;
-  end;
-end;
-
-procedure TLiStringList.SetValue(const Name, Value: string);
-begin
-  if Value <> '' then
-    FStrings.Values[Name] := Value else
-    Remove(Name, true);
-end;
-
-procedure TLiStringList.Unique;
-var
-  I: integer;
-begin
-  BeginUpdate;
-  try
-    FStrings.Sort;
-    for I := FStrings.Count - 2 downto 0 do
-      if MatchStrs(FStrings[I], FStrings[I + 1]) then
-        Delete(I + 1);
-  finally
-    EndUpdate;
   end;
 end;
 
@@ -12662,120 +11343,84 @@ begin
   my_gcman := TLiGarbageCollect.Create;
   my_modules := TLiModuleList.Create(nil);
   my_system := TLiModule.Create(LSE_SYSTE);
-  my_classes := TLiModule.Create('classes');
-  my_sysutils := TLiModule.Create('sysutils');
 
   //-- types -----------------------------------------------------------------
 
-  my_variant := TLiType_variant.Create(SystemTypeNames[TID_VARIANT], my_system, nil);
+  my_variant := TLiType_variant.Create(TID_NAMES[TID_VARIANT], my_system, nil);
   my_variant.FStyle := tsVariant;
   my_variant.FTID := TID_VARIANT;
   my_types[TID_VARIANT] := my_variant;
 
-  my_nil := TLiType_nil.Create(SystemTypeNames[TID_NIL], my_system, nil);
+  my_nil := TLiType_nil.Create(TID_NAMES[TID_NIL], my_system, nil);
   my_nil.FStyle := tsNil;
   my_nil.FTID := TID_NIL;
   my_types[TID_NIL] := my_nil;
 
-  my_char := TLiType_char.Create(SystemTypeNames[TID_CHAR], my_system, nil);
+  my_char := TLiType_char.Create(TID_NAMES[TID_CHAR], my_system, nil);
   my_char.FStyle := tsBasic;
   my_char.FTID := TID_CHAR;
   my_types[TID_CHAR] := my_char;
 
-  my_int := TLiType_integer.Create(SystemTypeNames[TID_INTEGER], my_system, nil);
+  my_int := TLiType_integer.Create(TID_NAMES[TID_INTEGER], my_system, nil);
   my_int.FStyle := tsBasic;
   my_int.FTID := TID_INTEGER;
   my_types[TID_INTEGER] := my_int;
 
-  my_float := TLiType_float.Create(SystemTypeNames[TID_FLOAT], my_system, nil);
+  my_float := TLiType_float.Create(TID_NAMES[TID_FLOAT], my_system, nil);
   my_float.FStyle := tsBasic;
   my_float.FTID := TID_FLOAT;
   my_types[TID_FLOAT] := my_float;
 
-  my_curr := TLiType_currency.Create(SystemTypeNames[TID_CURRENCY], my_system, nil);
+  my_curr := TLiType_currency.Create(TID_NAMES[TID_CURRENCY], my_system, nil);
   my_curr.FStyle := tsBasic;
   my_curr.FTID := TID_CURRENCY;
   my_types[TID_CURRENCY] := my_curr;
 
-  my_time := TLiType_time.Create(SystemTypeNames[TID_time], my_system, nil);
+  my_time := TLiType_time.Create(TID_NAMES[TID_time], my_system, nil);
   my_time.FStyle := tsBasic;
-  my_time.FTID := TID_time;
+  my_time.FTID := TID_TIME;
   my_types[TID_time] := my_time;
 
-  my_bool := TLiType_boolean.Create(SystemTypeNames[TID_BOOLEAN], my_system, nil);
+  my_bool := TLiType_boolean.Create(TID_NAMES[TID_BOOLEAN], my_system, nil);
   my_bool.FStyle := tsBasic;
   my_bool.FTID := TID_BOOLEAN;
   my_types[TID_BOOLEAN] := my_bool;
 
-  my_string := TLiType_string.Create(SystemTypeNames[TID_STRING], my_system, nil);
-  my_string.FTID := TID_STRING;
-  my_types[TID_STRING] := my_string;
-
-  my_type := TLiType_type.Create(SystemTypeNames[TID_TYPE], my_system, nil);
-  my_type.FTID := TID_TYPE;
-  my_types[TID_TYPE] := my_type;
-
-  my_module := TLiType_module.Create(SystemTypeNames[TID_MODULE], my_system, nil);
-  my_module.FTID := TID_MODULE;
-  my_types[TID_MODULE] := my_module;
-
-  my_func := TLiType_func.Create(SystemTypeNames[TID_FUNCTION], my_system, nil);
-  my_func.FTID := TID_FUNCTION;
-  my_types[TID_FUNCTION] := my_func;
-
-  my_list := TLiType_list.Create(SystemTypeNames[TID_LIST], my_classes, nil);
+  my_list := TLiType_list.Create(TID_NAMES[TID_LIST], AddModule('Classes'), nil);
   my_list.FTID := TID_LIST;
   my_types[TID_LIST] := my_list;
 
-  my_hash := TLiType_hash.Create(SystemTypeNames[TID_HASHLIST], my_system, nil);
+  my_hash := TLiType_hash.Create(TID_NAMES[TID_HASHLIST], my_system, nil);
   my_hash.FTID := TID_HASHLIST;
   my_types[TID_HASHLIST] := my_hash;
 
-  my_strlist := TLiType_strlist.Create(SystemTypeNames[TID_STRLIST], my_classes, nil);
-  my_strlist.FTID := TID_STRLIST;
-  my_types[TID_STRLIST] := my_strlist;
+  my_string := TLiType_string.Create(TID_NAMES[TID_STRING], my_system, nil);
+  my_string.FTID := TID_STRING;
+  my_types[TID_STRING] := my_string;
 
-  my_type_seed := TID_CUSTOM;
+  my_type := TLiType_type.Create(TID_NAMES[TID_TYPE], my_system, nil);
+  my_type.FTID := TID_TYPE;
+  my_types[TID_TYPE] := my_type;
 
-  my_TReplaceFlag := TLiEnumType.Create('#TReplaceFlags', my_system, nil);
-  my_TReplaceFlag.Add(['rfReplaceAll', 'rfIgnoreCase']);
-  my_TReplaceFlags := my_TReplaceFlag.NewEnumSetType('TReplaceFlags');
+  my_module := TLiType_module.Create(TID_NAMES[TID_MODULE], my_system, nil);
+  my_module.FTID := TID_MODULE;
+  my_types[TID_MODULE] := my_module;
+
+  my_func := TLiType_func.Create(TID_NAMES[TID_FUNCTION], my_system, nil);
+  my_func.FTID := TID_FUNCTION;
+  my_types[TID_FUNCTION] := my_func;
+
+  my_TID_seed := 100;
 
   //-- constant --------------------------------------------------------------
 
-  my_system.FConstants.Add('CharSize').SetAsInteger(sizeof(char));
-  {$IFDEF MSWINDOWS}
-  my_system.FConstants.Add('DriveDelim').SetAsString(DriveDelim);
-  {$ENDIF}
-
-  my_system.FConstants.Add('faReadOnly').SetAsInteger(faReadOnly);
-  my_system.FConstants.Add('faHidden').SetAsInteger(faHidden);
-  my_system.FConstants.Add('faSysFile').SetAsInteger(faSysFile);
-  my_system.FConstants.Add('faVolumeId').SetAsInteger(faVolumeId);
-  my_system.FConstants.Add('faDirectory').SetAsInteger(faDirectory);
-  my_system.FConstants.Add('faArchive').SetAsInteger(faArchive);
-  my_system.FConstants.Add('faSymLink').SetAsInteger(faSymLink);
-  my_system.FConstants.Add('faAnyFile').SetAsInteger(faAnyFile);
-
-  my_system.FConstants.Add('fmOpenRead').SetAsInteger(fmOpenRead);
-  my_system.FConstants.Add('fmOpenWrite').SetAsInteger(fmOpenWrite);
-  my_system.FConstants.Add('fmOpenReadWrite').SetAsInteger(fmOpenReadWrite);
-  my_system.FConstants.Add('fmShareCompat').SetAsInteger(fmShareCompat);
-  my_system.FConstants.Add('fmShareExclusive').SetAsInteger(fmShareExclusive);
-  my_system.FConstants.Add('fmShareDenyWrite').SetAsInteger(fmShareDenyWrite);
-  my_system.FConstants.Add('fmShareDenyRead').SetAsInteger(fmShareDenyRead);
-  my_system.FConstants.Add('fmShareDenyNone').SetAsInteger(fmShareDenyNone);
-
-  {$IFNDEF FPC}
-  my_system.FConstants.Add('INVALID_HANDLE_VALUE').SetAsInteger(INVALID_HANDLE_VALUE);
-  {$ENDIF}
-  my_system.FConstants.Add('MaxInt').SetAsInteger(High(int64));
-  my_system.FConstants.Add('MinInt').SetAsInteger(Low(int64));
-  my_system.FConstants.Add('PathDelim').SetAsChar(PathDelim);
-  my_system.FConstants.Add('PathSep').SetAsChar(PathSep);
-  my_system.FConstants.Add('PI').SetAsFloat(PI);
-  my_system.FConstants.Add('PointerSize').SetAsInteger(sizeof(pointer));
-  my_system.FConstants.Add('sLineBreak').SetAsString(sLineBreak);
+  my_system.FConsts.Add('MaxInt').SetAsInteger(High(int64));
+  my_system.FConsts.Add('MinInt').SetAsInteger(Low(int64));
+  my_system.FConsts.Add('PathDelim').SetAsChar(PathDelim);
+  my_system.FConsts.Add('PathSep').SetAsChar(PathSep);
+  my_system.FConsts.Add('PI').SetAsFloat(PI);
+  my_system.FConsts.Add('PointerSize').SetAsInteger(sizeof(pointer));
+  my_system.FConsts.Add('sLineBreak').SetAsString(sLineBreak);
 
   //-- operator --------------------------------------------------------------
 
@@ -12864,9 +11509,6 @@ begin
   my_list.AddOperate(opShi, my_variant, {$IFDEF FPC}@{$ENDIF}list_shi_variant);
   my_list.AddOperate(opFill, my_variant, {$IFDEF FPC}@{$ENDIF}list_fill_variant);
 
-  my_strlist.AddOperate(opShi, my_variant, {$IFDEF FPC}@{$ENDIF}strlist_shi_variant);
-  my_strlist.AddOperate(opFill, my_variant, {$IFDEF FPC}@{$ENDIF}strlist_fill_variant);
-
   //-- compare --------------------------------------------------------------
 
   my_variant.AddCompare(my_variant, {$IFDEF FPC}@{$ENDIF}compare_variant_variant);
@@ -12892,460 +11534,43 @@ begin
   my_time.AddCompare(my_float, {$IFDEF FPC}@{$ENDIF}compare_time_float);
   my_bool.AddCompare(my_bool, {$IFDEF FPC}@{$ENDIF}compare_bool_bool);
 
-  //-- convert ---------------------------------------------------------------
-
-  my_list.AddConvert(my_strlist, {$IFDEF FPC}@{$ENDIF}strlist_as_list);
-  my_hash.AddConvert(my_strlist, {$IFDEF FPC}@{$ENDIF}strlist_as_hashed);
-  my_strlist.AddConvert(my_string, {$IFDEF FPC}@{$ENDIF}string_as_strlist);
-  my_strlist.AddConvert(my_list, {$IFDEF FPC}@{$ENDIF}list_as_strlist);
-  my_strlist.AddConvert(my_hash, {$IFDEF FPC}@{$ENDIF}hashed_as_strlist);
-
   //-- system.functions ------------------------------------------------------
 
-  my_system.AddFunc(['halt', '_value'], [my_nil, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_halt);
-  my_system.AddFunc(['exit', '_value'], [my_nil, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_exit);
-  my_system.AddFunc(['break'], [my_nil],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_break);
-  my_system.AddFunc(['continue'], [my_nil],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_continue);
-  my_system.AddFunc(['compile', 'code', '_args'], [my_func, my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_compile);
-  my_system.AddFunc(['eval', 'expression'], [my_variant, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_eval);
-  my_system.AddFunc(['find', 'name'], [my_variant, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_find);
-  my_system.AddFunc(['sleep', 'milliSeconds'], [my_nil, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_sleep);
-  my_system.AddFunc(['typeOf', 'any'], [my_type, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_typeof);
-  my_system.AddFunc(['nameOf', 'any'], [my_string, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_nameof);
-  my_system.AddFunc(['moduleOf', 'any'], [my_module, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_moduleof);
-  my_system.AddFunc(['fileOf', 'any'], [my_string, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_fileof);
-  my_system.AddFunc(['collectGarbage'], [my_nil],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_collectGarbage);
-  my_system.AddFunc(['pos', 'subStr', 'Str'], [my_int, my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_pos);
-  my_system.AddFunc(['inc', 'varb', '_value'], [my_nil, my_variant, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_inc);
-  my_system.AddFunc(['dec', 'varb', '_value'], [my_nil, my_variant, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_dec);
-  my_system.AddFunc(['readln', '_varb'], [my_string, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_readln);
-  my_system.AddFunc(['write', '_str'], [my_nil, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_write);
-  my_system.AddFunc(['writeln', '_str'], [my_nil, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_writeln);
-  my_system.AddFunc(['now'], [my_time],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_now);
-  my_system.AddFunc(['length', 'list'], [my_int, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_length);
-  my_system.AddFunc(['random', '_range'], [my_int, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_random);
-  my_system.AddFunc(['getEnvironmentVariable', 'name'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_getenv);
-  my_system.AddFunc(['getEnvironmentStrings'], [my_strlist],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_getEnvStrings);
-  my_system.AddFunc(['getEnv', 'name'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_getenv);
-  my_system.AddFunc(['getEnvs'], [my_strlist],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_getEnvStrings);
-  my_system.AddFunc(['genID'], [my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_genid);
-  my_system.AddFunc(['pass'], [my_nil],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_pass);
-  my_system.AddFunc(['format', 'fmt', 'args'], [my_string, my_string, my_list],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_format);
-  my_system.AddFunc(['max', 'v1', 'v2', '...'],
-                    [my_variant, my_variant, my_variant, my_list],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_max);
-  my_system.AddFunc(['min', 'v1', 'v2', '...'],
-                    [my_variant, my_variant, my_variant, my_list],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_min);
-  my_system.AddFunc(['isLeapYear', 'year'], [my_bool, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_leap);
-  my_system.AddFunc(['getTempFileName', '_fileExt'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_tmpfname);
-  my_system.AddFunc(['includeTrailingPathDelimiter', 'dir'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_incPD);
-  my_system.AddFunc(['excludeTrailingPathDelimiter', 'dir'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_excPD);
-  my_system.AddFunc(['correctPathDelimiter', 'fileName'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_veryPD);
-  my_system.AddFunc(['abs', 'value'], [my_variant, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_abs);
-  my_system.AddFunc(['intToStr', 'value'], [my_string, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_itos);
-  my_system.AddFunc(['strToInt', 's'], [my_int, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_stoi);
-  my_system.AddFunc(['intToHex', 'value', '_digits'], [my_string, my_int, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_itox);
-  my_system.AddFunc(['hexToInt', 's'], [my_int, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_xtoi);
-  my_system.AddFunc(['ord', 'value'], [my_int, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_ord);
-  my_system.AddFunc(['chr', 'value'], [my_char, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_chr);
-  my_system.AddFunc(['compareText', 's1', 's2'], [my_int, my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_compareText);
-  my_system.AddFunc(['sameText', 's1', 's2'], [my_bool, my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_sameText);
-  my_system.AddFunc(['compareStr', 's1', 's2'], [my_int, my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_compareStr);
-  my_system.AddFunc(['sameStr', 's1', 's2'], [my_bool, my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_sameStr);
-  my_system.AddFunc(['expandFileName', 'fileName'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_expandFileName);
-  my_system.AddFunc(['extractFilePath', 'fileName'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_filePath);
-  my_system.AddFunc(['extractFileName', 'fileName'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_fileName);
-  my_system.AddFunc(['extractFileExt', 'fileName'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_fileExt);
-  my_system.AddFunc(['changeFileExt', 'fileName', '_fileExt'], [my_string, my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_changeExt);
-  my_system.AddFunc(['trim', 's'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_trim).MakeMethod;
-  my_system.AddFunc(['trimLeft', 's'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_trimLeft).MakeMethod;
-  my_system.AddFunc(['trimRight', 's'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_trimRight).MakeMethod;
-  my_system.AddFunc(['trimAll', 's'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_trimAll).MakeMethod;
-  my_system.AddFunc(['lowerCase', 's'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_lower).MakeMethod;
-  my_system.AddFunc(['upperCase', 's'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_upper).MakeMethod;
-  my_system.AddFunc(['stringReplace', 's', 'patten', '_newStr', '_replaceFlags'],
-                    [my_string, my_string, my_string, my_string, my_TReplaceFlags],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_stringReplace);
-  my_system.AddFunc(['isIdent', 's'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_isIdent).MakeMethod;
-  my_system.AddFunc(['isAlpha', 's'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_isAlpha).MakeMethod;
-  my_system.AddFunc(['isAlnum', 's'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_isAlnum).MakeMethod;
-  my_system.AddFunc(['isCntrl', 's'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_isCntrl).MakeMethod;
-  my_system.AddFunc(['isSpace', 's'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_isSpace).MakeMethod;
-  my_system.AddFunc(['isDigit', 's'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_isDigit).MakeMethod;
-  my_system.AddFunc(['isHex', 's'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_isHex).MakeMethod;
-  my_system.AddFunc(['isLowerCase', 's'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_isLower).MakeMethod;
-  my_system.AddFunc(['isUpperCase', 's'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_isUpper).MakeMethod;
-  my_system.AddFunc(['getFileText', 'fileName'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_fileText);
-  my_system.AddFunc(['saveTextToFile', 'fileName'], [my_nil, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_saveFileText);
-  my_system.AddFunc(['decompile', 'object'], [my_strlist, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_system_decompile);
-
-  //-- string ----------------------------------------------------------------
-
-  my_string.AddMethod(['pos', 'subStr'], [my_int, my_string],
-                      {$IFDEF FPC}@{$ENDIF}pp_string_pos);
-  my_string.AddMethod(['replace', 'patten', '_newStr'], [my_string, my_string, my_string],
-                      {$IFDEF FPC}@{$ENDIF}pp_string_replace);
-  my_string.AddMethod(['delete', 'index', '_count'], [my_string, my_int, my_int],
-                      {$IFDEF FPC}@{$ENDIF}pp_string_delete);
-  my_string.AddMethod(['insert', 'substr', 'index'], [my_string, my_string, my_int],
-                      {$IFDEF FPC}@{$ENDIF}pp_string_insert);
-  my_string.AddMethod(['lines'], [my_list],
-                      {$IFDEF FPC}@{$ENDIF}pp_string_lines);
-  my_string.AddMethod(['chars'], [my_list],
-                      {$IFDEF FPC}@{$ENDIF}pp_string_chars);
-
-  //-- type ---- -------------------------------------------------------------
-
-  my_type.AddMethod(['name'], [my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_type_name);
-  my_type.AddMethod(['parent'], [my_type],
-                    {$IFDEF FPC}@{$ENDIF}pp_type_parent);
-  my_type.AddMethod(['module'], [my_module],
-                    {$IFDEF FPC}@{$ENDIF}pp_type_module);
-  my_type.AddMethod(['methods'], [my_list],
-                    {$IFDEF FPC}@{$ENDIF}pp_type_methods);
-  my_type.AddMethod(['isObject'], [my_bool],
-                    {$IFDEF FPC}@{$ENDIF}pp_type_isObject);
-  my_type.AddMethod(['isNil'], [my_bool],
-                    {$IFDEF FPC}@{$ENDIF}pp_type_isNil);
-  my_type.AddMethod(['itemValues'], [my_list],
-                    {$IFDEF FPC}@{$ENDIF}pp_type_itemValues);
-  my_type.AddMethod(['prototype', 'name'], [my_string, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_type_prototype);
-  my_type.SetupProp('', my_func, ['name'], [my_func],
-                    {$IFDEF FPC}@{$ENDIF}pp_type_get, nil);
-
-  //-- module -- -------------------------------------------------------------
-
-  my_module.AddMethod(['name'], [my_string],
-                      {$IFDEF FPC}@{$ENDIF}pp_module_name);
-  my_module.AddMethod(['consts'], [my_list],
-                      {$IFDEF FPC}@{$ENDIF}pp_module_consts);
-  my_module.AddMethod(['types'], [my_list],
-                      {$IFDEF FPC}@{$ENDIF}pp_module_types);
-  my_module.AddMethod(['funcs'], [my_list],
-                      {$IFDEF FPC}@{$ENDIF}pp_module_funcs);
-  my_module.AddMethod(['usings'], [my_list],
-                      {$IFDEF FPC}@{$ENDIF}pp_module_usings);
-  my_module.SetupProp('', my_variant, ['name'], [my_string],
-                      {$IFDEF FPC}@{$ENDIF}pp_module_get, nil);
-
-  //-- function --------------------------------------------------------------
-
-  my_func.AddMethod(['name'], [my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_name);
-  my_func.AddMethod(['prototype'], [my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_prototype);
-  my_func.AddMethod(['parent'], [my_type],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_parent);
-  my_func.AddMethod(['module'], [my_module],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_module);
-  my_func.AddMethod(['isMainFunc'], [my_bool],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_isMainFunc);
-  my_func.AddMethod(['isMethod'], [my_bool],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_isMethod);
-  my_func.AddMethod(['isConstructor'], [my_bool],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_isConstructor);
-  my_func.AddMethod(['changeAble'], [my_bool],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_changeAble);
-  my_func.AddMethod(['paramCount'], [my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_pcount);
-  my_func.AddMethod(['paramNames'], [my_list],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_pnames);
-  my_func.AddMethod(['paramTypes'], [my_list],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_ptypes);
-  my_func.AddMethod(['clear'], [my_nil],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_clear);
-  my_func.AddMethod(['clearParams'], [my_nil],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_clearParams);
-  my_func.AddMethod(['clearCodes'], [my_nil],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_clearCodes);
-  my_func.AddMethod(['addParam', 'name', '_type'],
-                    [my_bool, my_string, my_type],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_addParam);
-  my_func.AddMethod(['addCode', 'code'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_addCode);
-  my_func.AddMethod(['setCode', 'code'], [my_bool, my_string],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_setCode);
-  my_func.SetupProp('type', my_type,
-                    {$IFDEF FPC}@{$ENDIF}pp_func_getType,
-                    {$IFDEF FPC}@{$ENDIF}pp_func_setType);
-  my_func.SetupProp('paramNames', my_string, ['index'], [my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_getParamName, nil);
-  my_func.SetupProp('paramTypes', my_type, ['index'], [my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_func_getParamType, nil);
-
-  //-- list ------------------------------------------------------------------
-
-  my_list.AddMethod(['create', '_count'], [my_list, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_create);
-  my_list.AddMethod(['isEmpty'], [my_bool],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_isEmpty);
-  my_list.AddMethod(['clear'], [my_nil],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_clear);
-  my_list.AddMethod(['delete', 'index'], [my_nil, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_delete);
-  my_list.AddMethod(['remove', 'value'], [my_nil, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_remove);
-  my_list.AddMethod(['exchange', 'x1', 'x2'], [my_nil, my_int, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_exchange);
-  my_list.AddMethod(['move', 'fromX', 'toX'], [my_nil, my_int, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_move);
-  my_list.AddMethod(['sort'], [my_nil],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_sort);
-  my_list.AddMethod(['insert', 'index', '_value'], [my_nil, my_int, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_insert);
-  my_list.AddMethod(['add', '_value', '...'], [my_int, my_variant, my_list],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_add);
-  my_list.AddMethod(['indexOf', 'value'], [my_int, my_variant],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_indexOf);
-  my_list.AddMethod(['copy', 'index', 'count'], [my_list, my_int, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_copy);
-  my_list.AddMethod(['left', 'count'], [my_list, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_left);
-  my_list.AddMethod(['right', 'count'], [my_list, my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_right);
-  my_list.AddMethod(['assign', 'source'], [my_nil, my_list],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_assign);
-  my_list.SetupProp('count', my_int,
-                    {$IFDEF FPC}@{$ENDIF}pp_list_getCount,
-                    {$IFDEF FPC}@{$ENDIF}pp_list_setCount);
-  my_list.SetupProp('', my_variant, ['index'], [my_int],
-                    {$IFDEF FPC}@{$ENDIF}pp_list_get,
-                    {$IFDEF FPC}@{$ENDIF}pp_list_set);
-
-  //-- hashed ----------------------------------------------------------------
-
-  my_hash.AddMethod(['create'], [my_hash],
-                      {$IFDEF FPC}@{$ENDIF}pp_hashed_create);
-  my_hash.AddMethod(['isEmpty'], [my_bool],
-                      {$IFDEF FPC}@{$ENDIF}pp_hashed_isEmpty);
-  my_hash.AddMethod(['clear'], [my_nil],
-                      {$IFDEF FPC}@{$ENDIF}pp_hashed_clear);
-  my_hash.AddMethod(['has', 'key'], [my_bool, my_string],
-                      {$IFDEF FPC}@{$ENDIF}pp_hashed_has);
-  my_hash.AddMethod(['remove', 'key'], [my_nil, my_string],
-                      {$IFDEF FPC}@{$ENDIF}pp_hashed_remove);
-  my_hash.AddMethod(['keys'], [my_list],
-                      {$IFDEF FPC}@{$ENDIF}pp_hashed_keys);
-  my_hash.AddMethod(['values'], [my_list],
-                      {$IFDEF FPC}@{$ENDIF}pp_hashed_values);
-  my_hash.SetupProp('', my_variant, ['key'], [my_string],
-                      {$IFDEF FPC}@{$ENDIF}pp_hashed_get,
-                      {$IFDEF FPC}@{$ENDIF}pp_hashed_set);
-
-  //-- strlist ---------------------------------------------------------------
-
-  my_strlist.AddMethod(['create'], [my_strlist],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_create);
-  my_strlist.AddMethod(['isEmpty'], [my_bool],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_isEmpty);
-  my_strlist.AddMethod(['loadFromFile', 'fileName'], [my_nil, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_loadFromFile);
-  my_strlist.AddMethod(['saveToFile', 'fileName'], [my_nil, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_saveToFile);
-  my_strlist.AddMethod(['beginUpdate'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_beginUpdate);
-  my_strlist.AddMethod(['endUpdate'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_endUpdate);
-  my_strlist.AddMethod(['unique'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_unique);
-  my_strlist.AddMethod(['pack'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_pack);
-  my_strlist.AddMethod(['clear'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_clear);
-  my_strlist.AddMethod(['clearObjects'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_clearObjects);
-  my_strlist.AddMethod(['delete', 'index'], [my_nil, my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_delete);
-  my_strlist.AddMethod(['deleteLast'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_deleteLast);
-  my_strlist.AddMethod(['deleteEmptyLines'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_deleteEmptyLines);
-  my_strlist.AddMethod(['remove', 's'], [my_nil, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_remove);
-  my_strlist.AddMethod(['removeByName', 'name'], [my_nil, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_removeByName);
-  my_strlist.AddMethod(['add', '_s', '...'], [my_int, my_string, my_list],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_add);
-  my_strlist.AddMethod(['addObject', 's', 'obj'], [my_int, my_string, my_variant],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_addObject);
-  my_strlist.AddMethod(['insert', 'index', '_s'], [my_nil, my_int, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_insert);
-  my_strlist.AddMethod(['insertObject', 'index', 's', 'obj'], [my_nil, my_int, my_string, my_variant],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_insertObject);
-  my_strlist.AddMethod(['exchange', 'x1', 'x2'], [my_nil, my_int, my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_exchange);
-  my_strlist.AddMethod(['move', 'fromX', 'toX'], [my_nil, my_int, my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_move);
-  my_strlist.AddMethod(['sort'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_sort);
-  my_strlist.AddMethod(['indexOf', 's'], [my_int, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_indexOf);
-  my_strlist.AddMethod(['indexOfObject', 'obj'], [my_int, my_variant],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_indexOfObject);
-  my_strlist.AddMethod(['indexOfName', 'name'], [my_int, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_indexOfName);
-  my_strlist.AddMethod(['indexOfValue', 's'], [my_int, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_indexOfValue);
-  my_strlist.AddMethod(['find', 's', '_var_index'], [my_bool, my_string, my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_find);
-  my_strlist.AddMethod(['rename', 'name', 'newName'], [my_nil, my_string, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_rename);
-  my_strlist.AddMethod(['assign', 'source'], [my_nil, my_strlist],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_assign);
-  my_strlist.AddMethod(['equals', 'strlist'], [my_bool, my_strlist],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_equals);
-  my_strlist.AddMethod(['trim'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_trim);
-  my_strlist.AddMethod(['trimAll'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_trimAll);
-  my_strlist.AddMethod(['trimLeft'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_trimLeft);
-  my_strlist.AddMethod(['trimRight'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_trimRight);
-  my_strlist.AddMethod(['copy', 'index', 'count'], [my_strlist, my_int, my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_copy);
-  my_strlist.AddMethod(['left', 'count'], [my_strlist, my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_left);
-  my_strlist.AddMethod(['right', 'count'], [my_strlist, my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_right);
-  my_strlist.AddMethod(['select', 'patten'], [my_strlist, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_select);
-  my_strlist.AddMethod(['deleteMatched', 'patten'], [my_nil, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_deleteMatched);
-  my_strlist.AddMethod(['reverse'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_reverse);
-  my_strlist.SetupProp('count', my_int,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getCount,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setCount);
-  my_strlist.SetupProp('', my_string, ['index'], [my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_get,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_set);
-  my_strlist.SetupProp('names', my_strlist,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_names, nil);
-  my_strlist.SetupProp('names', my_string, ['index'], [my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getName, nil);
-  my_strlist.SetupProp('values', my_string, ['name'], [my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getValue,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setValue);
-  my_strlist.SetupProp('objects', my_variant, ['index'], [my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getObject,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setObject);
-  my_strlist.SetupProp('valueFromIndex', my_string, ['index'], [my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_valueFromIndex, nil);
-  my_strlist.SetupProp('text', my_string,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getText,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setText);
-  my_strlist.SetupProp('commaText', my_string,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getCommaText,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setCommaText);
-  my_strlist.SetupProp('delimiter', my_char,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getDelimiter,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setDelimiter);
-  my_strlist.SetupProp('delimitedText', my_string,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getDelimitedText,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setDelimitedText);
-  my_strlist.SetupProp('lineBreak', my_string,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getLineBreak,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setLineBreak);
-  my_strlist.SetupProp('nameValueSeparator', my_char,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getNameValueSeparator,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setNameValueSeparator);
-  my_strlist.SetupProp('quoteChar', my_char,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getQuoteChar,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setQuoteChar);
-  my_strlist.SetupProp('strictDelimiter', my_bool,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getStrictDelimiter,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setStrictDelimiter);
-  {$IFNDEF FPC}
-  my_strlist.SetupProp('writeBOM', my_bool,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getWriteBOM,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setWriteBOM);
-  {$ENDIF}
-  my_strlist.SetupProp('sorted', my_bool,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getSorted,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setSorted);
-  my_strlist.SetupProp('caseSensitive', my_bool,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getCaseSensitive,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setCaseSensitive);
-  my_strlist.SetupProp('first', my_string,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getFirst,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setFirst);
-  my_strlist.SetupProp('last', my_string,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_getLast,
-                       {$IFDEF FPC}@{$ENDIF}pp_strlist_setLast);
-
-//my_system.FFuncList.Sorted := true;
+  AddFunc('Halt', ['_Value'], [my_variant],
+          {$IFDEF FPC}@{$ENDIF}pp_system_halt);
+  AddFunc('Exit', ['_Value'], [my_variant],
+          {$IFDEF FPC}@{$ENDIF}pp_system_exit);
+  AddFunc('Break', {$IFDEF FPC}@{$ENDIF}pp_system_break);
+  AddFunc('Continue', {$IFDEF FPC}@{$ENDIF}pp_system_continue);
+  AddFunc('Compile', my_func, ['Code', '_Args'], [my_string, my_string],
+          {$IFDEF FPC}@{$ENDIF}pp_system_compile);
+  AddFunc('Eval', my_variant, ['Expression'], [my_string],
+          {$IFDEF FPC}@{$ENDIF}pp_system_eval);
+  AddFunc('Find', my_variant, ['Name'], [my_string],
+          {$IFDEF FPC}@{$ENDIF}pp_system_find);
+  AddFunc('TypeOf', my_type, ['Any'], [my_variant],
+          {$IFDEF FPC}@{$ENDIF}pp_system_typeof);
+  AddFunc('ModuleOf', my_module, ['Any'], [my_variant],
+          {$IFDEF FPC}@{$ENDIF}pp_system_moduleof);
+  AddFunc('FileOf', my_string, ['Any'], [my_variant],
+          {$IFDEF FPC}@{$ENDIF}pp_system_fileof);
+  AddFunc('CollectGarbage',
+          {$IFDEF FPC}@{$ENDIF}pp_system_collectGarbage);
+  AddFunc('Inc', ['Varb', '_Value'], [my_variant, my_int],
+          {$IFDEF FPC}@{$ENDIF}pp_system_inc);
+  AddFunc('Dec', ['Varb', '_Value'], [my_variant, my_int],
+          {$IFDEF FPC}@{$ENDIF}pp_system_dec);
+  AddFunc('Readln', my_string, ['_Varb'], [my_variant],
+          {$IFDEF FPC}@{$ENDIF}pp_system_readln);
+  AddFunc('Write', ['_Str'], [my_string],
+          {$IFDEF FPC}@{$ENDIF}pp_system_write);
+  AddFunc('Writeln', ['_Str'], [my_string],
+          {$IFDEF FPC}@{$ENDIF}pp_system_writeln);
+  AddFunc('Length', my_int, ['Any'], [my_variant],
+          {$IFDEF FPC}@{$ENDIF}pp_system_length);
+  AddFunc('Pass', {$IFDEF FPC}@{$ENDIF}pp_system_pass);
+  AddFunc('Decompile', my_string, ['Any'], [my_variant],
+          {$IFDEF FPC}@{$ENDIF}pp_system_decompile);
 end;
 
 finalization
@@ -13359,4 +11584,3 @@ except
 end;
 
 end.
-
