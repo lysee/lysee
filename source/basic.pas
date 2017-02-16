@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2003-2016, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2003/02/28                                                      }
-{    MODIFIED: 2016/11/19                                                      }
+{    MODIFIED: 2017/01/21                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -1589,11 +1589,8 @@ begin
 end;
 
 function LoadDLL(const FileName: string; var Handle: THandle): boolean;
-var
-  F: AnsiString;
 begin
-  F := FileName;
-  Handle := LoadLibrary(PChar(F));
+  Handle := LoadLibrary(PChar(FileName));
   Result := (Handle <> 0);
 end;
 
@@ -1603,11 +1600,8 @@ begin
 end;
 
 function GetProcAddr(Handle: THandle; const ProcName: string): pointer;
-var
-  F: AnsiString;
 begin
-  F := ProcName;
-  Result := GetProcAddress(Handle, PAnsiChar(F));
+  Result := GetProcAddress(Handle, PChar(ProcName));
 end;
 
 function stdin: integer;

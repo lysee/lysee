@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2012, Li Yun Jie. All Rights Reserved.            }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2012/05/19                                                      }
-{    MODIFIED: 2016/11/05                                                      }
+{    MODIFIED: 2017/01/04                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -59,8 +59,6 @@ const
                  'Persist Security Info=False';
 type
 
-  TLiADOConnection = class;
-
   { TLiADOQuery }
 
   TLiADOQuery = class(TLiDataSet)
@@ -69,6 +67,15 @@ type
   public
     function ExecSQL(const SQL: string): integer;
     procedure OpenSQL(const SQL: string);
+  end;
+
+  { TLiADOQueryType }
+
+  TLiADOQueryType = class(TLiDataSetType)
+  protected
+    procedure MyOpenSQL(const Param: TLiParam);
+    procedure MyExecSQL(const Param: TLiParam);
+    procedure Setup;override;
   end;
 
   { TLiADOConnection }
@@ -103,19 +110,50 @@ type
     property Mode: TConnectMode read GetMode write SetMode;
   end;
 
-  { TLiType_TADOQuery }
+  { TLiADOConnectionType }
 
-  TLiType_TADOQuery = class(TLiType_TDataSet);
-
-  { TLiType_TADOConnection }
-
-  TLiType_TADOConnection = class(TLiType_TDataBase);
+  TLiADOConnectionType = class(TLiDataBaseType)
+  protected
+    procedure MyCreate(const Param: TLiParam);
+    procedure MyOpenEx(const Param: TLiParam);
+    procedure MyConnectSQLServer(const Param: TLiParam);
+    procedure MyConnectAccess(const Param: TLiParam);
+    procedure MyConnectExcelForRead(const Param: TLiParam);
+    procedure MyConnectExcelForReadWrite(const Param: TLiParam);
+    procedure MyConnectOracle(const Param: TLiParam);
+    procedure MyConnectTextDB(const Param: TLiParam);
+    procedure MyConnectDBase(const Param: TLiParam);
+    procedure MyConnectParadox(const Param: TLiParam);
+    procedure MyOpenSQL(const Param: TLiParam);
+    procedure MyExecSQL(const Param: TLiParam);
+    procedure MyGetConnectionString(const Param: TLiParam);
+    procedure MySetConnectionString(const Param: TLiParam);
+    procedure MyGetConnectMode(const Param: TLiParam);
+    procedure MySetConnectMode(const Param: TLiParam);
+    procedure MyGetConnectOption(const Param: TLiParam);
+    procedure MySetConnectOption(const Param: TLiParam);
+    procedure MyGetCursorLocation(const Param: TLiParam);
+    procedure MySetCursorLocation(const Param: TLiParam);
+    procedure MyGetCommandTimeout(const Param: TLiParam);
+    procedure MySetCommandTimeout(const Param: TLiParam);
+    procedure MyGetConnectionTimeout(const Param: TLiParam);
+    procedure MySetConnectionTimeout(const Param: TLiParam);
+    procedure MyGetIsolationLevel(const Param: TLiParam);
+    procedure MySetIsolationLevel(const Param: TLiParam);
+    procedure MyGetKeepConnection(const Param: TLiParam);
+    procedure MySetKeepConnection(const Param: TLiParam);
+    procedure MyGetProvider(const Param: TLiParam);
+    procedure MySetProvider(const Param: TLiParam);
+    procedure MyGetDefaultDatabase(const Param: TLiParam);
+    procedure MySetDefaultDatabase(const Param: TLiParam);
+    procedure Setup;override;
+  end;
 
 var
 
   my_adodb: TLiModule;
-  my_TADOConnection: TLiType_TADOConnection;
-  my_TADOQuery: TLiType_TADOQuery;
+  my_TADOConnection: TLiADOConnectionType;
+  my_TADOQuery: TLiADOQueryType;
   my_TCursorLocation: TLiEnumType;
   my_TConnectOption: TLiEnumType;
   my_TConnectMode: TLiEnumType;
@@ -123,6 +161,7 @@ var
   my_default: TLiADOConnection;
 
 function NewConnection: TLiADOConnection;
+function DefConnection: TLiADOConnection;
 function SelectStr(const S1, S2: string): string;
 function ReplaceTag(const S, Tag, Value: string): string;
 function ReplaceTags(const S: string; const Tags, Values: array of string): string;
@@ -147,6 +186,16 @@ begin
   end;
 end;
 
+function DefConnection: TLiADOConnection;
+begin
+  if my_default = nil then
+  begin
+    my_default := NewConnection;
+    my_default.IncRefcount;
+  end;
+  Result := my_default;
+end;
+
 function SelectStr(const S1, S2: string): string;
 begin
   if S1 <> '' then
@@ -168,475 +217,11 @@ begin
     Result := ReplaceTag(Result, Tags[I], Values[I]);
 end;
 
-procedure CheckDefaultConnection;
-begin
-  Check(my_default <> nil, 'default ADO connection is nil');
-end;
-
-procedure SetupDefaultConnection;
-begin
-  if my_default = nil then
-  begin
-    my_default := NewConnection;
-    my_default.IncRefcount;
-  end;
-end;
-
 //-- my_adodb ------------------------------------------------------------------
 
-procedure pp_adodb_makeDefault(const Param: TLiParam);
-var
-  C: TLiADOConnection;
+procedure pp_adodb_adb(const Param: TLiParam);
 begin
-  Param.Result.SetTOA(my_TADOConnection, my_default);
-  C := Param[0].GetOA(my_TADOConnection);
-  if C <> my_default then
-  begin
-    my_TADOConnection._DecRefcount(my_default);
-    my_TADOConnection._IncRefcount(C);
-    my_default := C;
-  end;
-end;
-
-procedure pp_adodb_defaultConnection(const Param: TLiParam);
-begin
-  Param.Result.SetTOA(my_TADOConnection, my_default);
-end;
-
-procedure pp_adodb_open(const Param: TLiParam);
-begin
-  if Param.Prmc > 0 then
-  begin
-    SetupDefaultConnection;
-    my_default.Connect(Param[0].AsString);
-  end
-  else
-  begin
-    CheckDefaultConnection;
-    my_default.Open;
-  end;
-end;
-
-procedure pp_adodb_close(const Param: TLiParam);
-begin
-  if my_default <> nil then
-    my_default.Close;
-end;
-
-procedure pp_adodb_connectSQLServer(const Param: TLiParam);
-var
-  H, D, U, P: string;
-begin
-  SetupDefaultConnection;
-  H := SelectStr(Trim(Param[0].AsString), '127.0.0.1');
-  D := SelectStr(Trim(Param[1].AsString), 'master');
-  U := SelectStr(Trim(Param[2].AsString), 'sa');
-  P := Param[3].AsString;
-  my_default.Connect(CS_SQLSERVER,
-    ['user', 'password', 'dbname', 'host'], [U, P, D, H]);
-end;
-
-procedure pp_adodb_connectAccess(const Param: TLiParam);
-var
-  S: string;
-begin
-  SetupDefaultConnection;
-  S := ReplaceTag(CS_ACCESS, 'fname', Param[0].GetFileName);
-  if Param.Prmc > 1 then
-    S := S + ';Jet OLEDB:Database Password=' + Param[1].AsString;
-   {S := S + ';Password=' + Param[1].AsString;}
-  my_default.Connect(S);
-end;
-
-procedure pp_adodb_connectExcelForRead(const Param: TLiParam);
-begin
-  SetupDefaultConnection;
-  my_default.Connect(CS_EXCEL_R, ['fname'], [Param[0].GetFileName]);
-end;
-
-procedure pp_adodb_connectExcelForReadWrite(const Param: TLiParam);
-begin
-  SetupDefaultConnection;
-  my_default.Connect(CS_EXCEL_W, ['fname'], [Param[0].GetFileName]);
-end;
-
-procedure pp_adodb_connectOracle(const Param: TLiParam);
-var
-  H, U, P: string;
-begin
-  SetupDefaultConnection;
-  H := SelectStr(Trim(Param[0].AsString), '127.0.0.1');
-  U := Param[1].AsString;
-  P := Param[2].AsString;
-  my_default.Connect(CS_ORACLE, ['user', 'password', 'host'], [U, P, H]);
-end;
-
-procedure pp_adodb_connectTextDB(const Param: TLiParam);
-begin
-  SetupDefaultConnection;
-  my_default.Connect(CS_TEXT, ['dir'], [Param[0].GetFileName]);
-end;
-
-procedure pp_adodb_connectDBase(const Param: TLiParam);
-begin
-  SetupDefaultConnection;
-  my_default.FADODB.CursorLocation := clUseServer;
-  my_default.Connect(CS_DBASE, ['dir'], [Param[0].GetFileName]);
-end;
-
-procedure pp_adodb_connectParadox(const Param: TLiParam);
-begin
-  SetupDefaultConnection;
-  my_default.FADODB.CursorLocation := clUseServer;
-  my_default.Connect(CS_PARADOX, ['dir'], [Param[0].GetFileName]);
-end;
-
-procedure pp_adodb_inTransaction(const Param: TLiParam);
-begin
-  CheckDefaultConnection;
-  Param.Result.AsBoolean := my_default.InTransaction;
-end;
-
-procedure pp_adodb_transact(const Param: TLiParam);
-begin
-  CheckDefaultConnection;
-  my_default.Transact;
-end;
-
-procedure pp_adodb_commit(const Param: TLiParam);
-begin
-  CheckDefaultConnection;
-  my_default.Commit;
-end;
-
-procedure pp_adodb_rollback(const Param: TLiParam);
-begin
-  CheckDefaultConnection;
-  my_default.Rollback;
-end;
-
-procedure pp_adodb_openSQL(const Param: TLiParam);
-begin
-  CheckDefaultConnection;
-  Param.Result.SetTOA(my_TADOQuery, my_default.OpenSQL(Param[0].AsString));
-end;
-
-procedure pp_adodb_execSQL(const Param: TLiParam);
-begin
-  CheckDefaultConnection;
-  Param.Result.AsInteger := my_default.ExecSQL(Param[0].AsString);
-end;
-
-//-- my_adoquery ---------------------------------------------------------------
-
-procedure pp_query_create(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.SetTOA(my_TADOQuery, C.NewQuery);
-end;
-
-procedure pp_query_openSQL(const Param: TLiParam);
-var
-  Q: TLiADOQuery;
-begin
-  if Param.GetSelf(Q) then
-    Q.OpenSQL(Param[1].AsString);
-end;
-
-procedure pp_query_execSQL(const Param: TLiParam);
-var
-  Q: TLiADOQuery;
-begin
-  if Param.GetSelf(Q) then
-    Param.Result.AsInteger := Q.ExecSQL(Param[1].AsString);
-end;
-
-//-- my_adoconn ----------------------------------------------------------------
-
-procedure pp_connection_create(const Param: TLiParam);
-begin
-  Param.Result.SetTOA(my_TADOConnection, NewConnection);
-end;
-
-procedure pp_connection_open(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    if Param.Prmc > 1 then
-      C.Connect(Param[1].AsString) else
-      C.Open;
-end;
-
-procedure pp_connection_connectSQLServer(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-  H, D, U, P: string;
-begin
-  if Param.GetSelf(C) then
-  begin
-    H := SelectStr(Trim(Param[1].AsString), '127.0.0.1');
-    D := SelectStr(Trim(Param[2].AsString), 'master');
-    U := SelectStr(Trim(Param[3].AsString), 'sa');
-    P := Param[4].AsString;
-    C.Connect(CS_SQLSERVER, ['user', 'password', 'dbname', 'host'], [U, P, D, H]);
-  end;
-end;
-
-procedure pp_connection_connectAccess(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-  S: string;
-begin
-  if Param.GetSelf(C) then
-  begin
-    S := ReplaceTag(CS_ACCESS, 'fname', Param[1].GetFileName);
-    if Param.Prmc > 2 then
-      S := S + ';Jet OLEDB:Database Password=' + Param[2].AsString;
-     {S := S + ';Password=' + Param[2].AsString;}
-    C.Connect(S);
-  end;
-end;
-
-procedure pp_connection_connectExcelForRead(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.Connect(CS_EXCEL_R, ['fname'], [Param[1].GetFileName]);
-end;
-
-procedure pp_connection_connectExcelForReadWrite(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.Connect(CS_EXCEL_W, ['fname'], [Param[1].GetFileName]);
-end;
-
-procedure pp_connection_connectOracle(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-  H, U, P: string;
-begin
-  if Param.GetSelf(C) then
-  begin
-    H := SelectStr(Trim(Param[1].AsString), '127.0.0.1');
-    U := Param[2].AsString;
-    P := Param[3].AsString;
-    C.Connect(CS_ORACLE, ['user', 'password', 'host'], [U, P, H]);
-  end;
-end;
-
-procedure pp_connection_connectTextDB(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.Connect(CS_TEXT, ['dir'], [Param[1].GetFileName]);
-end;
-
-procedure pp_connection_connectDBase(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-  begin
-    C.FADODB.CursorLocation := clUseServer;
-    C.Connect(CS_DBASE, ['dir'], [Param[1].GetFileName]);
-  end;
-end;
-
-procedure pp_connection_connectParadox(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-  begin
-    C.FADODB.CursorLocation := clUseServer;
-    C.Connect(CS_PARADOX, ['dir'], [Param[1].GetFileName]);
-  end;
-end;
-
-procedure pp_connection_openSQL(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.SetTOA(my_TADOQuery, C.OpenSQL(Param[1].AsString));
-end;
-
-procedure pp_connection_execSQL(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.AsInteger := C.ExecSQL(Param[1].AsString);
-end;
-
-procedure pp_connection_getConnectionString(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.AsString := C.ConnectionString;
-end;
-
-procedure pp_connection_setConnectionString(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.ConnectionString := Param[1].AsString;
-end;
-
-procedure pp_connection_getMode(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    my_TConnectMode.SetValue(Param.Result, Ord(C.FADODB.Mode));
-end;
-
-procedure pp_connection_setMode(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.FADODB.Mode := TConnectMode(Param[1].AsInteger);
-end;
-
-procedure pp_connection_getConnectOptions(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    my_TConnectOption.SetValue(Param.Result,
-      Ord(C.FADODB.ConnectOptions));
-end;
-
-procedure pp_connection_setConnectOptions(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.FADODB.ConnectOptions := TConnectOption(Param[1].AsInteger);
-end;
-
-procedure pp_connection_getCursorLocation(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    my_TCursorLocation.SetValue(Param.Result,
-      Ord(C.FADODB.CursorLocation));
-end;
-
-procedure pp_connection_setCursorLocation(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.FADODB.CursorLocation := TCursorLocation(Param[1].AsInteger);
-end;
-
-procedure pp_connection_getCommandTimeout(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.AsInteger := C.FADODB.CommandTimeout;
-end;
-
-procedure pp_connection_setCommandTimeout(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.FADODB.CommandTimeout := Param[1].AsInteger;
-end;
-
-procedure pp_connection_getConnectionTimeout(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.AsInteger := C.FADODB.ConnectionTimeout;
-end;
-
-procedure pp_connection_setConnectionTimeout(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.FADODB.ConnectionTimeout := Param[1].AsInteger;
-end;
-
-procedure pp_connection_getIsolationLevel(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    my_TIsolationLevel.SetValue(Param.Result,
-      Ord(C.FADODB.IsolationLevel));
-end;
-
-procedure pp_connection_setIsolationLevel(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.FADODB.IsolationLevel := TIsolationLevel(Param[1].AsInteger);
-end;
-
-procedure pp_connection_getKeepConnection(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.AsBoolean := C.FADODB.KeepConnection;
-end;
-
-procedure pp_connection_setKeepConnection(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.FADODB.KeepConnection := Param[1].AsBoolean;
-end;
-
-procedure pp_connection_getProvider(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.AsString := C.FADODB.Provider;
-end;
-
-procedure pp_connection_setProvider(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.FADODB.Provider := Param[1].AsString;
-end;
-
-procedure pp_connection_getDefaultDatabase(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.AsString := C.FADODB.DefaultDatabase;
-end;
-
-procedure pp_connection_setDefaultDatabase(const Param: TLiParam);
-var
-  C: TLiADOConnection;
-begin
-  if Param.GetSelf(C) then
-    C.FADODB.DefaultDatabase := Param[1].AsString;
+  Param.Result.SetTOA(my_TADOConnection, DefConnection);
 end;
 
 { TLiADOQuery }
@@ -657,6 +242,33 @@ begin
   finally
     Close;
   end;
+end;
+
+{ TLiADOQueryType }
+
+procedure TLiADOQueryType.MyExecSQL(const Param: TLiParam);
+var
+  Q: TLiADOQuery;
+begin
+  if Param.GetSelf(Q) then
+    Param.Result.AsInteger := Q.ExecSQL(Param[1].AsString);
+end;
+
+procedure TLiADOQueryType.MyOpenSQL(const Param: TLiParam);
+var
+  Q: TLiADOQuery;
+begin
+  if Param.GetSelf(Q) then
+    Q.OpenSQL(Param[1].AsString);
+end;
+
+procedure TLiADOQueryType.Setup;
+begin
+  Method('OpenSQL', my_nil, ['SQL'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyOpenSQL);
+  Method('ExecSQL', my_int, ['SQL'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyExecSQL);
+  inherited;
 end;
 
 { TLiADOConnection }
@@ -783,37 +395,394 @@ begin
   FADODB.Mode := Value;
 end;
 
+{ TLiADOConnectionType }
+
+procedure TLiADOConnectionType.MyConnectAccess(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+  S: string;
+begin
+  if Param.GetSelf(C) then
+  begin
+    S := ReplaceTag(CS_ACCESS, 'fname', Param[1].GetFileName);
+    if Param.Prmc > 2 then
+      S := S + ';Jet OLEDB:Database Password=' + Param[2].AsString;
+     {S := S + ';Password=' + Param[2].AsString;}
+    C.Connect(S);
+  end;
+end;
+
+procedure TLiADOConnectionType.MyConnectDBase(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+  begin
+    C.FADODB.CursorLocation := clUseServer;
+    C.Connect(CS_DBASE, ['dir'], [Param[1].GetFileName]);
+  end;
+end;
+
+procedure TLiADOConnectionType.MyConnectExcelForRead(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.Connect(CS_EXCEL_R, ['fname'], [Param[1].GetFileName]);
+end;
+
+procedure TLiADOConnectionType.MyConnectExcelForReadWrite(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.Connect(CS_EXCEL_W, ['fname'], [Param[1].GetFileName]);
+end;
+
+procedure TLiADOConnectionType.MyConnectOracle(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+  H, U, P: string;
+begin
+  if Param.GetSelf(C) then
+  begin
+    H := SelectStr(Trim(Param[1].AsString), '127.0.0.1');
+    U := Param[2].AsString;
+    P := Param[3].AsString;
+    C.Connect(CS_ORACLE, ['user', 'password', 'host'], [U, P, H]);
+  end;
+end;
+
+procedure TLiADOConnectionType.MyConnectParadox(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+  begin
+    C.FADODB.CursorLocation := clUseServer;
+    C.Connect(CS_PARADOX, ['dir'], [Param[1].GetFileName]);
+  end;
+end;
+
+procedure TLiADOConnectionType.MyConnectSQLServer(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+  H, D, U, P: string;
+begin
+  if Param.GetSelf(C) then
+  begin
+    H := SelectStr(Trim(Param[1].AsString), '127.0.0.1');
+    D := SelectStr(Trim(Param[2].AsString), 'master');
+    U := SelectStr(Trim(Param[3].AsString), 'sa');
+    P := Param[4].AsString;
+    C.Connect(CS_SQLSERVER, ['user', 'password', 'dbname', 'host'], [U, P, D, H]);
+  end;
+end;
+
+procedure TLiADOConnectionType.MyConnectTextDB(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.Connect(CS_TEXT, ['dir'], [Param[1].GetFileName]);
+end;
+
+procedure TLiADOConnectionType.MyCreate(const Param: TLiParam);
+begin
+  Param.Result.SetTOA(Self, NewConnection);
+end;
+
+procedure TLiADOConnectionType.MyExecSQL(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    Param.Result.AsInteger := C.ExecSQL(Param[1].AsString);
+end;
+
+procedure TLiADOConnectionType.MyGetCommandTimeout(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    Param.Result.AsInteger := C.FADODB.CommandTimeout;
+end;
+
+procedure TLiADOConnectionType.MyGetConnectionString(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    Param.Result.AsString := C.ConnectionString;
+end;
+
+procedure TLiADOConnectionType.MyGetConnectionTimeout(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    Param.Result.AsInteger := C.FADODB.ConnectionTimeout;
+end;
+
+procedure TLiADOConnectionType.MyGetConnectMode(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    my_TConnectMode.SetValue(Param.Result, Ord(C.FADODB.Mode));
+end;
+
+procedure TLiADOConnectionType.MyGetConnectOption(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    my_TConnectOption.SetValue(Param.Result,
+      Ord(C.FADODB.ConnectOptions));
+end;
+
+procedure TLiADOConnectionType.MyGetCursorLocation(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    my_TCursorLocation.SetValue(Param.Result,
+      Ord(C.FADODB.CursorLocation));
+end;
+
+procedure TLiADOConnectionType.MyGetDefaultDatabase(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    Param.Result.AsString := C.FADODB.DefaultDatabase;
+end;
+
+procedure TLiADOConnectionType.MyGetIsolationLevel(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    my_TIsolationLevel.SetValue(Param.Result,
+      Ord(C.FADODB.IsolationLevel));
+end;
+
+procedure TLiADOConnectionType.MyGetKeepConnection(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    Param.Result.AsBoolean := C.FADODB.KeepConnection;
+end;
+
+procedure TLiADOConnectionType.MyGetProvider(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    Param.Result.AsString := C.FADODB.Provider;
+end;
+
+procedure TLiADOConnectionType.MyOpenEx(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    if Param.Prmc > 1 then
+      C.Connect(Param[1].AsString) else
+      C.Open;
+end;
+
+procedure TLiADOConnectionType.MyOpenSQL(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    Param.Result.SetTOA(my_TADOQuery, C.OpenSQL(Param[1].AsString));
+end;
+
+procedure TLiADOConnectionType.MySetCommandTimeout(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.FADODB.CommandTimeout := Param[1].AsInteger;
+end;
+
+procedure TLiADOConnectionType.MySetConnectionString(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.ConnectionString := Param[1].AsString;
+end;
+
+procedure TLiADOConnectionType.MySetConnectionTimeout(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.FADODB.ConnectionTimeout := Param[1].AsInteger;
+end;
+
+procedure TLiADOConnectionType.MySetConnectMode(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.FADODB.Mode := TConnectMode(Param[1].AsInteger);
+end;
+
+procedure TLiADOConnectionType.MySetConnectOption(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.FADODB.ConnectOptions := TConnectOption(Param[1].AsInteger);
+end;
+
+procedure TLiADOConnectionType.MySetCursorLocation(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.FADODB.CursorLocation := TCursorLocation(Param[1].AsInteger);
+end;
+
+procedure TLiADOConnectionType.MySetDefaultDatabase(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.FADODB.DefaultDatabase := Param[1].AsString;
+end;
+
+procedure TLiADOConnectionType.MySetIsolationLevel(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.FADODB.IsolationLevel := TIsolationLevel(Param[1].AsInteger);
+end;
+
+procedure TLiADOConnectionType.MySetKeepConnection(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.FADODB.KeepConnection := Param[1].AsBoolean;
+end;
+
+procedure TLiADOConnectionType.MySetProvider(const Param: TLiParam);
+var
+  C: TLiADOConnection;
+begin
+  if Param.GetSelf(C) then
+    C.FADODB.Provider := Param[1].AsString;
+end;
+
+procedure TLiADOConnectionType.Setup;
+begin
+  Method('Create', Self,
+         {$IFDEF FPC}@{$ENDIF}MyCreate);
+  Method('Open', my_nil,
+         ['_ConnectionString'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyOpenEx);
+  Method('ConnectSQLServer', my_nil,
+         ['Host', 'DBName', 'UserID', 'Password'],
+         [my_string, my_string, my_string, my_string],
+         {$IFDEF FPC}@{$ENDIF}MyConnectSQLServer);
+  Method('ConnectAccess', my_nil,
+         ['MdbFileName', '_Password'], [my_string, my_string],
+         {$IFDEF FPC}@{$ENDIF}MyConnectAccess);
+  Method('ConnectExcelForRead', my_nil,
+         ['XlsFileName'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyConnectExcelForRead);
+  Method('ConnectExcelForReadWrite', my_nil,
+         ['XlsFileName'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyConnectExcelForReadWrite);
+  Method('ConnectOracle', my_nil,
+         ['Host', 'User', 'Password'],
+         [my_string, my_string, my_string],
+         {$IFDEF FPC}@{$ENDIF}MyConnectOracle);
+  Method('ConnectTextDB', my_nil,
+         ['TxtFileDir'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyConnectTextDB);
+  Method('ConnectDBase', my_nil,
+         ['DbfFileDir'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyConnectDBase);
+  Method('ConnectParadox', my_nil,
+         ['DbFileDir'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyConnectParadox);
+  Method('OpenSQL', my_TADOQuery,
+         ['SQL'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyOpenSQL);
+  Method('ExecSQL', my_int,
+         ['SQL'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyExecSQL);
+  Define('ConnectionString', my_string,
+         {$IFDEF FPC}@{$ENDIF}MyGetConnectionString,
+         {$IFDEF FPC}@{$ENDIF}MySetConnectionString);
+  Define('Mode', my_TConnectMode,
+         {$IFDEF FPC}@{$ENDIF}MyGetConnectMode,
+         {$IFDEF FPC}@{$ENDIF}MySetConnectMode);
+  Define('ConnectOption', my_TConnectOption,
+         {$IFDEF FPC}@{$ENDIF}MyGetConnectOption,
+         {$IFDEF FPC}@{$ENDIF}MySetConnectOption);
+  Define('CursorLocation', my_TCursorLocation,
+         {$IFDEF FPC}@{$ENDIF}MyGetCursorLocation,
+         {$IFDEF FPC}@{$ENDIF}MySetCursorLocation);
+  Define('CommandTimeout', my_int,
+         {$IFDEF FPC}@{$ENDIF}MyGetCommandTimeout,
+         {$IFDEF FPC}@{$ENDIF}MySetCommandTimeout);
+  Define('ConnectionTimeout', my_int,
+         {$IFDEF FPC}@{$ENDIF}MyGetConnectionTimeout,
+         {$IFDEF FPC}@{$ENDIF}MySetConnectionTimeout);
+  Define('IsolationLevel', my_TIsolationLevel,
+         {$IFDEF FPC}@{$ENDIF}MyGetIsolationLevel,
+         {$IFDEF FPC}@{$ENDIF}MySetIsolationLevel);
+  Define('KeepConnection', my_bool,
+         {$IFDEF FPC}@{$ENDIF}MyGetKeepConnection,
+         {$IFDEF FPC}@{$ENDIF}MySetKeepConnection);
+  Define('Provider', my_string,
+         {$IFDEF FPC}@{$ENDIF}MyGetProvider,
+         {$IFDEF FPC}@{$ENDIF}MySetProvider);
+  Define('DefaultDatabase', my_string,
+         {$IFDEF FPC}@{$ENDIF}MyGetDefaultDatabase,
+         {$IFDEF FPC}@{$ENDIF}MySetDefaultDatabase);
+  inherited;
+end;
+
 initialization
 begin
   CoInitialize(nil);
-  my_adodb := TLiModule.Create('adodb');
-  my_TADOConnection := TLiType_TADOConnection.Create('TADOConnection', my_adodb, my_database);
-  my_TADOQuery := TLiType_TADOQuery.Create('TADOQuery', my_adodb, my_dataset);
+  my_adodb := AddModule('adodb');
 
-  { TCursorLocation }
+  //-- enum types --------------------------------------------------------------
 
-  my_TCursorLocation := TLiEnumType.Create('TCursorLocation', my_adodb, nil);
-  my_TCursorLocation.Add(['clUseServer', 'clUseClient']);
+  my_TCursorLocation := my_adodb.AddEnumType('TCursorLocation',
+    ['clUseServer', 'clUseClient']);
 
-  { TConnectOption }
+  my_TConnectOption := my_adodb.AddEnumType('TConnectOption',
+    ['coConnectUnspecified', 'coAsyncConnect']);
 
-  my_TConnectOption := TLiEnumType.Create('TConnectOption', my_adodb, nil);
-  my_TConnectOption.Add(['coConnectUnspecified', 'coAsyncConnect']);
+  my_TConnectMode := my_adodb.AddEnumType('TConnectMode',
+    ['cmUnknown', 'cmRead', 'cmWrite', 'cmReadWrite', 'cmShareDenyRead',
+     'cmShareDenyWrite', 'cmShareExclusive', 'cmShareDenyNone']);
 
-  { TConnectMode }
+  my_TIsolationLevel := my_adodb.AddEnumType('TIsolationLevel',
+    ['ilUnspecified', 'ilChaos', 'ilReadUncommitted', 'ilBrowse',
+     'ilCursorStability', 'ilReadCommitted', 'ilRepeatableRead',
+     'ilSerializable', 'ilIsolated']);
 
-  my_TConnectMode := TLiEnumType.Create('TConnectMode', my_adodb, nil);
-  my_TConnectMode.Add([
-    'cmUnknown', 'cmRead', 'cmWrite', 'cmReadWrite', 'cmShareDenyRead',
-    'cmShareDenyWrite', 'cmShareExclusive', 'cmShareDenyNone']);
+  //-- types -------------------------------------------------------------------
 
-  { TIsolationLevel }
+  my_TADOQuery := TLiADOQueryType.Create('TADOQuery', my_adodb, my_dataset);
+  my_TADOConnection := TLiADOConnectionType.Create('TADOConnection', my_adodb, my_database);
 
-  my_TIsolationLevel := TLiEnumType.Create('TIsolationLevel', my_adodb, nil);
-  my_TIsolationLevel.Add([
-    'ilUnspecified', 'ilChaos', 'ilReadUncommitted', 'ilBrowse',
-    'ilCursorStability', 'ilReadCommitted', 'ilRepeatableRead',
-    'ilSerializable', 'ilIsolated']);
+  //-- functions ---------------------------------------------------------------
+
+  my_adodb.AddFunc('Adb', my_TADOConnection, {$IFDEF FPC}@{$ENDIF}pp_adodb_adb);
 
   //-- constants ---------------------------------------------------------------
 
@@ -826,138 +795,11 @@ begin
   my_adodb.Consts.Add('CS_TEXT').AsString := CS_TEXT;
   my_adodb.Consts.Add('CS_DBASE').AsString := CS_DBASE;
   my_adodb.Consts.Add('CS_PARADOX').AsString := CS_PARADOX;
-
-  //-- my_adodb ----------------------------------------------------------------
-
-  my_adodb.AddFunc(['new'], [my_TADOConnection],
-                   {$IFDEF FPC}@{$ENDIF}pp_connection_create);
-  my_adodb.AddFunc(['makeDefault', 'connection'],
-                   [my_TADOConnection, my_TADOConnection],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_makeDefault);
-  my_adodb.AddFunc(['defaultConnection'], [my_TADOConnection],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_defaultConnection);
-  my_adodb.AddFunc(['open', '_connectionString'],
-                   [my_nil, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_open);
-  my_adodb.AddFunc(['close'], [my_nil],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_close);
-  my_adodb.AddFunc(['connectSQLServer', 'host', 'dbname', 'userID', 'password'],
-                   [my_nil, my_string, my_string, my_string, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_connectSQLServer);
-  my_adodb.AddFunc(['connectAccess', 'mdbFileName', '_password'],
-                   [my_nil, my_string, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_connectAccess);
-  my_adodb.AddFunc(['connectExcelForRead', 'xlsFileName'],
-                   [my_nil, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_connectExcelForRead);
-  my_adodb.AddFunc(['connectExcelForReadWrite', 'xlsFileName'],
-                   [my_nil, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_connectExcelForReadWrite);
-  my_adodb.AddFunc(['connectOracle', 'host', 'user', 'password'],
-                   [my_nil, my_string, my_string, my_string, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_connectOracle);
-  my_adodb.AddFunc(['connectTextDB', 'txtFileDir'],
-                   [my_nil, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_connectTextDB);
-  my_adodb.AddFunc(['connectDBase', 'dbfFileDir'],
-                   [my_nil, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_connectDBase);
-  my_adodb.AddFunc(['connectParadox', 'dbFileDir'],
-                   [my_nil, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_connectParadox);
-  my_adodb.AddFunc(['inTransaction'], [my_bool],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_inTransaction);
-  my_adodb.AddFunc(['transact'], [my_nil],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_transact);
-  my_adodb.AddFunc(['commit'], [my_nil],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_commit);
-  my_adodb.AddFunc(['rollback'], [my_nil],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_rollback);
-  my_adodb.AddFunc(['openSQL', 'SQL'], [my_TADOQuery, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_openSQL);
-  my_adodb.AddFunc(['execSQL', 'SQL'], [my_int, my_string],
-                   {$IFDEF FPC}@{$ENDIF}pp_adodb_execSQL);
-
-  //-- my_adoquery -------------------------------------------------------------
-
-  my_TADOQuery.AddMethod(['create', 'connection'],
-                         [my_TADOQuery, my_TADOConnection],
-                         {$IFDEF FPC}@{$ENDIF}pp_query_create);
-  my_TADOQuery.AddMethod(['openSQL', 'SQL'], [my_nil, my_string],
-                         {$IFDEF FPC}@{$ENDIF}pp_query_openSQL);
-  my_TADOQuery.AddMethod(['execSQL', 'SQL'], [my_int, my_string],
-                         {$IFDEF FPC}@{$ENDIF}pp_query_execSQL);
-
-  //-- my_adoconn --------------------------------------------------------------
-
-  my_TADOConnection.AddMethod(['create'], [my_TADOConnection],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_create);
-  my_TADOConnection.AddMethod(['open', '_connectionString'],
-                              [my_nil, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_open);
-  my_TADOConnection.AddMethod(['connectSQLServer', 'host', 'dbname', 'userID', 'password'],
-                              [my_nil, my_string, my_string, my_string, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_connectSQLServer);
-  my_TADOConnection.AddMethod(['connectAccess', 'mdbFileName', '_password'],
-                              [my_nil, my_string, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_connectAccess);
-  my_TADOConnection.AddMethod(['connectExcelForRead', 'xlsFileName'],
-                              [my_nil, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_connectExcelForRead);
-  my_TADOConnection.AddMethod(['connectExcelForReadWrite', 'xlsFileName'],
-                              [my_nil, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_connectExcelForReadWrite);
-  my_TADOConnection.AddMethod(['connectOracle', 'host', 'user', 'password'],
-                              [my_nil, my_string, my_string, my_string, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_connectOracle);
-  my_TADOConnection.AddMethod(['connectTextDB', 'txtFileDir'],
-                              [my_nil, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_connectTextDB);
-  my_TADOConnection.AddMethod(['connectDBase', 'dbfFileDir'],
-                              [my_nil, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_connectDBase);
-  my_TADOConnection.AddMethod(['connectParadox', 'dbFileDir'],
-                              [my_nil, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_connectParadox);
-  my_TADOConnection.AddMethod(['openSQL', 'SQL'], [my_TADOQuery, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_openSQL);
-  my_TADOConnection.AddMethod(['execSQL', 'SQL'], [my_int, my_string],
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_execSQL);
-  my_TADOConnection.SetupProp('connectionString', my_string,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_getConnectionString,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_setConnectionString);
-  my_TADOConnection.SetupProp('Mode', my_TConnectMode,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_getMode,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_setMode);
-  my_TADOConnection.SetupProp('ConnectOption', my_TConnectOption,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_getConnectOptions,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_setConnectOptions);
-  my_TADOConnection.SetupProp('CursorLocation', my_TCursorLocation,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_getCursorLocation,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_setCursorLocation);
-  my_TADOConnection.SetupProp('CommandTimeout', my_int,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_getCommandTimeout,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_setCommandTimeout);
-  my_TADOConnection.SetupProp('ConnectionTimeout', my_int,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_getConnectionTimeout,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_setConnectionTimeout);
-  my_TADOConnection.SetupProp('IsolationLevel', my_TIsolationLevel,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_getIsolationLevel,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_setIsolationLevel);
-  my_TADOConnection.SetupProp('KeepConnection', my_bool,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_getKeepConnection,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_setKeepConnection);
-  my_TADOConnection.SetupProp('Provider', my_string,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_getProvider,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_setProvider);
-  my_TADOConnection.SetupProp('DefaultDatabase', my_string,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_getDefaultDatabase,
-                              {$IFDEF FPC}@{$ENDIF}pp_connection_setDefaultDatabase);
 end;
 
 finalization
 begin
-  my_TADOConnection._DecRefcount(my_default)
+  if my_default <> nil then my_default.DecRefcount;
 end;
 
 end.

@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2012, Li Yun Jie. All Rights Reserved.            }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2012/05/19                                                      }
-{    MODIFIED: 2016/11/19                                                      }
+{    MODIFIED: 2017/01/07                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -17,7 +17,7 @@ unit lysee_db;
 interface
 
 uses
-  Classes, SysUtils, Db, lysee, basic;
+  Classes, SysUtils, Db, basic, lysee;
 
 type
 
@@ -43,16 +43,46 @@ type
     procedure SaveValueTo(Value: TLiValue);
     function IsNull: boolean;
     function AsString: string;override;
-    property Field: TField read FField;
-    property FieldName: string read GetName;
-    property FieldType: TLiType read GetType;
-    property FieldIndex: integer read GetIndex;
     property AsChar: char read GetAsChar;
     property AsInteger: int64 read GetAsInteger;
     property AsFloat: double read GetAsFloat;
     property AsCurrency: currency read GetAsCurrency;
     property AsTime: TDateTime read GetAsTime;
     property AsBoolean: boolean read GetAsBoolean;
+    property Field: TField read FField;
+    property FieldName: string read GetName;
+    property FieldType: TLiType read GetType;
+    property FieldIndex: integer read GetIndex;
+  end;
+
+  { TLiFieldType }
+
+  TLiFieldType = class(TLiType)
+  protected
+    procedure MyName(const Param: TLiParam);
+    procedure MyType(const Param: TLiParam);
+    procedure MyIndex(const Param: TLiParam);
+    procedure MyValue(const Param: TLiParam);
+    procedure MyIsNull(const Param: TLiParam);
+    procedure MyAsString(const Param: TLiParam);
+    procedure MyAsChar(const Param: TLiParam);
+    procedure MyAsInteger(const Param: TLiParam);
+    procedure MyAsFloat(const Param: TLiParam);
+    procedure MyAsCurrency(const Param: TLiParam);
+    procedure MyAsBoolean(const Param: TLiParam);
+    procedure MyAsTime(const Param: TLiParam);
+    procedure Setup;override;
+  public
+    function _IncRefcount(Obj: pointer): integer;override;
+    function _DecRefcount(Obj: pointer): integer;override;
+    function _AsString(Obj: pointer): string;override;
+    function _AsChar(Obj: pointer): char;override;
+    function _AsInteger(Obj: pointer): int64;override;
+    function _AsFloat(Obj: pointer): double;override;
+    function _AsCurrency(Obj: pointer): currency;override;
+    function _AsTime(Obj: pointer): TDateTime;override;
+    function _AsBoolean(Obj: pointer): boolean;override;
+    procedure _Validate(Obj: pointer);override;
   end;
 
   { TLiDataSet }
@@ -96,6 +126,36 @@ type
     property Eof: boolean read GetEof;
   end;
 
+  { TLiDataSetType }
+
+  TLiDataSetType = class(TLiType)
+  protected
+    procedure MyOpen(const Param: TLiParam);
+    procedure MyClose(const Param: TLiParam);
+    procedure MyFirst(const Param: TLiParam);
+    procedure MyLast(const Param: TLiParam);
+    procedure MyPrior(const Param: TLiParam);
+    procedure MyNext(const Param: TLiParam);
+    procedure MyBof(const Param: TLiParam);
+    procedure MyEof(const Param: TLiParam);
+    procedure MyFindField(const Param: TLiParam);
+    procedure MyFieldByName(const Param: TLiParam);
+    procedure MyFieldCount(const Param: TLiParam);
+    procedure MyRecordCount(const Param: TLiParam);
+    procedure MyGetActive(const Param: TLiParam);
+    procedure MySetActive(const Param: TLiParam);
+    procedure MyGetField(const Param: TLiParam);
+    procedure MyGetValue(const Param: TLiParam);
+    procedure Setup;override;
+  public
+    function _IncRefcount(Obj: pointer): integer;override;
+    function _DecRefcount(Obj: pointer): integer;override;
+    function _AsString(Obj: pointer): string;override;
+    function _AsBoolean(Obj: pointer): boolean;override;
+    function _Length(Obj: pointer): int64;override;
+    procedure _Validate(Obj: pointer);override;
+  end;
+
   { TLiDataBase }
 
   TLiDataBase = class(TLiObject)
@@ -136,38 +196,27 @@ type
     property LoginPrompt: boolean read GetLoginPrompt write SetLoginPrompt;
   end;
 
-  { TLiType_TField }
+  { TLiDataBaseType }
 
-  TLiType_TField = class(TLiType)
+  TLiDataBaseType = class(TLiType)
   protected
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    function _AsChar(Obj: pointer): char;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    function _AsFloat(Obj: pointer): double;override;
-    function _AsCurrency(Obj: pointer): currency;override;
-    function _AsTime(Obj: pointer): TDateTime;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Validate(Obj: pointer);override;
-  end;
-
-  { TLiType_TDataSet }
-
-  TLiType_TDataSet = class(TLiType)
-  protected
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    function _Length(Obj: pointer): int64;override;
-    procedure _Validate(Obj: pointer);override;
-  end;
-
-  { TLiType_TDataBase }
-
-  TLiType_TDataBase = class(TLiType)
-  protected
+    procedure MyOpen(const Param: TLiParam);
+    procedure MyClose(const Param: TLiParam);
+    procedure MyInTransaction(const Param: TLiParam);
+    procedure MyTransact(const Param: TLiParam);
+    procedure MyCommit(const Param: TLiParam);
+    procedure MyRollback(const Param: TLiParam);
+    procedure MyTableNames(const Param: TLiParam);
+    procedure MyUserTableNames(const Param: TLiParam);
+    procedure MySystemTableNames(const Param: TLiParam);
+    procedure MyTableFieldNames(const Param: TLiParam);
+    procedure MyProcedureNames(const Param: TLiParam);
+    procedure MyGetConnected(const Param: TLiParam);
+    procedure MySetConnected(const Param: TLiParam);
+    procedure MyGetLoginPrompt(const Param: TLiParam);
+    procedure MySetLoginPrompt(const Param: TLiParam);
+    procedure Setup;override;
+  public
     function _IncRefcount(Obj: pointer): integer;override;
     function _DecRefcount(Obj: pointer): integer;override;
     function _AsString(Obj: pointer): string;override;
@@ -177,9 +226,9 @@ type
 var
 
   my_db: TLiModule;
-  my_field: TLiType_TField;
-  my_dataset: TLiType_TDataSet;
-  my_database: TLiType_TDataBase;
+  my_field: TLiFieldType;
+  my_dataset: TLiDataSetType;
+  my_database: TLiDataBaseType;
 
 function FieldTID(AType: TFieldType): integer;overload;
 function FieldTID(AField: TField): integer;overload;
@@ -374,418 +423,6 @@ begin
   end;
 end;
 
-//-- my_field ------------------------------------------------------------------
-
-procedure pp_field_name(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsString := F.FieldName;
-end;
-
-procedure pp_field_type(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsType := F.FieldType;
-end;
-
-procedure pp_field_index(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsInteger := F.FieldIndex;
-end;
-
-procedure pp_field_value(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    GetFieldValue(F.FField, Param.Result);
-end;
-
-procedure pp_field_isNull(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsBoolean := F.IsNull;
-end;
-
-procedure pp_field_string(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsString := F.AsString;
-end;
-
-procedure pp_field_char(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsChar := F.AsChar;
-end;
-
-procedure pp_field_int(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsInteger := F.AsInteger;
-end;
-
-procedure pp_field_float(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsFloat := F.AsFloat;
-end;
-
-procedure pp_field_curr(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsCurrency := F.AsCurrency;
-end;
-
-procedure pp_field_bool(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsBoolean := F.AsBoolean;
-end;
-
-procedure pp_field_time(const Param: TLiParam);
-var
-  F: TLiField;
-begin
-  if Param.GetSelf(F) then
-    Param.Result.AsTime := F.AsTime;
-end;
-
-//-- my_dataset ----------------------------------------------------------------
-
-procedure pp_dataset_open(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    S.Open;
-end;
-
-procedure pp_dataset_close(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    S.Close;
-end;
-
-procedure pp_dataset_first(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    S.First;
-end;
-
-procedure pp_dataset_last(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    S.Last;
-end;
-
-procedure pp_dataset_prior(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    S.Prior;
-end;
-
-procedure pp_dataset_next(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    S.Next;
-end;
-
-procedure pp_dataset_bof(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    Param.Result.AsBoolean := S.Bof;
-end;
-
-procedure pp_dataset_eof(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    Param.Result.AsBoolean := S.Eof;
-end;
-
-procedure pp_dataset_findField(const Param: TLiParam);
-var
-  S: TLiDataSet;
-  F: TLiField;
-begin
-  if Param.GetSelf(S) then
-  begin
-    F := S.FindField(Param[1].AsString);
-    Param.Result.SetTOA(my_field, F);
-  end;
-end;
-
-procedure pp_dataset_fieldByName(const Param: TLiParam);
-var
-  S: TLiDataSet;
-  F: TLiField;
-begin
-  if Param.GetSelf(S) then
-  begin
-    F := S.FieldByName(Param[1].AsString);
-    Param.Result.SetTOA(my_field, F);
-  end;
-end;
-
-procedure pp_dataset_fieldCount(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    Param.Result.AsInteger := S.FieldCount;
-end;
-
-procedure pp_dataset_recordCount(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    Param.Result.AsInteger := S.RecordCount;
-end;
-
-procedure pp_dataset_getActive(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    Param.Result.AsBoolean := S.Active;
-end;
-
-procedure pp_dataset_setActive(const Param: TLiParam);
-var
-  S: TLiDataSet;
-begin
-  if Param.GetSelf(S) then
-    S.Active := Param[1].AsBoolean;
-end;
-
-procedure pp_dataset_get(const Param: TLiParam);
-var
-  S: TLiDataSet;
-  X: TLiValue;
-  F: TLiField;
-begin
-  if Param.GetSelf(S) then
-  begin
-    X := Param[1];
-    if X.VType.TID in [TID_STRING, TID_CHAR, TID_INTEGER] then
-    begin
-      if X.VType = my_int then
-        F := S.Fields[X.AsInteger] else
-        F := S.FieldByName(X.AsString);
-      Param.Result.SetTOA(my_field, F);
-    end
-    else Param.Error('invalid field index: %s', [X.VType.Name])
-  end;
-end;
-
-procedure pp_dataset_getValue(const Param: TLiParam);
-var
-  S: TLiDataSet;
-  X: TLiValue;
-  F: TLiField;
-begin
-  if Param.GetSelf(S) then
-  begin
-    X := Param[1];
-    if X.VType.TID in [TID_STRING, TID_CHAR, TID_INTEGER] then
-    begin
-      if X.VType = my_int then
-        F := S.Fields[X.AsInteger] else
-        F := S.FieldByName(X.AsString);
-      F.SaveValueTo(Param.Result);
-    end
-    else Param.Error('invalid field index: %s', [X.VType.Name])
-  end;
-end;
-
-//-- my_database ---------------------------------------------------------------
-
-procedure pp_database_open(const Param: TLiParam);
-var
-  C: TLiDataBase;
-begin
-  if Param.GetSelf(C) then C.Open;
-end;
-
-procedure pp_database_close(const Param: TLiParam);
-var
-  C: TLiDataBase;
-begin
-  if Param.GetSelf(C) then C.Close;
-end;
-
-procedure pp_database_inTransaction(const Param: TLiParam);
-var
-  C: TLiDataBase;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.AsBoolean := C.InTransaction;
-end;
-
-procedure pp_database_transact(const Param: TLiParam);
-var
-  C: TLiDataBase;
-begin
-  if Param.GetSelf(C) then C.Transact;
-end;
-
-procedure pp_database_commit(const Param: TLiParam);
-var
-  C: TLiDataBase;
-begin
-  if Param.GetSelf(C) then C.Commit;
-end;
-
-procedure pp_database_rollback(const Param: TLiParam);
-var
-  C: TLiDataBase;
-begin
-  if Param.GetSelf(C) then C.Rollback;
-end;
-
-procedure pp_database_tableFieldNames(const Param: TLiParam);
-var
-  C: TLiDataBase;
-  L: TLiStringList;
-begin
-  if Param.GetSelf(C) then
-  begin
-    L := TLiStringList.Create;
-    Param.Result.AsStringList := L;
-    C.GetFieldNames(L.StringList, Param[1].AsString);
-  end;
-end;
-
-procedure pp_database_userTableNames(const Param: TLiParam);
-var
-  C: TLiDataBase;
-  L: TLiStringList;
-begin
-  if Param.GetSelf(C) then
-  begin
-    L := TLiStringList.Create;
-    Param.Result.AsStringList := L;
-    C.GetTableNames(L.StringList, false);
-  end;
-end;
-
-procedure pp_database_systemTableNames(const Param: TLiParam);
-var
-  C: TLiDataBase;
-  L: TLiStringList;
-  U: TStrings;
-  I: integer;
-begin
-  if Param.GetSelf(C) then
-  begin
-    L := TLiStringList.Create;
-    Param.Result.AsStringList := L;
-    C.GetTableNames(L.StringList, true);
-    U := TStringList.Create;
-    try
-      C.GetTableNames(U, false);
-      for I := 0 to U.Count - 1 do
-        L.Remove(U[I], false);
-    finally
-      U.Free;
-    end;
-  end;
-end;
-
-procedure pp_database_tableNames(const Param: TLiParam);
-var
-  C: TLiDataBase;
-  L: TLiStringList;
-begin
-  if Param.GetSelf(C) then
-  begin
-    L := TLiStringList.Create;
-    Param.Result.AsStringList := L;
-    C.GetTableNames(L.StringList, true);
-  end;
-end;
-
-procedure pp_database_procedures(const Param: TLiParam);
-var
-  C: TLiDataBase;
-  L: TLiStringList;
-begin
-  if Param.GetSelf(C) then
-  begin
-    L := TLiStringList.Create;
-    Param.Result.AsStringList := L;
-    C.GetProcedureNames(L.StringList);
-  end;
-end;
-
-procedure pp_database_getConnected(const Param: TLiParam);
-var
-  C: TLiDataBase;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.AsBoolean := C.Connected;
-end;
-
-procedure pp_database_setConnected(const Param: TLiParam);
-var
-  C: TLiDataBase;
-begin
-  if Param.GetSelf(C) then
-    C.Connected := Param[1].AsBoolean;
-end;
-
-procedure pp_database_getLoginPrompt(const Param: TLiParam);
-var
-  C: TLiDataBase;
-begin
-  if Param.GetSelf(C) then
-    Param.Result.AsBoolean := C.LoginPrompt;
-end;
-
-procedure pp_database_setLoginPrompt(const Param: TLiParam);
-var
-  C: TLiDataBase;
-begin
-  if Param.GetSelf(C) then
-    C.LoginPrompt := Param[1].AsBoolean;
-end;
-
 { TLiField }
 
 constructor TLiField.Create(AField: TField);
@@ -851,6 +488,178 @@ end;
 procedure TLiField.SaveValueTo(Value: TLiValue);
 begin
   GetFieldValue(FField, Value);
+end;
+
+{ TLiFieldType }
+
+procedure TLiFieldType.MyAsBoolean(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsBoolean := F.AsBoolean;
+end;
+
+procedure TLiFieldType.MyAsChar(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsChar := F.AsChar;
+end;
+
+procedure TLiFieldType.MyAsCurrency(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsCurrency := F.AsCurrency;
+end;
+
+procedure TLiFieldType.MyAsFloat(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsFloat := F.AsFloat;
+end;
+
+procedure TLiFieldType.MyAsInteger(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsInteger := F.AsInteger;
+end;
+
+procedure TLiFieldType.MyAsString(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsString := F.AsString;
+end;
+
+procedure TLiFieldType.MyAsTime(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsTime := F.AsTime;
+end;
+
+procedure TLiFieldType.MyIndex(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsInteger := F.FieldIndex;
+end;
+
+procedure TLiFieldType.MyIsNull(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsBoolean := F.IsNull;
+end;
+
+procedure TLiFieldType.MyName(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsString := F.FieldName;
+end;
+
+procedure TLiFieldType.MyType(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    Param.Result.AsType := F.FieldType;
+end;
+
+procedure TLiFieldType.MyValue(const Param: TLiParam);
+var
+  F: TLiField;
+begin
+  if Param.GetSelf(F) then
+    GetFieldValue(F.FField, Param.Result);
+end;
+
+procedure TLiFieldType.Setup;
+begin
+  Method('Name', my_string, {$IFDEF FPC}@{$ENDIF}MyName);
+  Method('Type', my_type, {$IFDEF FPC}@{$ENDIF}MyType);
+  Method('Index', my_int, {$IFDEF FPC}@{$ENDIF}MyIndex);
+  Method('Value', my_variant, {$IFDEF FPC}@{$ENDIF}MyValue);
+  Method('IsNull', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsNull);
+  Method('AsString', my_string, {$IFDEF FPC}@{$ENDIF}MyAsString);
+  Method('AsChar', my_char, {$IFDEF FPC}@{$ENDIF}MyAsChar);
+  Method('AsInteger', my_int, {$IFDEF FPC}@{$ENDIF}MyAsInteger);
+  Method('AsFloat', my_float, {$IFDEF FPC}@{$ENDIF}MyAsFloat);
+  Method('AsCurrency', my_curr, {$IFDEF FPC}@{$ENDIF}MyAsCurrency);
+  Method('AsBoolean', my_bool, {$IFDEF FPC}@{$ENDIF}MyAsBoolean);
+  Method('AsTime', my_time, {$IFDEF FPC}@{$ENDIF}MyAsTime);
+  inherited;
+end;
+
+function TLiFieldType._AsBoolean(Obj: pointer): boolean;
+begin
+  Result := (Obj <> nil) and TLiField(Obj).AsBoolean;
+end;
+
+function TLiFieldType._AsChar(Obj: pointer): char;
+begin
+  Result := TLiField(Obj).AsChar;
+end;
+
+function TLiFieldType._AsFloat(Obj: pointer): double;
+begin
+  Result := TLiField(Obj).AsFloat;
+end;
+
+function TLiFieldType._AsInteger(Obj: pointer): int64;
+begin
+  Result := TLiField(Obj).AsInteger;
+end;
+
+function TLiFieldType._AsCurrency(Obj: pointer): currency;
+begin
+  Result := TLiField(Obj).AsCurrency;
+end;
+
+function TLiFieldType._AsString(Obj: pointer): string;
+begin
+  if Obj <> nil then
+    Result := TLiField(Obj).AsString else
+    Result := '';
+end;
+
+function TLiFieldType._AsTime(Obj: pointer): TDateTime;
+begin
+  Result := TLiField(Obj).AsTime;
+end;
+
+function TLiFieldType._DecRefcount(Obj: pointer): integer;
+begin
+  if Obj <> nil then
+    Result := TLiField(Obj).DecRefcount else
+    Result := 0;
+end;
+
+function TLiFieldType._IncRefcount(Obj: pointer): integer;
+begin
+  if Obj <> nil then
+    Result := TLiField(Obj).IncRefcount else
+    Result := 0;
+end;
+
+procedure TLiFieldType._Validate(Obj: pointer);
+begin
+  inherited;
+  Check(TLiField(Obj).FField <> nil, 'field has been released');
 end;
 
 { TLiDataSet }
@@ -1032,6 +841,229 @@ begin
     end;
 end;
 
+{ TLiDataSetType }
+
+procedure TLiDataSetType.MyFieldByName(const Param: TLiParam);
+var
+  S: TLiDataSet;
+  F: TLiField;
+begin
+  if Param.GetSelf(S) then
+  begin
+    F := S.FieldByName(Param[1].AsString);
+    Param.Result.SetTOA(my_field, F);
+  end;
+end;
+
+procedure TLiDataSetType.MyFieldCount(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then
+    Param.Result.AsInteger := S.FieldCount;
+end;
+
+procedure TLiDataSetType.MyBof(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then
+    Param.Result.AsBoolean := S.Bof;
+end;
+
+procedure TLiDataSetType.MyClose(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then S.Close;
+end;
+
+procedure TLiDataSetType.MyEof(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then
+    Param.Result.AsBoolean := S.Eof;
+end;
+
+procedure TLiDataSetType.MyFindField(const Param: TLiParam);
+var
+  S: TLiDataSet;
+  F: TLiField;
+begin
+  if Param.GetSelf(S) then
+  begin
+    F := S.FindField(Param[1].AsString);
+    Param.Result.SetTOA(my_field, F);
+  end;
+end;
+
+procedure TLiDataSetType.MyFirst(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then S.First;
+end;
+
+procedure TLiDataSetType.MyGetActive(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then
+    Param.Result.AsBoolean := S.Active;
+end;
+
+procedure TLiDataSetType.MyGetField(const Param: TLiParam);
+var
+  S: TLiDataSet;
+  X: TLiValue;
+  F: TLiField;
+begin
+  if Param.GetSelf(S) then
+  begin
+    X := Param[1];
+    if X.VType.TID in [TID_STRING, TID_CHAR, TID_INTEGER] then
+    begin
+      if X.VType = my_int then
+        F := S.Fields[X.AsInteger] else
+        F := S.FieldByName(X.AsString);
+      Param.Result.SetTOA(my_field, F);
+    end
+    else Param.Error('invalid field index: %s', [X.VType.Name])
+  end;
+end;
+
+procedure TLiDataSetType.MyGetValue(const Param: TLiParam);
+var
+  S: TLiDataSet;
+  X: TLiValue;
+  F: TLiField;
+begin
+  if Param.GetSelf(S) then
+  begin
+    X := Param[1];
+    if X.VType.TID in [TID_STRING, TID_CHAR, TID_INTEGER] then
+    begin
+      if X.VType = my_int then
+        F := S.Fields[X.AsInteger] else
+        F := S.FieldByName(X.AsString);
+      F.SaveValueTo(Param.Result);
+    end
+    else Param.Error('invalid field index: %s', [X.VType.Name])
+  end;
+end;
+
+procedure TLiDataSetType.MyLast(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then S.Last;
+end;
+
+procedure TLiDataSetType.MyNext(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then S.Next;
+end;
+
+procedure TLiDataSetType.MyOpen(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then S.Open;
+end;
+
+procedure TLiDataSetType.MyPrior(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then S.Prior;
+end;
+
+procedure TLiDataSetType.MyRecordCount(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then
+    Param.Result.AsInteger := S.RecordCount;
+end;
+
+procedure TLiDataSetType.MySetActive(const Param: TLiParam);
+var
+  S: TLiDataSet;
+begin
+  if Param.GetSelf(S) then
+    S.Active := Param[1].AsBoolean;
+end;
+
+procedure TLiDataSetType.Setup;
+begin
+  Method('Open', {$IFDEF FPC}@{$ENDIF}MyOpen);
+  Method('Close', {$IFDEF FPC}@{$ENDIF}MyClose);
+  Method('First', {$IFDEF FPC}@{$ENDIF}MyFirst);
+  Method('Last', {$IFDEF FPC}@{$ENDIF}MyLast);
+  Method('Prior', {$IFDEF FPC}@{$ENDIF}MyPrior);
+  Method('Next', {$IFDEF FPC}@{$ENDIF}MyNext);
+  Method('Bof', my_bool, {$IFDEF FPC}@{$ENDIF}MyBof);
+  Method('Eof', my_bool, {$IFDEF FPC}@{$ENDIF}MyEof);
+  Method('RecordCount', my_int, {$IFDEF FPC}@{$ENDIF}MyRecordCount);
+  Method('FieldCount', my_int, {$IFDEF FPC}@{$ENDIF}MyFieldCount);
+  Method('FindField', my_field, ['FieldName'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyFindField);
+  Method('FieldByName', my_field, ['FieldName'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyFieldByName);
+  Define('Active', my_bool,
+         {$IFDEF FPC}@{$ENDIF}MyGetActive,
+         {$IFDEF FPC}@{$ENDIF}MySetActive);
+  Define('Fields', my_field, 'Index', my_variant,
+         {$IFDEF FPC}@{$ENDIF}MyGetField);
+  Define('', my_field, 'Index', my_variant,
+         {$IFDEF FPC}@{$ENDIF}MyGetField);
+  Define('Values', my_variant, 'Index', my_variant,
+         {$IFDEF FPC}@{$ENDIF}MyGetValue);
+  inherited;
+end;
+
+function TLiDataSetType._AsBoolean(Obj: pointer): boolean;
+begin
+  Result := (Obj <> nil) and TLiDataSet(Obj).Active;
+end;
+
+function TLiDataSetType._AsString(Obj: pointer): string;
+begin
+  if Obj <> nil then
+    Result := TLiDataSet(Obj).AsString else
+    Result := '';
+end;
+
+function TLiDataSetType._DecRefcount(Obj: pointer): integer;
+begin
+  if Obj <> nil then
+    Result := TLiDataSet(Obj).DecRefcount else
+    Result := 0;
+end;
+
+function TLiDataSetType._IncRefcount(Obj: pointer): integer;
+begin
+  if Obj <> nil then
+    Result := TLiDataSet(Obj).IncRefcount else
+    Result := 0;
+end;
+
+function TLiDataSetType._Length(Obj: pointer): int64;
+begin
+  if Obj <> nil then
+    Result := TLiDataSet(Obj).FieldCount else
+    Result := 0;
+end;
+
+procedure TLiDataSetType._Validate(Obj: pointer);
+begin
+  inherited;
+  Check(TLiDataSet(Obj).FDataSet <> nil, 'dataset has been released');
+end;
+
 { TLiDataBase }
 
 procedure TLiDataBase.ClearDataSets;
@@ -1187,128 +1219,235 @@ begin
   { nothing }
 end;
 
-{ TLiType_TField }
+{ TLiDataBaseType }
 
-function TLiType_TField._AsBoolean(Obj: pointer): boolean;
+procedure TLiDataBaseType.MyClose(const Param: TLiParam);
+var
+  C: TLiDataBase;
 begin
-  Result := (Obj <> nil) and TLiField(Obj).AsBoolean;
+  if Param.GetSelf(C) then C.Close;
 end;
 
-function TLiType_TField._AsChar(Obj: pointer): char;
+procedure TLiDataBaseType.MyCommit(const Param: TLiParam);
+var
+  C: TLiDataBase;
 begin
-  Result := TLiField(Obj).AsChar;
+  if Param.GetSelf(C) then C.Commit;
 end;
 
-function TLiType_TField._AsFloat(Obj: pointer): double;
+procedure TLiDataBaseType.MyGetConnected(const Param: TLiParam);
+var
+  C: TLiDataBase;
 begin
-  Result := TLiField(Obj).AsFloat;
+  if Param.GetSelf(C) then
+    Param.Result.AsBoolean := C.Connected;
 end;
 
-function TLiType_TField._AsInteger(Obj: pointer): int64;
+procedure TLiDataBaseType.MyGetLoginPrompt(const Param: TLiParam);
+var
+  C: TLiDataBase;
 begin
-  Result := TLiField(Obj).AsInteger;
+  if Param.GetSelf(C) then
+    Param.Result.AsBoolean := C.LoginPrompt;
 end;
 
-function TLiType_TField._AsCurrency(Obj: pointer): currency;
+procedure TLiDataBaseType.MyInTransaction(const Param: TLiParam);
+var
+  C: TLiDataBase;
 begin
-  Result := TLiField(Obj).AsCurrency;
+  if Param.GetSelf(C) then
+    Param.Result.AsBoolean := C.InTransaction;
 end;
 
-function TLiType_TField._AsString(Obj: pointer): string;
+procedure TLiDataBaseType.MyOpen(const Param: TLiParam);
+var
+  C: TLiDataBase;
 begin
-  if Obj <> nil then
-    Result := TLiField(Obj).AsString else
-    Result := '';
+  if Param.GetSelf(C) then C.Open;
 end;
 
-function TLiType_TField._AsTime(Obj: pointer): TDateTime;
+procedure TLiDataBaseType.MyProcedureNames(const Param: TLiParam);
+var
+  C: TLiDataBase;
+  L: TLiList;
+  T: TStrings;
 begin
-  Result := TLiField(Obj).AsTime;
+  if Param.GetSelf(C) then
+  begin
+    L := TLiList.Create;
+    Param.Result.SetTOA(my_list, L);
+    T := TStringList.Create;
+    try
+      C.GetProcedureNames(T);
+      L.AddStrings(T);
+    finally
+      T.Free;
+    end;
+  end;
 end;
 
-function TLiType_TField._DecRefcount(Obj: pointer): integer;
+procedure TLiDataBaseType.MyRollback(const Param: TLiParam);
+var
+  C: TLiDataBase;
 begin
-  if Obj <> nil then
-    Result := TLiField(Obj).DecRefcount else
-    Result := 0;
+  if Param.GetSelf(C) then C.Rollback;
 end;
 
-function TLiType_TField._IncRefcount(Obj: pointer): integer;
+procedure TLiDataBaseType.MySetConnected(const Param: TLiParam);
+var
+  C: TLiDataBase;
 begin
-  if Obj <> nil then
-    Result := TLiField(Obj).IncRefcount else
-    Result := 0;
+  if Param.GetSelf(C) then
+    C.Connected := Param[1].AsBoolean;
 end;
 
-procedure TLiType_TField._Validate(Obj: pointer);
+procedure TLiDataBaseType.MySetLoginPrompt(const Param: TLiParam);
+var
+  C: TLiDataBase;
 begin
+  if Param.GetSelf(C) then
+    C.LoginPrompt := Param[1].AsBoolean;
+end;
+
+procedure TLiDataBaseType.MySystemTableNames(const Param: TLiParam);
+var
+  C: TLiDataBase;
+  L: TLiList;
+  T, U: TStrings;
+  I, X: integer;
+begin
+  if Param.GetSelf(C) then
+  begin
+    L := TLiList.Create;
+    Param.Result.SetTOA(my_list, L);
+    T := TStringList.Create;
+    U := TStringList.Create;
+    try
+      C.GetTableNames(T, true);
+      C.GetTableNames(U, false);
+      for I := 0 to U.Count - 1 do
+      begin
+        X := T.IndexOf(U[I]);
+        if X >= 0 then T.Delete(X);
+      end;
+      L.AddStrings(T);
+    finally
+      U.Free;
+      T.Free;
+    end;
+  end;
+end;
+
+procedure TLiDataBaseType.MyTableFieldNames(const Param: TLiParam);
+var
+  C: TLiDataBase;
+  L: TLiList;
+  T: TStrings;
+begin
+  if Param.GetSelf(C) then
+  begin
+    L := TLiList.Create;
+    Param.Result.SetTOA(my_list, L);
+    T := TStringList.Create;
+    try
+      C.GetFieldNames(T, Param[1].AsString);
+      L.AddStrings(T);
+    finally
+      T.Free;
+    end;
+  end;
+end;
+
+procedure TLiDataBaseType.MyTableNames(const Param: TLiParam);
+var
+  C: TLiDataBase;
+  L: TLiList;
+  T: TStrings;
+begin
+  if Param.GetSelf(C) then
+  begin
+    L := TLiList.Create;
+    Param.Result.SetTOA(my_list, L);
+    T := TStringList.Create;
+    try
+      C.GetTableNames(T, true);
+      L.AddStrings(T);
+    finally
+      T.Free;
+    end;
+  end;
+end;
+
+procedure TLiDataBaseType.MyTransact(const Param: TLiParam);
+var
+  C: TLiDataBase;
+begin
+  if Param.GetSelf(C) then C.Transact;
+end;
+
+procedure TLiDataBaseType.MyUserTableNames(const Param: TLiParam);
+var
+  C: TLiDataBase;
+  L: TLiList;
+  T: TStrings;
+begin
+  if Param.GetSelf(C) then
+  begin
+    L := TLiList.Create;
+    Param.Result.SetTOA(my_list, L);
+    T := TStringList.Create;
+    try
+      C.GetTableNames(T, false);
+      L.AddStrings(T);
+    finally
+      T.Free;
+    end;
+  end;
+end;
+
+procedure TLiDataBaseType.Setup;
+begin
+  Method('Open', {$IFDEF FPC}@{$ENDIF}MyOpen);
+  Method('Close', {$IFDEF FPC}@{$ENDIF}MyClose);
+  Method('InTransaction', my_bool, {$IFDEF FPC}@{$ENDIF}MyInTransaction);
+  Method('Transact', {$IFDEF FPC}@{$ENDIF}MyTransact);
+  Method('Commit', {$IFDEF FPC}@{$ENDIF}MyCommit);
+  Method('Rollback', {$IFDEF FPC}@{$ENDIF}MyRollback);
+  Method('TableNames', my_list, {$IFDEF FPC}@{$ENDIF}MyTableNames);
+  Method('UserTableNames', my_list, {$IFDEF FPC}@{$ENDIF}MyUserTableNames);
+  Method('SystemTableNames', my_list, {$IFDEF FPC}@{$ENDIF}MySystemTableNames);
+  Method('ProcedureNames', my_list, {$IFDEF FPC}@{$ENDIF}MyProcedureNames);
+  Method('TableFieldNames', my_list, ['table'], [my_string],
+         {$IFDEF FPC}@{$ENDIF}MyTableFieldNames);
+  Define('Connected', my_bool,
+         {$IFDEF FPC}@{$ENDIF}MyGetConnected,
+         {$IFDEF FPC}@{$ENDIF}MySetConnected);
+  Define('LoginPrompt', my_bool,
+         {$IFDEF FPC}@{$ENDIF}MyGetLoginPrompt,
+         {$IFDEF FPC}@{$ENDIF}MySetLoginPrompt);
   inherited;
-  Check(TLiField(Obj).FField <> nil, 'field has been released');
 end;
 
-{ TLiType_TDataSet }
-
-function TLiType_TDataSet._AsBoolean(Obj: pointer): boolean;
-begin
-  Result := (Obj <> nil) and TLiDataSet(Obj).Active;
-end;
-
-function TLiType_TDataSet._AsString(Obj: pointer): string;
-begin
-  if Obj <> nil then
-    Result := TLiDataSet(Obj).AsString else
-    Result := '';
-end;
-
-function TLiType_TDataSet._DecRefcount(Obj: pointer): integer;
-begin
-  if Obj <> nil then
-    Result := TLiDataSet(Obj).DecRefcount else
-    Result := 0;
-end;
-
-function TLiType_TDataSet._IncRefcount(Obj: pointer): integer;
-begin
-  if Obj <> nil then
-    Result := TLiDataSet(Obj).IncRefcount else
-    Result := 0;
-end;
-
-function TLiType_TDataSet._Length(Obj: pointer): int64;
-begin
-  if Obj <> nil then
-    Result := TLiDataSet(Obj).FieldCount else
-    Result := 0;
-end;
-
-procedure TLiType_TDataSet._Validate(Obj: pointer);
-begin
-  inherited;
-  Check(TLiDataSet(Obj).FDataSet <> nil, 'dataset has been released');
-end;
-
-{ TLiType_TDataBase }
-
-function TLiType_TDataBase._AsString(Obj: pointer): string;
+function TLiDataBaseType._AsString(Obj: pointer): string;
 begin
   Result := '';
 end;
 
-function TLiType_TDataBase._DecRefcount(Obj: pointer): integer;
+function TLiDataBaseType._DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
     Result := TLiDataBase(Obj).DecRefcount else
     Result := 0;
 end;
 
-function TLiType_TDataBase._IncRefcount(Obj: pointer): integer;
+function TLiDataBaseType._IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
     Result := TLiDataBase(Obj).IncRefcount else
     Result := 0;
 end;
 
-procedure TLiType_TDataBase._Validate(Obj: pointer);
+procedure TLiDataBaseType._Validate(Obj: pointer);
 begin
   inherited;
   Check(TLiDataBase(Obj).FConnection <> nil, 'invalid database connection');
@@ -1316,104 +1455,10 @@ end;
 
 initialization
 begin
-  my_db := TLiModule.Create('db');
-  my_field := TLiType_TField.Create('TField', my_db, nil);
-  my_dataset := TLiType_TDataSet.Create('TDataSet', my_db, nil);
-  my_database := TLiType_TDataBase.Create('TDataBase', my_db, nil);
-
-  //-- my_field ----------------------------------------------------------------
-
-  my_field.AddMethod(['name'], [my_string],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_name);
-  my_field.AddMethod(['type'], [my_type],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_type);
-  my_field.AddMethod(['index'], [my_int],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_index);
-  my_field.AddMethod(['value'], [my_variant],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_value);
-  my_field.AddMethod(['isNull'], [my_bool],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_isNull);
-  my_field.AddMethod(['asString'], [my_string],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_string);
-  my_field.AddMethod(['asChar'], [my_char],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_char);
-  my_field.AddMethod(['asInteger'], [my_int],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_int);
-  my_field.AddMethod(['asFloat'], [my_float],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_float);
-  my_field.AddMethod(['asCurrency'], [my_curr],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_curr);
-  my_field.AddMethod(['asBoolean'], [my_bool],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_bool);
-  my_field.AddMethod(['asTime'], [my_time],
-                     {$IFDEF FPC}@{$ENDIF}pp_field_time);
-
-  //-- my_dataset --------------------------------------------------------------
-
-  my_dataset.AddMethod(['open'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_open);
-  my_dataset.AddMethod(['close'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_close);
-  my_dataset.AddMethod(['first'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_first);
-  my_dataset.AddMethod(['last'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_last);
-  my_dataset.AddMethod(['prior'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_prior);
-  my_dataset.AddMethod(['next'], [my_nil],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_next);
-  my_dataset.AddMethod(['bof'], [my_bool],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_bof);
-  my_dataset.AddMethod(['eof'], [my_bool],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_eof);
-  my_dataset.AddMethod(['findField', 'fieldName'], [my_field, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_findField);
-  my_dataset.AddMethod(['fieldByName', 'fieldName'], [my_field, my_string],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_fieldByName);
-  my_dataset.AddMethod(['recordCount'], [my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_recordCount);
-  my_dataset.AddMethod(['fieldCount'], [my_int],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_fieldCount);
-  my_dataset.SetupProp('active', my_bool,
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_getActive,
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_setActive);
-  my_dataset.SetupProp('fields', my_field, ['index'], [my_variant],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_get, nil);
-  my_dataset.SetupProp('values', my_variant, ['index'], [my_variant],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_getValue, nil);
-  my_dataset.SetupProp('', my_variant, ['index'], [my_variant],
-                       {$IFDEF FPC}@{$ENDIF}pp_dataset_getValue, nil);
-
-  //-- my_connection -----------------------------------------------------------
-
-  my_database.AddMethod(['open'], [my_nil],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_open);
-  my_database.AddMethod(['close'], [my_nil],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_close);
-  my_database.AddMethod(['inTransaction'], [my_bool],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_inTransaction);
-  my_database.AddMethod(['transact'], [my_nil],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_transact);
-  my_database.AddMethod(['commit'], [my_nil],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_commit);
-  my_database.AddMethod(['rollback'], [my_nil],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_rollback);
-  my_database.AddMethod(['userTableNames'], [my_strlist],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_userTableNames);
-  my_database.AddMethod(['systemTableNames'], [my_strlist],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_systemTableNames);
-  my_database.AddMethod(['tableNames'], [my_strlist],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_tableNames);
-  my_database.AddMethod(['tableFieldNames', 'table'], [my_strlist, my_string],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_tableFieldNames);
-  my_database.AddMethod(['procedureNames'], [my_strlist],
-                        {$IFDEF FPC}@{$ENDIF}pp_database_procedures);
-  my_database.SetupProp('connected', my_bool,
-                        {$IFDEF FPC}@{$ENDIF}pp_database_getConnected,
-                        {$IFDEF FPC}@{$ENDIF}pp_database_setConnected);
-  my_database.SetupProp('loginPrompt', my_bool,
-                        {$IFDEF FPC}@{$ENDIF}pp_database_getLoginPrompt,
-                        {$IFDEF FPC}@{$ENDIF}pp_database_setLoginPrompt);
+  my_db := AddModule('Db');
+  my_field := TLiFieldType.Create('TField', my_db, nil);
+  my_dataset := TLiDataSetType.Create('TDataSet', my_db, nil);
+  my_database := TLiDataBaseType.Create('TDataBase', my_db, nil);
 end;
 
 end.
