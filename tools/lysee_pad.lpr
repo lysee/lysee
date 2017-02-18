@@ -18,7 +18,6 @@ uses
   basic,
   lysee,
   lysee_db,
-  lysee_pmc,
   lysee_syntax,
   lysee_pad_about,
   msgbox,

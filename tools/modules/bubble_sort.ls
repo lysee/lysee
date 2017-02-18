@@ -7,5 +7,5 @@ function Sort(list);
     result := list;
 
 if __in_main then
-    writeln(Sort([2.3, 1.3, 15.02, 25.02, 45, 85.14, 56.1, 35.2, 4.2, 15.4]));
+  writeln(Sort([2.3, 1.3, 15.02, 25.02, 45, 85.14, 56.1, 35.2, 4.2, 15.4]));
 

@@ -15,7 +15,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="2"/>
-      <BuildNr Value="2679"/>
+      <BuildNr Value="2683"/>
       <StringTable FileDescription="lysee script interpretor (FPC)" LegalCopyright="Copyright (C) 2003-2011 li yun jie &lt;libudi@hotmail.com>" ProductVersion="2.0.0"/>
     </VersionInfo>
     <BuildModes Count="1">
@@ -37,31 +37,32 @@
       <Unit0>
         <Filename Value="lysee_cmd.lpr"/>
         <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
         <TopLine Value="2"/>
         <CursorPos X="26" Y="21"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
-        <Filename Value="lysee\lengine.pas"/>
+        <Filename Value="..\source\lysee\lengine.pas"/>
         <TopLine Value="667"/>
         <CursorPos X="5" Y="683"/>
         <UsageCount Value="197"/>
       </Unit1>
       <Unit2>
-        <Filename Value="lysee\lse_console.pas"/>
+        <Filename Value="..\source\lysee\lse_console.pas"/>
         <TopLine Value="7"/>
         <CursorPos X="26" Y="7"/>
         <UsageCount Value="189"/>
       </Unit2>
       <Unit3>
-        <Filename Value="lysee\lse_dbu.pas"/>
+        <Filename Value="..\source\lysee\lse_dbu.pas"/>
         <TopLine Value="346"/>
         <CursorPos Y="349"/>
         <UsageCount Value="187"/>
       </Unit3>
       <Unit4>
-        <Filename Value="lysee\lse_export.pas"/>
+        <Filename Value="..\source\lysee\lse_export.pas"/>
         <TopLine Value="148"/>
         <CursorPos Y="159"/>
         <UsageCount Value="187"/>
@@ -70,60 +71,60 @@
         </Bookmarks>
       </Unit4>
       <Unit5>
-        <Filename Value="lysee\lse_funcs.pas"/>
+        <Filename Value="..\source\lysee\lse_funcs.pas"/>
         <TopLine Value="103"/>
         <CursorPos X="37" Y="116"/>
         <UsageCount Value="187"/>
       </Unit5>
       <Unit6>
-        <Filename Value="lysee\lse_regexpr.pas"/>
+        <Filename Value="..\source\lysee\lse_regexpr.pas"/>
         <UsageCount Value="145"/>
       </Unit6>
       <Unit7>
-        <Filename Value="lysee\lse_symbol.pas"/>
+        <Filename Value="..\source\lysee\lse_symbol.pas"/>
         <TopLine Value="34"/>
         <CursorPos Y="817"/>
         <UsageCount Value="187"/>
       </Unit7>
       <Unit8>
-        <Filename Value="lysee\lse_api.pas"/>
+        <Filename Value="..\source\lysee\lse_api.pas"/>
         <TopLine Value="59"/>
         <CursorPos Y="69"/>
         <UsageCount Value="187"/>
       </Unit8>
       <Unit9>
-        <Filename Value="lysee\spawn.pas"/>
+        <Filename Value="..\source\lysee\spawn.pas"/>
         <UsageCount Value="9"/>
       </Unit9>
       <Unit10>
-        <Filename Value="lysee\fpc\dbv\ib.pp"/>
+        <Filename Value="..\source\lysee\fpc\dbv\ib.pp"/>
         <CursorPos X="46" Y="8"/>
         <UsageCount Value="9"/>
       </Unit10>
       <Unit11>
-        <Filename Value="lysee\fpc\dbv\odbc.pp"/>
+        <Filename Value="..\source\lysee\fpc\dbv\odbc.pp"/>
         <TopLine Value="34"/>
         <CursorPos X="9" Y="51"/>
         <UsageCount Value="9"/>
       </Unit11>
       <Unit12>
-        <Filename Value="lysee\fpc\dbv\postgres.pp"/>
+        <Filename Value="..\source\lysee\fpc\dbv\postgres.pp"/>
         <UsageCount Value="50"/>
       </Unit12>
       <Unit13>
-        <Filename Value="lysee\lysee.pas"/>
+        <Filename Value="..\source\lysee\lysee.pas"/>
         <TopLine Value="2540"/>
         <CursorPos X="3" Y="2545"/>
         <UsageCount Value="197"/>
       </Unit13>
       <Unit14>
-        <Filename Value="lysee\fpc\dbv\body.inc"/>
+        <Filename Value="..\source\lysee\fpc\dbv\body.inc"/>
         <TopLine Value="627"/>
         <CursorPos X="27" Y="643"/>
         <UsageCount Value="2"/>
       </Unit14>
       <Unit15>
-        <Filename Value="lysee\fpc\dbv\head.inc"/>
+        <Filename Value="..\source\lysee\fpc\dbv\head.inc"/>
         <CursorPos Y="23"/>
         <UsageCount Value="8"/>
       </Unit15>
@@ -134,7 +135,7 @@
         <UsageCount Value="2"/>
       </Unit16>
       <Unit17>
-        <Filename Value="lysee\statements.txt"/>
+        <Filename Value="..\source\lysee\statements.txt"/>
         <CursorPos Y="7"/>
         <UsageCount Value="2"/>
         <DefaultSyntaxHighlighter Value="None"/>
@@ -146,7 +147,7 @@
         <UsageCount Value="10"/>
       </Unit18>
       <Unit19>
-        <Filename Value="lysee\lse_spawn.pas"/>
+        <Filename Value="..\source\lysee\lse_spawn.pas"/>
         <UsageCount Value="173"/>
       </Unit19>
       <Unit20>
@@ -241,12 +242,12 @@
         <UsageCount Value="1"/>
       </Unit34>
       <Unit35>
-        <Filename Value="lysee\lse_cgi.pas"/>
+        <Filename Value="..\source\lysee\lse_cgi.pas"/>
         <CursorPos X="26" Y="5"/>
         <UsageCount Value="173"/>
       </Unit35>
       <Unit36>
-        <Filename Value="lysee_setup\demos\cembed\lseu.pas"/>
+        <Filename Value="..\source\lysee_setup\demos\cembed\lseu.pas"/>
         <TopLine Value="3014"/>
         <CursorPos Y="3026"/>
         <UsageCount Value="10"/>
@@ -294,7 +295,7 @@
         <UsageCount Value="7"/>
       </Unit43>
       <Unit44>
-        <Filename Value="lysee\xxx.txt"/>
+        <Filename Value="..\source\lysee\xxx.txt"/>
         <TopLine Value="75"/>
         <CursorPos X="38" Y="108"/>
         <UsageCount Value="5"/>
@@ -320,7 +321,7 @@
         <UsageCount Value="5"/>
       </Unit47>
       <Unit48>
-        <Filename Value="lysee\lse_encrypt.pas"/>
+        <Filename Value="..\source\lysee\lse_encrypt.pas"/>
         <TopLine Value="56"/>
         <CursorPos Y="80"/>
         <UsageCount Value="9"/>
@@ -415,13 +416,13 @@
         <UsageCount Value="7"/>
       </Unit64>
       <Unit65>
-        <Filename Value="lysee\lse_ipcu.pas"/>
+        <Filename Value="..\source\lysee\lse_ipcu.pas"/>
         <TopLine Value="305"/>
         <CursorPos X="50" Y="312"/>
         <UsageCount Value="8"/>
       </Unit65>
       <Unit66>
-        <Filename Value="lysee\lse_syncobj.pas"/>
+        <Filename Value="..\source\lysee\lse_syncobj.pas"/>
         <TopLine Value="13"/>
         <CursorPos X="81" Y="16"/>
         <UsageCount Value="39"/>
@@ -463,7 +464,7 @@
         <UsageCount Value="7"/>
       </Unit72>
       <Unit73>
-        <Filename Value="lysee\lse_patten.pas"/>
+        <Filename Value="..\source\lysee\lse_patten.pas"/>
         <CursorPos Y="6"/>
         <UsageCount Value="18"/>
       </Unit73>
@@ -474,7 +475,7 @@
         <UsageCount Value="8"/>
       </Unit74>
       <Unit75>
-        <Filename Value="lysee\lse_components.pas"/>
+        <Filename Value="..\source\lysee\lse_components.pas"/>
         <TopLine Value="851"/>
         <CursorPos X="14" Y="857"/>
         <UsageCount Value="7"/>
@@ -543,7 +544,7 @@
         <UsageCount Value="2"/>
       </Unit85>
       <Unit86>
-        <Filename Value="lysee\lse_strings.pas"/>
+        <Filename Value="..\source\lysee\lse_strings.pas"/>
         <TopLine Value="509"/>
         <CursorPos Y="510"/>
         <UsageCount Value="14"/>
@@ -573,7 +574,7 @@
         <UsageCount Value="9"/>
       </Unit90>
       <Unit91>
-        <Filename Value="lysee\lse_objrec.pas"/>
+        <Filename Value="..\source\lysee\lse_objrec.pas"/>
         <CursorPos Y="10"/>
         <UsageCount Value="9"/>
       </Unit91>
@@ -584,7 +585,7 @@
         <UsageCount Value="9"/>
       </Unit92>
       <Unit93>
-        <Filename Value="lysee\lse_misc.pas"/>
+        <Filename Value="..\source\lysee\lse_misc.pas"/>
         <UsageCount Value="9"/>
       </Unit93>
       <Unit94>
@@ -631,18 +632,18 @@
         <UsageCount Value="2"/>
       </Unit100>
       <Unit101>
-        <Filename Value="lysee\xx.pp"/>
+        <Filename Value="..\source\lysee\xx.pp"/>
         <TopLine Value="802"/>
         <UsageCount Value="4"/>
       </Unit101>
       <Unit102>
-        <Filename Value="lysee\modules\lmmath.pas"/>
+        <Filename Value="..\source\lysee\modules\lmmath.pas"/>
         <TopLine Value="10"/>
         <CursorPos X="44" Y="18"/>
         <UsageCount Value="4"/>
       </Unit102>
       <Unit103>
-        <Filename Value="lbasic.pas"/>
+        <Filename Value="..\source\lbasic.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="299"/>
         <CursorPos X="10" Y="318"/>
@@ -655,38 +656,38 @@
         <UsageCount Value="8"/>
       </Unit104>
       <Unit105>
-        <Filename Value="Jie\jlib.pas"/>
+        <Filename Value="..\source\Jie\jlib.pas"/>
         <CursorPos X="48" Y="14"/>
         <UsageCount Value="7"/>
       </Unit105>
       <Unit106>
-        <Filename Value="lmd5.pas"/>
+        <Filename Value="..\source\lmd5.pas"/>
         <TopLine Value="126"/>
         <CursorPos X="17" Y="141"/>
         <UsageCount Value="19"/>
       </Unit106>
       <Unit107>
-        <Filename Value="Jie\jgc.pas"/>
+        <Filename Value="..\source\Jie\jgc.pas"/>
         <TopLine Value="28"/>
         <UsageCount Value="7"/>
       </Unit107>
       <Unit108>
-        <Filename Value="lpatten.pas"/>
+        <Filename Value="..\source\lpatten.pas"/>
         <CursorPos X="40" Y="12"/>
         <UsageCount Value="18"/>
       </Unit108>
       <Unit109>
-        <Filename Value="lysee\lprint.pas"/>
+        <Filename Value="..\source\lysee\lprint.pas"/>
         <CursorPos X="3" Y="11"/>
         <UsageCount Value="17"/>
       </Unit109>
       <Unit110>
-        <Filename Value="lysee\lrunonce.pas"/>
+        <Filename Value="..\source\lysee\lrunonce.pas"/>
         <CursorPos X="46" Y="21"/>
         <UsageCount Value="7"/>
       </Unit110>
       <Unit111>
-        <Filename Value="Jie\jstdio.pas"/>
+        <Filename Value="..\source\Jie\jstdio.pas"/>
         <TopLine Value="30"/>
         <CursorPos Y="49"/>
         <UsageCount Value="7"/>
@@ -699,32 +700,31 @@
         <UsageCount Value="7"/>
       </Unit112>
       <Unit113>
-        <Filename Value="Jie\juser.pas"/>
+        <Filename Value="..\source\Jie\juser.pas"/>
         <TopLine Value="67"/>
         <UsageCount Value="7"/>
       </Unit113>
       <Unit114>
-        <Filename Value="Jie\jtable.pas"/>
+        <Filename Value="..\source\Jie\jtable.pas"/>
         <TopLine Value="97"/>
         <UsageCount Value="7"/>
       </Unit114>
       <Unit115>
-        <Filename Value="lengine.pas"/>
+        <Filename Value="..\source\lengine.pas"/>
         <EditorIndex Value="-1"/>
         <UsageCount Value="72"/>
       </Unit115>
       <Unit116>
-        <Filename Value="lysee.pas"/>
+        <Filename Value="..\source\lysee.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="10591"/>
-        <CursorPos Y="10601"/>
+        <TopLine Value="2793"/>
+        <CursorPos X="9" Y="2811"/>
         <UsageCount Value="81"/>
         <Loaded Value="True"/>
       </Unit116>
       <Unit117>
-        <Filename Value="lysee_funcs.pas"/>
+        <Filename Value="..\source\lysee_funcs.pas"/>
         <CursorPos X="35" Y="8"/>
         <UsageCount Value="17"/>
       </Unit117>
@@ -753,13 +753,13 @@
         <UsageCount Value="7"/>
       </Unit121>
       <Unit122>
-        <Filename Value="modules\lmsysutils.pas"/>
+        <Filename Value="..\source\modules\lmsysutils.pas"/>
         <TopLine Value="84"/>
         <CursorPos X="3" Y="358"/>
         <UsageCount Value="39"/>
       </Unit122>
       <Unit123>
-        <Filename Value="modules\lmsysutils_m.pas"/>
+        <Filename Value="..\source\modules\lmsysutils_m.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="150"/>
         <CursorPos X="44" Y="155"/>
@@ -772,91 +772,91 @@
         <UsageCount Value="11"/>
       </Unit124>
       <Unit125>
-        <Filename Value="modules\lmymd.pas"/>
+        <Filename Value="..\source\modules\lmymd.pas"/>
         <CursorPos Y="6"/>
         <UsageCount Value="31"/>
       </Unit125>
       <Unit126>
-        <Filename Value="modules\lmymd_m.pas"/>
+        <Filename Value="..\source\modules\lmymd_m.pas"/>
         <TopLine Value="104"/>
         <CursorPos X="21" Y="111"/>
         <UsageCount Value="31"/>
       </Unit126>
       <Unit127>
-        <Filename Value="lpmc.pas"/>
+        <Filename Value="..\source\lpmc.pas"/>
         <EditorIndex Value="-1"/>
         <UsageCount Value="32"/>
       </Unit127>
       <Unit128>
-        <Filename Value="modules\lmpmc.pas"/>
+        <Filename Value="..\source\modules\lmpmc.pas"/>
         <TopLine Value="19"/>
         <UsageCount Value="31"/>
       </Unit128>
       <Unit129>
-        <Filename Value="modules\lmpmc_m.pas"/>
+        <Filename Value="..\source\modules\lmpmc_m.pas"/>
         <CursorPos X="51" Y="8"/>
         <UsageCount Value="31"/>
       </Unit129>
       <Unit130>
-        <Filename Value="modules\lmmd5.pas"/>
+        <Filename Value="..\source\modules\lmmd5.pas"/>
         <TopLine Value="18"/>
         <CursorPos X="15" Y="32"/>
         <UsageCount Value="31"/>
       </Unit130>
       <Unit131>
-        <Filename Value="modules\lmmd5_m.pas"/>
+        <Filename Value="..\source\modules\lmmd5_m.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="84"/>
         <CursorPos X="35" Y="96"/>
         <UsageCount Value="31"/>
       </Unit131>
       <Unit132>
-        <Filename Value="modules\lmsyncobj.pas"/>
+        <Filename Value="..\source\modules\lmsyncobj.pas"/>
         <TopLine Value="18"/>
         <CursorPos X="39" Y="38"/>
         <UsageCount Value="19"/>
       </Unit132>
       <Unit133>
-        <Filename Value="modules\lmstrutils_p.pp"/>
+        <Filename Value="..\source\modules\lmstrutils_p.pp"/>
         <UsageCount Value="9"/>
       </Unit133>
       <Unit134>
-        <Filename Value="modules\lmsyncobj_m.pas"/>
+        <Filename Value="..\source\modules\lmsyncobj_m.pas"/>
         <TopLine Value="18"/>
         <CursorPos Y="38"/>
         <UsageCount Value="19"/>
       </Unit134>
       <Unit135>
-        <Filename Value="modules\lmsyncobjs.pas"/>
+        <Filename Value="..\source\modules\lmsyncobjs.pas"/>
         <TopLine Value="18"/>
         <UsageCount Value="31"/>
       </Unit135>
       <Unit136>
-        <Filename Value="modules\lmsyncobjs_m.pas"/>
+        <Filename Value="..\source\modules\lmsyncobjs_m.pas"/>
         <TopLine Value="10"/>
         <CursorPos X="21" Y="50"/>
         <UsageCount Value="31"/>
       </Unit136>
       <Unit137>
-        <Filename Value="modules\lminifile.pas"/>
+        <Filename Value="..\source\modules\lminifile.pas"/>
         <TopLine Value="12"/>
         <CursorPos Y="39"/>
         <UsageCount Value="31"/>
       </Unit137>
       <Unit138>
-        <Filename Value="modules\lminifile_m.pas"/>
+        <Filename Value="..\source\modules\lminifile_m.pas"/>
         <TopLine Value="14"/>
         <CursorPos Y="34"/>
         <UsageCount Value="31"/>
       </Unit138>
       <Unit139>
-        <Filename Value="modules\lmdateutils.pas"/>
+        <Filename Value="..\source\modules\lmdateutils.pas"/>
         <TopLine Value="28"/>
         <CursorPos X="26" Y="35"/>
         <UsageCount Value="31"/>
       </Unit139>
       <Unit140>
-        <Filename Value="modules\lmdateutils_m.pas"/>
+        <Filename Value="..\source\modules\lmdateutils_m.pas"/>
         <TopLine Value="348"/>
         <CursorPos X="3" Y="368"/>
         <UsageCount Value="31"/>
@@ -886,25 +886,25 @@
         <UsageCount Value="9"/>
       </Unit144>
       <Unit145>
-        <Filename Value="modules\lmdateutils_p.pp"/>
+        <Filename Value="..\source\modules\lmdateutils_p.pp"/>
         <TopLine Value="6"/>
         <CursorPos Y="26"/>
         <UsageCount Value="9"/>
       </Unit145>
       <Unit146>
-        <Filename Value="modules\lmdateutils_m.pp"/>
+        <Filename Value="..\source\modules\lmdateutils_m.pp"/>
         <TopLine Value="2768"/>
         <CursorPos X="5" Y="2788"/>
         <UsageCount Value="9"/>
       </Unit146>
       <Unit147>
-        <Filename Value="modules\lmsysutils_x.pp"/>
+        <Filename Value="..\source\modules\lmsysutils_x.pp"/>
         <TopLine Value="1724"/>
         <CursorPos X="5" Y="1762"/>
         <UsageCount Value="9"/>
       </Unit147>
       <Unit148>
-        <Filename Value="modules\lmsyncobjs_x.pp"/>
+        <Filename Value="..\source\modules\lmsyncobjs_x.pp"/>
         <TopLine Value="82"/>
         <CursorPos X="24" Y="102"/>
         <UsageCount Value="9"/>
@@ -916,20 +916,20 @@
         <UsageCount Value="9"/>
       </Unit149>
       <Unit150>
-        <Filename Value="modules\lmymd_x.pp"/>
+        <Filename Value="..\source\modules\lmymd_x.pp"/>
         <TopLine Value="208"/>
         <CursorPos X="4" Y="15"/>
         <UsageCount Value="9"/>
       </Unit150>
       <Unit151>
-        <Filename Value="modules\lmprocess.pas"/>
+        <Filename Value="..\source\modules\lmprocess.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="366"/>
         <CursorPos X="12" Y="376"/>
         <UsageCount Value="27"/>
       </Unit151>
       <Unit152>
-        <Filename Value="modules\lmprocess_m.pas"/>
+        <Filename Value="..\source\modules\lmprocess_m.pas"/>
         <TopLine Value="262"/>
         <CursorPos X="14" Y="141"/>
         <UsageCount Value="27"/>
@@ -960,13 +960,13 @@
         <UsageCount Value="10"/>
       </Unit156>
       <Unit157>
-        <Filename Value="modules\lmstrutils.pas"/>
+        <Filename Value="..\source\modules\lmstrutils.pas"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="9" Y="686"/>
         <UsageCount Value="25"/>
       </Unit157>
       <Unit158>
-        <Filename Value="modules\lmstrutils_m.pas"/>
+        <Filename Value="..\source\modules\lmstrutils_m.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="247"/>
         <CursorPos Y="6"/>
@@ -1022,7 +1022,7 @@
         <UsageCount Value="9"/>
       </Unit165>
       <Unit166>
-        <Filename Value="basic.pas"/>
+        <Filename Value="..\source\basic.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="1"/>
         <UsageCount Value="28"/>
@@ -1044,14 +1044,14 @@
         <UsageCount Value="9"/>
       </Unit168>
       <Unit169>
-        <Filename Value="lysee_adodb.pas"/>
+        <Filename Value="..\source\lysee_adodb.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="108"/>
         <CursorPos X="29" Y="127"/>
         <UsageCount Value="19"/>
       </Unit169>
       <Unit170>
-        <Filename Value="lysee_db.pas"/>
+        <Filename Value="..\source\lysee_db.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="3"/>
         <TopLine Value="1348"/>
@@ -1060,13 +1060,11 @@
         <Loaded Value="True"/>
       </Unit170>
       <Unit171>
-        <Filename Value="lysee_pmc.pas"/>
-        <IsPartOfProject Value="True"/>
-        <EditorIndex Value="4"/>
+        <Filename Value="..\source\lysee_pmc.pas"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="1794"/>
         <CursorPos Y="1804"/>
         <UsageCount Value="27"/>
-        <Loaded Value="True"/>
       </Unit171>
       <Unit172>
         <Filename Value="d:\tools\lazarus\fpc\3.0.0\source\rtl\objpas\classes\classesh.inc"/>
@@ -1085,122 +1083,121 @@
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="basic.pas"/>
-        <Caret Line="2232" TopLine="2216"/>
+        <Filename Value="..\source\basic.pas"/>
+        <Caret Line="2229" TopLine="2216"/>
       </Position1>
       <Position2>
-        <Filename Value="basic.pas"/>
-        <Caret Line="2225" TopLine="2216"/>
+        <Filename Value="..\source\basic.pas"/>
+        <Caret Line="2230" TopLine="2216"/>
       </Position2>
       <Position3>
-        <Filename Value="basic.pas"/>
-        <Caret Line="2227" TopLine="2216"/>
+        <Filename Value="..\source\basic.pas"/>
+        <Caret Line="2232" TopLine="2216"/>
       </Position3>
       <Position4>
-        <Filename Value="basic.pas"/>
-        <Caret Line="2228" TopLine="2216"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10887" TopLine="10877"/>
       </Position4>
       <Position5>
-        <Filename Value="basic.pas"/>
-        <Caret Line="2229" TopLine="2216"/>
+        <Filename Value="..\source\lysee.pas"/>
       </Position5>
       <Position6>
-        <Filename Value="basic.pas"/>
-        <Caret Line="2230" TopLine="2216"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10757" Column="13" TopLine="10751"/>
       </Position6>
       <Position7>
-        <Filename Value="basic.pas"/>
-        <Caret Line="2232" TopLine="2216"/>
+        <Filename Value="..\source\basic.pas"/>
+        <Caret Line="2157" TopLine="2155"/>
       </Position7>
       <Position8>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10887" TopLine="10877"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10757" Column="13" TopLine="10751"/>
       </Position8>
       <Position9>
-        <Filename Value="lysee.pas"/>
+        <Filename Value="..\source\lysee.pas"/>
       </Position9>
       <Position10>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10757" Column="13" TopLine="10751"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="1160" Column="14" TopLine="1144"/>
       </Position10>
       <Position11>
-        <Filename Value="basic.pas"/>
-        <Caret Line="2157" TopLine="2155"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="3294" Column="30" TopLine="3278"/>
       </Position11>
       <Position12>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10757" Column="13" TopLine="10751"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="3295" Column="42" TopLine="3279"/>
       </Position12>
       <Position13>
-        <Filename Value="lysee.pas"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10401" Column="16" TopLine="10385"/>
       </Position13>
       <Position14>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="1160" Column="14" TopLine="1144"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10436" Column="20" TopLine="10420"/>
       </Position14>
       <Position15>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="3294" Column="30" TopLine="3278"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10756" Column="12" TopLine="10740"/>
       </Position15>
       <Position16>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="3295" Column="42" TopLine="3279"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10757" Column="12" TopLine="10741"/>
       </Position16>
       <Position17>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10401" Column="16" TopLine="10385"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10758" Column="12" TopLine="10742"/>
       </Position17>
       <Position18>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10436" Column="20" TopLine="10420"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10785" Column="23" TopLine="10769"/>
       </Position18>
       <Position19>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10756" Column="12" TopLine="10740"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10797" Column="21" TopLine="10781"/>
       </Position19>
       <Position20>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10757" Column="12" TopLine="10741"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10799" Column="27" TopLine="10783"/>
       </Position20>
       <Position21>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10758" Column="12" TopLine="10742"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10800" Column="14" TopLine="10784"/>
       </Position21>
       <Position22>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10785" Column="23" TopLine="10769"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10887" Column="30" TopLine="10871"/>
       </Position22>
       <Position23>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10797" Column="21" TopLine="10781"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="13201" Column="3" TopLine="13185"/>
       </Position23>
       <Position24>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10799" Column="27" TopLine="10783"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10966" TopLine="10956"/>
       </Position24>
       <Position25>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10800" Column="14" TopLine="10784"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="7851" Column="47" TopLine="7848"/>
       </Position25>
       <Position26>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10887" Column="30" TopLine="10871"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="10595" Column="34" TopLine="10592"/>
       </Position26>
       <Position27>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="13201" Column="3" TopLine="13185"/>
+        <Filename Value="..\source\lysee.pas"/>
       </Position27>
       <Position28>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="10966" TopLine="10956"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="2704" Column="27" TopLine="2688"/>
       </Position28>
       <Position29>
-        <Filename Value="lysee_pmc.pas"/>
-        <Caret Line="1804" TopLine="1794"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="2787" Column="52" TopLine="2781"/>
       </Position29>
       <Position30>
-        <Filename Value="lysee.pas"/>
-        <Caret Line="7851" Column="47" TopLine="7848"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="32" Column="39" TopLine="23"/>
       </Position30>
     </JumpHistory>
   </ProjectOptions>
@@ -1208,7 +1205,7 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <SearchPaths>
-      <OtherUnitFiles Value="lysee\home\libudi\libc\src"/>
+      <OtherUnitFiles Value="..\source\lysee\home\libudi\libc\src"/>
     </SearchPaths>
     <Parsing>
       <SyntaxOptions>
@@ -1245,8 +1242,8 @@
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
         <WatchKind Value="wpkWrite"/>
-        <Source Value="lysee.pas"/>
-        <Line Value="7858"/>
+        <Source Value="..\source\lysee.pas"/>
+        <Line Value="7866"/>
       </Item1>
     </BreakPoints>
     <Exceptions Count="2">
