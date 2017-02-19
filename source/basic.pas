@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2003-2016, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2003/02/28                                                      }
-{    MODIFIED: 2017/01/21                                                      }
+{    MODIFIED: 2017/02/19                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -52,13 +52,12 @@ const
 
 type
 
-  TLiCompare  = (crEqual, crLess, crMore, crDiff);
-  TLiCompares = set of TLiCompare;
-  TLiException = class(Exception);
+  TCompare  = (crEqual, crLess, crMore, crDiff);
+  TCompares = set of TCompare;
 
-  { TLiObject }
+  { TBasicObject }
 
-  TLiObject = class
+  TBasicObject = class
   private
     FRefCount: integer;
   public
@@ -68,9 +67,9 @@ type
     function AsString: string;virtual;
   end;
 
-  { TLiNamedObject }
+  { TNamedObject }
 
-  TLiNamedObject = class(TLiObject)
+  TNamedObject = class(TBasicObject)
   protected
     FName: string;
     procedure SetName(const AName: string);virtual;
@@ -80,9 +79,9 @@ type
     property Name: string read FName write SetName;
   end;
 
-  { TLiCriticalSection }
+  { TSpinLock }
 
-  TLiCriticalSection = class(TLiObject)
+  TSpinLock = class(TBasicObject)
   private
     FCriticalSection: TCriticalSection;
   public
@@ -93,13 +92,9 @@ type
     function TryEnter: boolean;
   end;
 
-  { TLiSpinLock }
+  { TMD5 }
 
-  TLiSpinLock = TLicriticalsection;
-
-  { TLiMD5 }
-
-  TLiMD5 = class(TLiObject)
+  TMD5 = class(TBasicObject)
   private
     FBuffer: array[0..15] of cardinal;
     FA, FB, FC, FD: cardinal;
@@ -121,8 +116,8 @@ type
     function SumFile(const FileName: string): string;
   end;
 
-function Addref(A: TLiObject): integer;
-function Release(A: TLiObject): integer;
+function Addref(A: TBasicObject): integer;
+function Release(A: TBasicObject): integer;
 
 { exception handling }
 
@@ -183,16 +178,16 @@ function IsID(const S: string): boolean;
 
 { compare }
 
-function IntToCompare(I: integer): TLiCompare;overload;
-function IntToCompare(I: int64): TLiCompare;overload;
-function CompareFloat(V1, V2: double): TLiCompare;
-function CompareInt64(V1, V2: int64): TLiCompare;
-function CompareInteger(V1, V2: integer): TLiCompare;
-function CompareMoney(V1, V2: currency): TLiCompare;
-function CompareChar(V1, V2: char): TLiCompare;overload;
-function CompareChar(const V1, V2: char; CaseSensitive: boolean): TLiCompare;overload;
-function CompareString(const S1, S2: string): TLiCompare;overload;
-function CompareString(const S1, S2: string; CaseSensitive: boolean): TLiCompare;overload;
+function IntToCompare(I: integer): TCompare;overload;
+function IntToCompare(I: int64): TCompare;overload;
+function CompareFloat(V1, V2: double): TCompare;
+function CompareInt64(V1, V2: int64): TCompare;
+function CompareInteger(V1, V2: integer): TCompare;
+function CompareMoney(V1, V2: currency): TCompare;
+function CompareChar(V1, V2: char): TCompare;overload;
+function CompareChar(const V1, V2: char; CaseSensitive: boolean): TCompare;overload;
+function CompareString(const S1, S2: string): TCompare;overload;
+function CompareString(const S1, S2: string; CaseSensitive: boolean): TCompare;overload;
 
 { patten }
 
@@ -332,14 +327,14 @@ uses
   {$IFDEF MSWINDOWS}Windows{$ELSE}dynlibs{$ENDIF},
   {$IFDEF FPC}regexpr{$ELSE}RegularExpressions{$ENDIF};
 
-function Addref(A: TLiObject): integer;
+function Addref(A: TBasicObject): integer;
 begin
   if A <> nil then
     Result := A.IncRefcount else
     Result := 0;
 end;
 
-function Release(A: TLiObject): integer;
+function Release(A: TBasicObject): integer;
 begin
   if A <> nil then
     Result := A.DecRefcount else
@@ -359,7 +354,7 @@ end;
 
 procedure Throw(const Msg: string);
 begin
-  raise TLiException.Create(Msg);
+  raise Exception.Create(Msg);
 end;
 
 procedure Throw(const Msg: string; const Args: array of const);
@@ -1008,21 +1003,21 @@ begin
   Result := 0;
 end;
 
-function IntToCompare(I: integer): TLiCompare;
+function IntToCompare(I: integer): TCompare;
 begin
   if I = 0 then Result := crEqual else
   if I < 0 then Result := crLess else
                 Result := crMore;
 end;
 
-function IntToCompare(I: int64): TLiCompare;overload;
+function IntToCompare(I: int64): TCompare;overload;
 begin
   if I = 0 then Result := crEqual else
   if I < 0 then Result := crLess else
                 Result := crMore;
 end;
 
-function CompareFloat(V1, V2: double): TLiCompare;
+function CompareFloat(V1, V2: double): TCompare;
 begin
   V1 := V1 - V2;
   if IsZero(V1) then
@@ -1032,45 +1027,45 @@ begin
     Result := crMore;
 end;
 
-function CompareInt64(V1, V2: int64): TLiCompare;
+function CompareInt64(V1, V2: int64): TCompare;
 begin
   if V1 = V2 then Result := crEqual else
   if V1 < V2 then Result := crLess else
                   Result := crMore;
 end;
 
-function CompareInteger(V1, V2: integer): TLiCompare;
+function CompareInteger(V1, V2: integer): TCompare;
 begin
   if V1 = V2 then Result := crEqual else
   if V1 < V2 then Result := crLess else
                   Result := crMore;
 end;
 
-function CompareMoney(V1, V2: currency): TLiCompare;
+function CompareMoney(V1, V2: currency): TCompare;
 begin
   if V1 = V2 then Result := crEqual else
   if V1 < V2 then Result := crLess else
                   Result := crMore;
 end;
 
-function CompareChar(V1, V2: char): TLiCompare;
+function CompareChar(V1, V2: char): TCompare;
 begin
   Result := IntToCompare(Ord(V1) - Ord(V2));
 end;
 
-function CompareChar(const V1, V2: char; CaseSensitive: boolean): TLiCompare;
+function CompareChar(const V1, V2: char; CaseSensitive: boolean): TCompare;
 begin
   if CaseSensitive then
     Result := IntToCompare(Ord(V1) - Ord(V2)) else
     Result := IntToCompare(Ord(LowerChar(V1)) - Ord(LowerChar(V2)));
 end;
 
-function CompareString(const S1, S2: string): TLiCompare;
+function CompareString(const S1, S2: string): TCompare;
 begin
   Result := IntToCompare(SysUtils.CompareStr(S1, S2));
 end;
 
-function CompareString(const S1, S2: string; CaseSensitive: boolean): TLiCompare;
+function CompareString(const S1, S2: string; CaseSensitive: boolean): TCompare;
 begin
   if CaseSensitive then
     Result := IntToCompare(SysUtils.CompareStr(S1, S2)) else
@@ -1469,9 +1464,9 @@ end;
 
 function MD5SumBuffer(const Buffer: pointer; Count: integer): string;
 var
-  M: TLiMD5;
+  M: TMD5;
 begin
-  M := TLiMD5.Create;
+  M := TMD5.Create;
   try
     Result := M.SumBuffer(Buffer, Count);
   finally
@@ -1481,9 +1476,9 @@ end;
 
 function MD5SumString(const S: string): string;
 var
-  M: TLiMD5;
+  M: TMD5;
 begin
-  M := TLiMD5.Create;
+  M := TMD5.Create;
   try
     Result := M.SumString(S);
   finally
@@ -1493,9 +1488,9 @@ end;
 
 function MD5SumAnsiString(const S: AnsiString): string;
 var
-  M: TLiMD5;
+  M: TMD5;
 begin
-  M := TLiMD5.Create;
+  M := TMD5.Create;
   try
     Result := M.SumAnsiString(S);
   finally
@@ -1505,9 +1500,9 @@ end;
 
 function MD5SumWideString(const S: WideString): string;
 var
-  M: TLiMD5;
+  M: TMD5;
 begin
-  M := TLiMD5.Create;
+  M := TMD5.Create;
   try
     Result := M.SumWideString(S);
   finally
@@ -1517,9 +1512,9 @@ end;
 
 function MD5SumStream(const Stream: TStream): string;
 var
-  M: TLiMD5;
+  M: TMD5;
 begin
-  M := TLiMD5.Create;
+  M := TMD5.Create;
   try
     Result := M.SumStream(Stream);
   finally
@@ -1529,9 +1524,9 @@ end;
 
 function MD5SumFile(const FileName: string): string;
 var
-  M: TLiMD5;
+  M: TMD5;
 begin
-  M := TLiMD5.Create;
+  M := TMD5.Create;
   try
     Result := M.SumFile(FileName);
   finally
@@ -1640,21 +1635,21 @@ begin
   V2 := T;
 end;
 
-{ TLiObject }
+{ TBasicObject }
 
-function TLiObject.RefCount: integer;
+function TBasicObject.RefCount: integer;
 begin
   if Self <> nil then
     Result := FRefCount else
     Result := 0;
 end;
 
-function TLiObject.AsString: string;
+function TBasicObject.AsString: string;
 begin
   Result := '';
 end;
 
-function TLiObject.DecRefcount: integer;
+function TBasicObject.DecRefcount: integer;
 begin
   if Self <> nil then
   begin
@@ -1665,7 +1660,7 @@ begin
   else Result := 0;
 end;
 
-function TLiObject.IncRefcount: integer;
+function TBasicObject.IncRefcount: integer;
 begin
   if Self <> nil then
   begin
@@ -1675,60 +1670,60 @@ begin
   else Result := 0;
 end;
 
-{ TLiNamedObject }
+{ TNamedObject }
 
-constructor TLiNamedObject.Create(const AName: string);
+constructor TNamedObject.Create(const AName: string);
 begin
   inherited Create;
   FName := AName;
 end;
 
-destructor TLiNamedObject.Destroy;
+destructor TNamedObject.Destroy;
 begin
   FName := '';
   inherited;
 end;
 
-procedure TLiNamedObject.SetName(const AName: string);
+procedure TNamedObject.SetName(const AName: string);
 begin
   FName := AName;
 end;
 
-{ TLiCriticalSection }
+{ TSpinLock }
 
-constructor TLiCriticalSection.Create;
+constructor TSpinLock.Create;
 begin
   FCriticalSection := SyncObjs.TCriticalSection.Create;
 end;
 
-destructor TLiCriticalSection.Destroy;
+destructor TSpinLock.Destroy;
 begin
   FreeAndNil(FCriticalSection);
 end;
 
-procedure TLiCriticalSection.Enter;
+procedure TSpinLock.Enter;
 begin
   FCriticalSection.Enter;
 end;
 
-procedure TLiCriticalSection.Leave;
+procedure TSpinLock.Leave;
 begin
   FCriticalSection.Leave;
 end;
 
-function TLiCriticalSection.TryEnter: boolean;
+function TSpinLock.TryEnter: boolean;
 begin
   Result := FCriticalSection.TryEnter;
 end;
 
-{ TLiMD5 }
+{ TMD5 }
 
-procedure TLiMD5.FF(a, b, c, d, x: PCardinal; s: byte; ac: cardinal);
+procedure TMD5.FF(a, b, c, d, x: PCardinal; s: byte; ac: cardinal);
 begin
   a^ := ROL(a^ + ((b^ and c^) or ((not b^) and d^)) + x^ + ac, s) + b^;
 end;
 
-function TLiMD5.GetDigest: string;
+function TMD5.GetDigest: string;
 
   function VS(V: cardinal): string;
   var
@@ -1745,22 +1740,22 @@ begin
   Result := Format('%s%s%s%s', [VS(PA^), VS(PB^), VS(PC^), VS(PD^)]);
 end;
 
-procedure TLiMD5.GG(a, b, c, d, x: PCardinal; s: byte; ac: cardinal);
+procedure TMD5.GG(a, b, c, d, x: PCardinal; s: byte; ac: cardinal);
 begin
   a^ := ROL(a^ + ((b^ and d^) or (c^ and (not d^))) + x^ + ac, s) + b^;
 end;
 
-procedure TLiMD5.HH(a, b, c, d, x: PCardinal; s: byte; ac: cardinal);
+procedure TMD5.HH(a, b, c, d, x: PCardinal; s: byte; ac: cardinal);
 begin
   a^ := ROL(a^ + (b^ xor c^ xor d^) + x^ + ac, s) + b^;
 end;
 
-procedure TLiMD5.II(a, b, c, d, x: PCardinal; s: byte; ac: cardinal);
+procedure TMD5.II(a, b, c, d, x: PCardinal; s: byte; ac: cardinal);
 begin
   a^ := ROL(a^ + (c^ xor (b^ or (not d^))) + x^ + ac, s) + b^;
 end;
 
-procedure TLiMD5.Init;
+procedure TMD5.Init;
 begin
   FA := cardinal($67452301); PA := @FA;
   FB := cardinal($efcdab89); PB := @FB;
@@ -1768,7 +1763,7 @@ begin
   FD := cardinal($10325476); PD := @FD;
 end;
 
-function TLiMD5.ROL(A: cardinal; Amount: byte): cardinal;
+function TMD5.ROL(A: cardinal; Amount: byte): cardinal;
 const
   CARMASK = $80000000;
 var
@@ -1781,12 +1776,12 @@ begin
    Result := A;
 end;
 
-function TLiMD5.SumAnsiString(const S: AnsiString): string;
+function TMD5.SumAnsiString(const S: AnsiString): string;
 begin
   Result := SumBuffer(pointer(S), Length(S));
 end;
 
-function TLiMD5.SumBuffer(const Buffer: pointer; Count: integer): string;
+function TMD5.SumBuffer(const Buffer: pointer; Count: integer): string;
 var
   buf: array[0..4159] of byte;
   src: pbyte;
@@ -1828,7 +1823,7 @@ begin
   Result := GetDigest;
 end;
 
-function TLiMD5.SumFile(const FileName: string): string;
+function TMD5.SumFile(const FileName: string): string;
 var
   F: TFileStream;
 begin
@@ -1840,17 +1835,17 @@ begin
   end;
 end;
 
-function TLiMD5.SumString(const S: string): string;
+function TMD5.SumString(const S: string): string;
 begin
   Result := SumBuffer(pointer(S), Length(S) * sizeof(char));
 end;
 
-function TLiMD5.SumWideString(const S: WideString): string;
+function TMD5.SumWideString(const S: WideString): string;
 begin
   Result := SumBuffer(pointer(S), Length(S) * sizeof(WideChar));
 end;
 
-function TLiMD5.SumStream(const Stream: TStream): string;
+function TMD5.SumStream(const Stream: TStream): string;
 var
   buf: array[0..4159] of byte;
   len: int64;
@@ -1887,7 +1882,7 @@ begin
   Result := GetDigest;
 end;
 
-procedure TLiMD5.Transform;
+procedure TMD5.Transform;
 const
   S11 = 7;  S12 = 12;  S13 = 17;  S14 = 22;
   S21 = 5;  S22 = 9;   S23 = 14;  S24 = 20;

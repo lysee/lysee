@@ -150,7 +150,7 @@ type
     FProgramExist: boolean;
     FModified: boolean;
     FErrorRow: integer;
-    FContext: TLiContext;
+    FLysee: TLysee;
     FReplace: boolean;
     FOptions: TSynSearchOptions;
     procedure ResetCaption;
@@ -207,8 +207,8 @@ begin
   end;
 
   SetSynEditKeywords(Hilights);
-  FContext := TLiContext.Create(nil);
-  FContext.OnExecuting := @Executing;
+  FLysee := TLysee.Create(nil);
+  FLysee.OnExecuting := @Executing;
 
   ResetCaption;
   FOptions := [];
@@ -217,7 +217,7 @@ end;
 
 procedure TPadForm.FormDestroy(Sender: TObject);
 begin
-  FreeAndNil(FContext);
+  FreeAndNil(FLysee);
 end;
 
 procedure TPadForm.FormKeyDown(Sender: TObject; var Key: Word;
@@ -423,27 +423,27 @@ end;
 procedure TPadForm.acRunCheckExecute(Sender: TObject);
 begin
   ClearError;
-  FContext.Clear;
+  FLysee.Clear;
   try
     if FFileName = '' then
-      FContext.MainFile := ExpandFileName('Untitled.ls') else
-      FContext.MainFile := FFileName;
-    if not FContext.Execute(smLysee.Lines.Text) then
+      FLysee.MainFile := ExpandFileName('Untitled.ls') else
+      FLysee.MainFile := FFileName;
+    if not FLysee.Execute(smLysee.Lines.Text) then
     begin
-      if FContext.Error.EModule = 'main' then
+      if FLysee.Error.EModule = 'main' then
       begin
-        FErrorRow := FContext.Error.ERow + 1;
-        smLysee.CaretY := FContext.Error.ERow + 1;
-        smLysee.CaretX := FContext.Error.ECol + 1;
+        FErrorRow := FLysee.Error.ERow + 1;
+        smLysee.CaretY := FLysee.Error.ERow + 1;
+        smLysee.CaretX := FLysee.Error.ECol + 1;
         smLysee.Refresh;
-        SetPanelText(1, Format(' %s (%d, %d) - %s', [FContext.Error.ErrID,
-          FContext.Error.ERow + 1, FContext.Error.ECol + 1, FContext.Error.EMsg]));
+        SetPanelText(1, Format(' %s (%d, %d) - %s', [FLysee.Error.ErrID,
+          FLysee.Error.ERow + 1, FLysee.Error.ECol + 1, FLysee.Error.EMsg]));
       end
-      else SetPanelText(1, ' ' + FContext.Error.ErrorText);
+      else SetPanelText(1, ' ' + FLysee.Error.ErrorText);
     end
     else SetPanelText(1, 'OK');
   finally
-    FContext.Clear;
+    FLysee.Clear;
   end;
 end;
 
@@ -610,7 +610,10 @@ begin
     {$IFNDEF MSWINDOWS}
     P.Options := P.Options + [poNewConsole];
     {$ENDIF}
-    P.CommandLine := Trim(QS(ExeName) + ' ' + Options + ' ' + QS(FileName));
+    P.Executable := ExeName;
+    if Options <> '' then
+      P.Parameters.Add(Options);
+    P.Parameters.Add(FileName);
     P.Execute;
   finally
     P.Free;
@@ -628,7 +631,7 @@ end;
 
 procedure TPadForm.Executing(Sender: TObject);
 begin
-  FContext.Terminate;
+  FLysee.Terminate;
 end;
 
 initialization

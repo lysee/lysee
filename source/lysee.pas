@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2003-2015, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2003/02/28                                                      }
-{    MODIFIED: 2017/02/18                                                      }
+{    MODIFIED: 2017/02/19                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -47,76 +47,76 @@ const
   TID_MODULE   = 10;
   TID_FUNCTION = 11;
   TID_HASHLIST = 12;
-  TID_LIST     = 13;
+  TID_ARRAY    = 13;
 
-  TID_NAMES: array[TID_VARIANT..TID_LIST] of string = (
+  TID_NAMES: array[TID_VARIANT..TID_ARRAY] of string = (
     'variant', 'nil', 'char', 'integer', 'float', 'currency',
     'time', 'boolean', 'type', 'string', 'module', 'function',
-    'THash', 'TList');
+    'THash', 'array');
 
 type
 
   { forward }
 
-  TLiError          = class;
-  TLiContext        = class;{<--lysee script executer}
-  TLiType           = class;
-  TLiEnumItem       = class;
-  TLiEnumType       = class;
-  TLiEnumSet        = class;
-  TLiEnumSetType    = class;
-  TLiValue          = class;
-  TLiParam          = class;
-  TLiToken          = class;
-  TLiTokenList      = class;
-  TLiTokenizer      = class;
-  TLiParser         = class;
-  TLiSTMT           = class;
-  TLiSTMT_assign    = class;
-  TLiSTMT_for       = class;
-  TLiSTMT_if        = class;
-  TLiSTMT_case      = class;
-  TLiSTMT_try       = class;
-  TLiSTMTList       = class;
-  TLiVarb           = class;
-  TLiVarbList       = class;
-  TLiFunc           = class;
-  TLiFuncList       = class;
-  TLiModule         = class;
-  TLiModuleList     = class;
-  TLiString         = class;
-  TLiGarbage        = class;
-  TLiGarbageCollect = class;
-  TLiList           = class;
-  TLiHash           = class;
-  TLiGenerate       = class;
+  TLysee            = class;{<--lysee script executer}
+  TLyseeError       = class;
+  TLyseeType        = class;
+  TLyseeEnumItem    = class;
+  TLyseeEnumType    = class;
+  TLyseeEnumSet     = class;
+  TLyseeEnumSetType = class;
+  TLyseeValue       = class;
+  TLyseeParam       = class;
+  TLyseeToken       = class;
+  TLyseeTokenList   = class;
+  TLyseeTokenizer   = class;
+  TLyseeParser      = class;
+  TLyseeSTMT        = class;
+  TLyseeSTMTList    = class;
+  TLyseeAssign      = class;
+  TLyseeFor         = class;
+  TLyseeIf          = class;
+  TLyseeCase        = class;
+  TLyseeTry         = class;
+  TLyseeVarb        = class;
+  TLyseeVarbList    = class;
+  TLyseeFunc        = class;
+  TLyseeFuncList    = class;
+  TLyseeModule      = class;
+  TLyseeModuleList  = class;
+  TLyseeString      = class;
+  TLyseeGarbage     = class;
+  TLyseeCollect     = class;
+  TLyseeList        = class;
+  TLyseeHash        = class;
+  TLyseeGenerate    = class;
 
   { lysee procedure }
 
-  TLiLyseeProc = procedure(const Param: TLiParam);
-  TLiLyseeObjectProc = procedure(const Param: TLiParam) of object;
+  TLyseeProc = procedure(const Param: TLyseeParam);
+  TLyseeObjectProc = procedure(const Param: TLyseeParam) of object;
 
-  { RLiFind }
+  { RLyseeFind }
 
-  TLiFind = (fiNone, fiVarb, fiFunc, fiType, fiModule, fiValue);
-  TLiFinds = set of TLiFind;
+  TLyseeFind = (fiNone, fiVarb, fiFunc, fiType, fiModule, fiValue);
+  TLyseeFinds = set of TLyseeFind;
 
-  RLiFind = packed record
-    case f_find: TLiFind of
+  RLyseeFind = packed record
+    case f_find: TLyseeFind of
     fiNone  :(VNone: pointer);
-    fiVarb  :(VVarb: TLiVarb);
-    fiFunc  :(VFunc: TLiFunc);
-    fiType  :(VType: TLiType);
-    fiModule:(VModule: TLiModule);
-    fiValue :(VValue: TLiValue);   // constant
+    fiVarb  :(VVarb: TLyseeVarb);
+    fiFunc  :(VFunc: TLyseeFunc);
+    fiType  :(VType: TLyseeType);
+    fiModule:(VModule: TLyseeModule);
+    fiValue :(VValue: TLyseeValue);   // constant
   end;
-  PLiFind = ^RLiFind;
+  PLyseeFind = ^RLyseeFind;
 
-  { TLiError }
+  { TLyseeError }
 
-  TLiError = class
+  TLyseeError = class
   private
-    FContext: TLiContext;
+    FContext: TLysee;
     FErrID: string;
     FMsg: string;
     FModule: string;
@@ -125,7 +125,7 @@ type
     FCol: integer;
     function GetText: string;
   public
-    constructor Create(AContext: TLiContext);
+    constructor Create(AContext: TLysee);
     procedure Syntax(const Msg, Module, FileName: string; Row, Col: integer);
     procedure Runtime(const Msg, Module, FileName: string; Row, Col: integer);
     procedure Clear;
@@ -138,51 +138,51 @@ type
     property ErrorText: string read GetText;
   end;
 
-  { TLiContext }
+  { TLysee }
 
-  TLiReadln = procedure(Sender: TObject; var S: string) of object;
-  TLiWrite = procedure(Sender: TObject; const S: string) of object;
-  TLiResolve = function(const ID: string; Value: TLiValue): boolean of object;
-  TLiGetModuleFile = function(Sender: TObject; const Module: string): string of object;
+  TLyseeReadln = procedure(Sender: TObject; var S: string) of object;
+  TLyseeWrite = procedure(Sender: TObject; const S: string) of object;
+  TLyseeResolve = function(const ID: string; Value: TLyseeValue): boolean of object;
+  TLyseeGetModule = function(Sender: TObject; const Module: string): string of object;
 
-  TLiContextState = (csTerminated, csReady, csRunning, csContinue, csBreak, csExit);
+  TLyseeState = (csTerminated, csReady, csRunning, csContinue, csBreak, csExit);
 
-  TLiContext = class(TComponent)
+  TLysee = class(TComponent)
   private
     FMainFile: string;
-    FError: TLiError;
-    FState: TLiContextState;
+    FError: TLyseeError;
+    FState: TLyseeState;
     FTerminated: boolean;
     FExcepted: boolean;
     FHalted: boolean;
-    FResult: TLiValue;
-    FMainModule: TLiModule;
-    FMainFunc: TLiFunc;
-    FMainLocals: TLiList;
-    FMainToken: TLiToken;
-    FArgs: TLiList;
-    FModules: TLiModuleList;
+    FResult: TLyseeValue;
+    FMainModule: TLyseeModule;
+    FMainFunc: TLyseeFunc;
+    FMainLocals: TLyseeList;
+    FMainToken: TLyseeToken;
+    FArgs: TLyseeList;
+    FModules: TLyseeModuleList;
     FRollbacks: TList;
     FNameSeed: cardinal;
-    FCurrent: TLiParam;
+    FCurrent: TLyseeParam;
     FOnExecuting: TNotifyEvent;
     FOnExecuted: TNotifyEvent;
-    FOnReadln: TLiReadln;
-    FOnWrite: TLiWrite;
-    FOnResolve: TLiResolve;
-    FOnGetModuleFile: TLiGetModuleFile;
+    FOnReadln: TLyseeReadln;
+    FOnWrite: TLyseeWrite;
+    FOnResolve: TLyseeResolve;
+    FOnGetModuleFile: TLyseeGetModule;
     procedure SetMainFile(const Value: string);
-    procedure SetResult(Value: TLiValue);
-    function GetMainFunc: TLiFunc;
-    function GetCodeModule: TLiModule;
-    function GetCodeFunc: TLiFunc;
+    procedure SetResult(Value: TLyseeValue);
+    function GetMainFunc: TLyseeFunc;
+    function GetCodeModule: TLyseeModule;
+    function GetCodeFunc: TLyseeFunc;
     function GetReady: boolean;
     function GetRunning: boolean;
     function GetTerminated: boolean;
     function GetTerminating: boolean;
-    function GetMainModule: TLiModule;
-    function GetMainToken: TLiToken;
-    function Compile(const Code: string): TLiFunc;
+    function GetMainModule: TLyseeModule;
+    function GetMainToken: TLyseeToken;
+    function Compile(const Code: string): TLyseeFunc;
   protected
     procedure MarkSurvived;
     procedure BeginExecute;
@@ -197,7 +197,7 @@ type
     destructor Destroy;override;
     procedure CheckNotRunning;
     procedure Clear(WillDestroy: boolean = false);
-    function Resolve(const ID: string; Value: TLiValue): boolean;virtual;
+    function Resolve(const ID: string; Value: TLyseeValue): boolean;virtual;
     function GetModuleFile(const AName: string): string;
     { execute }
     function Execute(const Code: string): boolean;
@@ -213,517 +213,508 @@ type
     procedure Writeln(const Text: string);overload;
     procedure Writeln(const Text: string; const Args: array of const);overload;
     { property }
-    property Error: TLiError read FError;
+    property Error: TLyseeError read FError;
     property Ready: boolean read GetReady;
     property Running: boolean read GetRunning;
     property Terminating: boolean read GetTerminating;
     property Terminated: boolean read GetTerminated;
     property Halted: boolean read FHalted;
     property Excepted: boolean read FExcepted write FExcepted;
-    property Modules: TLiModuleList read FModules;
+    property Modules: TLyseeModuleList read FModules;
     property MainFile: string read FMainFile write SetMainFile;
-    property MainModule: TLiModule read GetMainModule;
-    property MainFunc: TLiFunc read GetMainFunc;
-    property MainToken: TLiToken read GetMainToken;
-    property Current: TLiParam read FCurrent;
-    property CodeModule: TLiModule read GetCodeModule;
-    property CodeFunc: TLiFunc read GetCodeFunc;
-    property Stack: TLiList read FMainLocals;
-    property Result: TLiValue read FResult write SetResult;
-    property Args: TLiList read FArgs;
+    property MainModule: TLyseeModule read GetMainModule;
+    property MainFunc: TLyseeFunc read GetMainFunc;
+    property MainToken: TLyseeToken read GetMainToken;
+    property Current: TLyseeParam read FCurrent;
+    property CodeModule: TLyseeModule read GetCodeModule;
+    property CodeFunc: TLyseeFunc read GetCodeFunc;
+    property Stack: TLyseeList read FMainLocals;
+    property Result: TLyseeValue read FResult write SetResult;
+    property Args: TLyseeList read FArgs;
     property Rollbacks: TList read FRollbacks write FRollbacks;
     property OnExecuting: TNotifyEvent read FOnExecuting write FOnExecuting;
     property OnExecuted: TNotifyEvent read FOnExecuted write FOnExecuted;
-    property OnReadln: TLiReadln read FOnReadln write FOnReadln;
-    property OnWrite: TLiWrite read FOnWrite write FOnWrite;
-    property OnResolve: TLiResolve read FOnResolve write FOnResolve;
-    property OnGetModuleFile: TLiGetModuleFile read FOnGetModuleFile write FOnGetModuleFile;
+    property OnReadln: TLyseeReadln read FOnReadln write FOnReadln;
+    property OnWrite: TLyseeWrite read FOnWrite write FOnWrite;
+    property OnResolve: TLyseeResolve read FOnResolve write FOnResolve;
+    property OnGetModuleFile: TLyseeGetModule read FOnGetModuleFile write FOnGetModuleFile;
   end;
 
-  { TLiType }
+  { TLyseeType }
 
-  TLiOperator = (opAdd, opDec, opMul, opDiv, opDivf, opMod, opXor, opShl,
-                 opShr, opShi, opFill, opIn, opLike, opIs, opAs,
-                 {single}opNot, opNeg);
+  TLyseeOperator = (opAdd, opDec, opMul, opDiv, opDivf, opMod, opXor, opShl,
+                    opShr, opShi, opFill, opIn, opLike, opIs, opAs,
+                    {single}opNot, opNeg);
 
-  TLiOperateProc = procedure(V1, V2: TLiValue);
-  PLiOperate = ^RLiOperate;
-  RLiOperate = packed record
-    o_oper: TLiOperator;
-    o_type: TLiType;
-    o_operate: TLiOperateProc;
-    o_next: PLiOperate;
+  TLyseeOperateProc = procedure(V1, V2: TLyseeValue);
+  PLyseeOperate = ^RLyseeOperate;
+  RLyseeOperate = packed record
+    o_oper: TLyseeOperator;
+    o_type: TLyseeType;
+    o_operate: TLyseeOperateProc;
+    o_next: PLyseeOperate;
   end;
 
-  TLiCompareFunc = function(V1, V2: TLiValue): TLiCompare;
-  PLiCompare = ^RLiCompare;
-  RLiCompare = packed record
-    c_type: TLiType;
-    c_compare: TLiCompareFunc;
-    c_next: PLiCompare;
+  TLyseeCompareFunc = function(V1, V2: TLyseeValue): TCompare;
+  PLyseeCompare = ^RLyseeCompare;
+  RLyseeCompare = packed record
+    c_type: TLyseeType;
+    c_compare: TLyseeCompareFunc;
+    c_next: PLyseeCompare;
   end;
 
-  TLiConvertProc = procedure(Value: TLiValue);
-  PLiConvert = ^RLiConvert;
-  RLiConvert = packed record
-    c_type: TLiType;
-    c_convert: TLiConvertProc;
-    c_next: PLiConvert;
-  end;
+  TLyseeTypeStyle = (tsVariant, tsNil, tsBasic, tsEnum, tsEnumSet, tsObject);
 
-  TLiTypeStyle = (tsVariant, tsNil, tsBasic, tsEnum, tsEnumSet, tsObject);
-
-  TLiType = class
+  TLyseeType = class
   private
-    FModule: TLiModule;
-    FParent: TLiType;
+    FModule: TLyseeModule;
+    FParent: TLyseeType;
     FName: string;
     FTID: integer;
-    FStyle: TLiTypeStyle;
-    FMethods : TLiFuncList;
-    FConstructer: TLiFunc;
-    FOperate: array[TLiOperator] of PLiOperate;
-    FCompare : PLiCompare;
-    FConvert: PLiConvert;
-    FProcs: array of TLiLyseeObjectProc;
+    FStyle: TLyseeTypeStyle;
+    FMethods : TLyseeFuncList;
+    FConstructer: TLyseeFunc;
+    FOperate: array[TLyseeOperator] of PLyseeOperate;
+    FCompare : PLyseeCompare;
+    FProcs: array of TLyseeObjectProc;
     function GetFullName: string;
     function GetMethodCount: integer;
-    function GetMethod(Index: integer): TLiFunc;
-    procedure SetParent(const Value: TLiType);
+    function GetMethod(Index: integer): TLyseeFunc;
+    procedure SetParent(const Value: TLyseeType);
   protected
-    function RegisterProc(AProc: TLiLyseeObjectProc): integer;
+    function RegisterProc(AProc: TLyseeObjectProc): integer;
     procedure Setup;virtual;
   public
-    function _IncRefcount(Obj: pointer): integer;virtual;
-    function _DecRefcount(Obj: pointer): integer;virtual;
-    function _AsString(Obj: pointer): string;virtual;
-    function _AsChar(Obj: pointer): char;virtual;
-    function _AsInteger(Obj: pointer): int64;virtual;
-    function _AsFloat(Obj: pointer): double;virtual;
-    function _AsCurrency(Obj: pointer): currency;virtual;
-    function _AsTime(Obj: pointer): TDateTime;virtual;
-    function _AsBoolean(Obj: pointer): boolean;virtual;
-    procedure _Convert(Value: TLiValue);virtual;
-    procedure _SetDefault(Value: TLiValue);virtual;
-    procedure _GcMark(Obj: pointer);virtual; // for garbage collection
-    function _Generate(Obj: pointer): TLiGenerate;virtual;
-    function _Length(Obj: pointer): int64;virtual;
-    function _Clear(Obj: pointer): boolean;virtual;
-    function _Add(Obj: pointer; Value: TLiValue): integer;virtual;
-    procedure _Validate(Obj: pointer);virtual;
+    function IncRefcount(Obj: pointer): integer;virtual;
+    function DecRefcount(Obj: pointer): integer;virtual;
+    function AsString(Obj: pointer): string;virtual;
+    function AsChar(Obj: pointer): char;virtual;
+    function AsInteger(Obj: pointer): int64;virtual;
+    function AsFloat(Obj: pointer): double;virtual;
+    function AsCurrency(Obj: pointer): currency;virtual;
+    function AsTime(Obj: pointer): TDateTime;virtual;
+    function AsBoolean(Obj: pointer): boolean;virtual;
+    function ConvertTo(Value: TLyseeValue; T: TLyseeType): boolean;virtual;
+    procedure Convert(Value: TLyseeValue);virtual;
+    procedure SetDefault(Value: TLyseeValue);virtual;
+    procedure GcMark(Obj: pointer);virtual; // for garbage collection
+    function Generate(Obj: pointer): TLyseeGenerate;virtual;
+    function GetLength(Obj: pointer): int64;virtual;
+    function Clear(Obj: pointer): boolean;virtual;
+    function Add(Obj: pointer; Value: TLyseeValue): integer;virtual;
+    procedure Validate(Obj: pointer);virtual;
   public
-    function FindMethod(const AName: string): TLiFunc;
+    function FindMethod(const AName: string): TLyseeFunc;
     function Method(const AName: string;
-      const AType: TLiType;
+      const AType: TLyseeType;
       const ParamNames: array of string;
-      const ParamTypes: array of TLiType;
-      const AProc: TLiLyseeObjectProc): TLiFunc;overload;
+      const ParamTypes: array of TLyseeType;
+      const AProc: TLyseeObjectProc): TLyseeFunc;overload;
     function Method(const AName: string;
       const ParamNames: array of string;
-      const ParamTypes: array of TLiType;
-      const AProc: TLiLyseeObjectProc): TLiFunc;overload;
+      const ParamTypes: array of TLyseeType;
+      const AProc: TLyseeObjectProc): TLyseeFunc;overload;
     function Method(const AName: string;
-      const AType: TLiType;
-      const AProc: TLiLyseeObjectProc): TLiFunc;overload;
+      const AType: TLyseeType;
+      const AProc: TLyseeObjectProc): TLyseeFunc;overload;
     function Method(const AName: string;
-      const AProc: TLiLyseeObjectProc): TLiFunc;overload;
+      const AProc: TLyseeObjectProc): TLyseeFunc;overload;
     { define property }
-    function Define(const AProp: string; const AType: TLiType;
-      const IndexNames: array of string; const IndexTypes: array of TLiType;
-      const GetProc: TLiLyseeObjectProc;
-      const SetProc: TLiLyseeObjectProc = nil): boolean;overload;
-    function Define(const AProp: string; const AType: TLiType;
-      const IndexName: string; const IndexType: TLiType;
-      const GetProc: TLiLyseeObjectProc;
-      const SetProc: TLiLyseeObjectProc = nil): boolean;overload;
-    function Define(const AProp: string; const AType: TLiType;
-      const GetProc: TLiLyseeObjectProc;
-      const SetProc: TLiLyseeObjectProc = nil): boolean;overload;
+    function Define(const AProp: string; const AType: TLyseeType;
+      const IndexNames: array of string; const IndexTypes: array of TLyseeType;
+      const GetProc: TLyseeObjectProc;
+      const SetProc: TLyseeObjectProc = nil): boolean;overload;
+    function Define(const AProp: string; const AType: TLyseeType;
+      const IndexName: string; const IndexType: TLyseeType;
+      const GetProc: TLyseeObjectProc;
+      const SetProc: TLyseeObjectProc = nil): boolean;overload;
+    function Define(const AProp: string; const AType: TLyseeType;
+      const GetProc: TLyseeObjectProc;
+      const SetProc: TLyseeObjectProc = nil): boolean;overload;
   public
-    constructor Create(const AName: string; AModule: TLiModule; AParent: TLiType = nil);virtual;
+    constructor Create(const AName: string; AModule: TLyseeModule; AParent: TLyseeType = nil);virtual;
     destructor Destroy;override;
     function Prototype(const AName: string): string;
-    function IsTypeOf(AType: TLiType): boolean;
-    function IsChildTypeOf(AType: TLiType): boolean;
+    function IsTypeOf(AType: TLyseeType): boolean;
+    function IsChildTypeOf(AType: TLyseeType): boolean;
     function IsBasicValue: boolean;
     function IsEnum: boolean;
     function IsEnumSet: boolean;
     function IsObject: boolean;
     function IsNil: boolean;
-    function AddOperate(OP: TLiOperator; AType: TLiType; AProc: TLiOperateProc): PLiOperate;
-    function FindOperate(OP: TLiOperator; AType: TLiType): PLiOperate;
-    function AddCompare(AType: TLiType; AFunc: TLiCompareFunc): PLiCompare;
-    function FindCompare(AType: TLiType): PLiCompare;
-    function AddConvert(AType: TLiType; AProc: TLiConvertProc): PLiConvert;
-    function FindConvert(AType: TLiType): PLiConvert;
-    property Parent: TLiType read FParent write SetParent;
-    property Module: TLiModule read FModule;
+    function AddOperate(OP: TLyseeOperator; AType: TLyseeType; AProc: TLyseeOperateProc): PLyseeOperate;
+    function FindOperate(OP: TLyseeOperator; AType: TLyseeType): PLyseeOperate;
+    function AddCompare(AType: TLyseeType; AFunc: TLyseeCompareFunc): PLyseeCompare;
+    function FindCompare(AType: TLyseeType): PLyseeCompare;
+    property Parent: TLyseeType read FParent write SetParent;
+    property Module: TLyseeModule read FModule;
     property Name: string read FName;
     property FullName: string read GetFullName;
     property TID: integer read FTID;
-    property Style: TLiTypeStyle read FStyle;
-    property Constructer: TLiFunc read FConstructer;
+    property Style: TLyseeTypeStyle read FStyle;
+    property Constructer: TLyseeFunc read FConstructer;
     property MethodCount: integer read GetMethodCount;
-    property Methods[Index: integer]: TLiFunc read GetMethod;default;
+    property Methods[Index: integer]: TLyseeFunc read GetMethod;default;
   end;
 
-  { TLiType_variant }
+  { TLyseeVariantType }
 
-  TLiType_variant = class(TLiType)
+  TLyseeVariantType = class(TLyseeType)
   public
-    procedure _Convert(Value: TLiValue);override;
-    procedure _SetDefault(Value: TLiValue);override;
+    procedure Convert(Value: TLyseeValue);override;
+    procedure SetDefault(Value: TLyseeValue);override;
   end;
 
-  { TLiType_nil }
+  { TLyseeNilType }
 
-  TLiType_nil = class(TLiType)
+  TLyseeNilType = class(TLyseeType)
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    function _AsChar(Obj: pointer): char;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    function _AsFloat(Obj: pointer): double;override;
-    function _AsCurrency(Obj: pointer): currency;override;
-    function _AsTime(Obj: pointer): TDateTime;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Convert(Value: TLiValue);override;
-    procedure _SetDefault(Value: TLiValue);override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
+    function AsChar(Obj: pointer): char;override;
+    function AsInteger(Obj: pointer): int64;override;
+    function AsFloat(Obj: pointer): double;override;
+    function AsCurrency(Obj: pointer): currency;override;
+    function AsTime(Obj: pointer): TDateTime;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    function ConvertTo(Value: TLyseeValue; T: TLyseeType): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+    procedure SetDefault(Value: TLyseeValue);override;
   end;
 
-  { TLiType_char }
+  { TLyseeCharType }
 
-  TLiType_char = class(TLiType)
+  TLyseeCharType = class(TLyseeType)
   public
-    function _AsString(Obj: pointer): string;override;
-    function _AsChar(Obj: pointer): char;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    function _AsFloat(Obj: pointer): double;override;
-    function _AsCurrency(Obj: pointer): currency;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Convert(Value: TLiValue);override;
-    procedure _SetDefault(Value: TLiValue);override;
+    function AsString(Obj: pointer): string;override;
+    function AsChar(Obj: pointer): char;override;
+    function AsInteger(Obj: pointer): int64;override;
+    function AsFloat(Obj: pointer): double;override;
+    function AsCurrency(Obj: pointer): currency;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+    procedure SetDefault(Value: TLyseeValue);override;
   end;
 
-  { TLiType_integer }
+  { TLyseeIntegerType }
 
-  TLiType_integer = class(TLiType)
+  TLyseeIntegerType = class(TLyseeType)
   public
-    function _AsString(Obj: pointer): string;override;
-    function _AsChar(Obj: pointer): char;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    function _AsFloat(Obj: pointer): double;override;
-    function _AsCurrency(Obj: pointer): currency;override;
-    function _AsTime(Obj: pointer): TDateTime;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Convert(Value: TLiValue);override;
-    procedure _SetDefault(Value: TLiValue);override;
-    function _Generate(Obj: pointer): TLiGenerate;override;
+    function AsString(Obj: pointer): string;override;
+    function AsChar(Obj: pointer): char;override;
+    function AsInteger(Obj: pointer): int64;override;
+    function AsFloat(Obj: pointer): double;override;
+    function AsCurrency(Obj: pointer): currency;override;
+    function AsTime(Obj: pointer): TDateTime;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+    procedure SetDefault(Value: TLyseeValue);override;
+    function Generate(Obj: pointer): TLyseeGenerate;override;
   end;
 
-  { TLiType_float }
+  { TLyseeFloatType }
 
-  TLiType_float = class(TLiType)
+  TLyseeFloatType = class(TLyseeType)
   public
-    function _AsString(Obj: pointer): string;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    function _AsFloat(Obj: pointer): double;override;
-    function _AsCurrency(Obj: pointer): currency;override;
-    function _AsTime(Obj: pointer): TDateTime;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Convert(Value: TLiValue);override;
-    procedure _SetDefault(Value: TLiValue);override;
+    function AsString(Obj: pointer): string;override;
+    function AsInteger(Obj: pointer): int64;override;
+    function AsFloat(Obj: pointer): double;override;
+    function AsCurrency(Obj: pointer): currency;override;
+    function AsTime(Obj: pointer): TDateTime;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+    procedure SetDefault(Value: TLyseeValue);override;
   end;
 
-  { TLiType_currency }
+  { TLyseeCurrencyType }
 
-  TLiType_currency = class(TLiType)
+  TLyseeCurrencyType = class(TLyseeType)
   public
-    function _AsString(Obj: pointer): string;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    function _AsFloat(Obj: pointer): double;override;
-    function _AsCurrency(Obj: pointer): currency;override;
-    function _AsTime(Obj: pointer): TDateTime;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Convert(Value: TLiValue);override;
-    procedure _SetDefault(Value: TLiValue);override;
+    function AsString(Obj: pointer): string;override;
+    function AsInteger(Obj: pointer): int64;override;
+    function AsFloat(Obj: pointer): double;override;
+    function AsCurrency(Obj: pointer): currency;override;
+    function AsTime(Obj: pointer): TDateTime;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+    procedure SetDefault(Value: TLyseeValue);override;
   end;
 
-  { TLiType_time }
+  { TLyseeTimeType }
 
-  TLiType_time = class(TLiType)
+  TLyseeTimeType = class(TLyseeType)
   public
-    function _AsString(Obj: pointer): string;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    function _AsFloat(Obj: pointer): double;override;
-    function _AsTime(Obj: pointer): TDateTime;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Convert(Value: TLiValue);override;
-    procedure _SetDefault(Value: TLiValue);override;
+    function AsString(Obj: pointer): string;override;
+    function AsInteger(Obj: pointer): int64;override;
+    function AsFloat(Obj: pointer): double;override;
+    function AsTime(Obj: pointer): TDateTime;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+    procedure SetDefault(Value: TLyseeValue);override;
   end;
 
-  { TLiType_boolean }
+  { TLyseeBoolType }
 
-  TLiType_boolean = class(TLiType)
+  TLyseeBoolType = class(TLyseeType)
   public
-    function _AsString(Obj: pointer): string;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Convert(Value: TLiValue);override;
-    procedure _SetDefault(Value: TLiValue);override;
+    function AsString(Obj: pointer): string;override;
+    function AsInteger(Obj: pointer): int64;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+    procedure SetDefault(Value: TLyseeValue);override;
   end;
 
-  { TLiType_type }
+  { TLyseeTypeType }
 
-  TLiType_type = class(TLiType)
+  TLyseeTypeType = class(TLyseeType)
   protected
-    procedure MyName(const Param: TLiParam);
-    procedure MyParent(const Param: TLiParam);
-    procedure MyModule(const Param: TLiParam);
-    procedure MyMethods(const Param: TLiParam);
-    procedure MyIsTypeOf(const Param: TLiParam);
-    procedure MyIsChildTypeOf(const Param: TLiParam);
-    procedure MyIsObject(const Param: TLiParam);
-    procedure MyIsNil(const Param: TLiParam);
-    procedure MyIsEnum(const Param: TLiParam);
-    procedure MyIsEnumSet(const Param: TLiParam);
-    procedure MyItemValues(const Param: TLiParam);
-    procedure MyPrototype(const Param: TLiParam);
-    procedure MyFindMethod(const Param: TLiParam);
+    procedure MyName(const Param: TLyseeParam);
+    procedure MyParent(const Param: TLyseeParam);
+    procedure MyModule(const Param: TLyseeParam);
+    procedure MyMethods(const Param: TLyseeParam);
+    procedure MyIsTypeOf(const Param: TLyseeParam);
+    procedure MyIsChildTypeOf(const Param: TLyseeParam);
+    procedure MyIsObject(const Param: TLyseeParam);
+    procedure MyIsNil(const Param: TLyseeParam);
+    procedure MyIsEnum(const Param: TLyseeParam);
+    procedure MyIsEnumSet(const Param: TLyseeParam);
+    procedure MyItemValues(const Param: TLyseeParam);
+    procedure MyPrototype(const Param: TLyseeParam);
+    procedure MyFindMethod(const Param: TLyseeParam);
     procedure Setup;override;
   public
-    function _AsString(Obj: pointer): string;override;
-    procedure _Convert(Value: TLiValue);override;
+    function AsString(Obj: pointer): string;override;
+    procedure Convert(Value: TLyseeValue);override;
   end;
 
-  { TLiType_string }
+  { TLyseeStringType }
 
-  TLiType_string = class(TLiType)
+  TLyseeStringType = class(TLyseeType)
   protected
-    procedure MyGet(const Param: TLiParam);
+    procedure MyGet(const Param: TLyseeParam);
     procedure Setup;override;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    function _AsChar(Obj: pointer): char;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    function _AsFloat(Obj: pointer): double;override;
-    function _AsCurrency(Obj: pointer): currency;override;
-    function _AsTime(Obj: pointer): TDateTime;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Convert(Value: TLiValue);override;
-    function _Generate(Obj: pointer): TLiGenerate;override;
-    function _Length(Obj: pointer): int64;override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
+    function AsChar(Obj: pointer): char;override;
+    function AsInteger(Obj: pointer): int64;override;
+    function AsFloat(Obj: pointer): double;override;
+    function AsCurrency(Obj: pointer): currency;override;
+    function AsTime(Obj: pointer): TDateTime;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+    function Generate(Obj: pointer): TLyseeGenerate;override;
+    function GetLength(Obj: pointer): int64;override;
   end;
 
-  { TLiType_func }
+  { TLyseeFuncType }
 
-  TLiType_func = class(TLiType)
+  TLyseeFuncType = class(TLyseeType)
   protected
-    procedure MyName(const Param: TLiParam);
-    procedure MyPrototype(const Param: TLiParam);
-    procedure MyParent(const Param: TLiParam);
-    procedure MyModule(const Param: TLiParam);
-    procedure MyIsMainFunc(const Param: TLiParam);
-    procedure MyIsMethod(const Param: TLiParam);
-    procedure MyIsConstructor(const Param: TLiParam);
-    procedure MyIsChangeAble(const Param: TLiParam);
-    procedure MyParamCount(const Param: TLiParam);
-    procedure MyGetParamName(const Param: TLiParam);
-    procedure MySetParamName(const Param: TLiParam);
-    procedure MyGetParamType(const Param: TLiParam);
-    procedure MySetParamType(const Param: TLiParam);
-    procedure MyParamNames(const Param: TLiParam);
-    procedure MyParamTypes(const Param: TLiParam);
-    procedure MyClear(const Param: TLiParam);
-    procedure MyClearParams(const Param: TLiParam);
-    procedure MyClearCodes(const Param: TLiParam);
-    procedure MyAddParam(const Param: TLiParam);
-    procedure MyAddCode(const Param: TLiParam);
-    procedure MySetCode(const Param: TLiParam);
-    procedure MyGetResultType(const Param: TLiParam);
-    procedure MySetResultType(const Param: TLiParam);
+    procedure MyName(const Param: TLyseeParam);
+    procedure MyPrototype(const Param: TLyseeParam);
+    procedure MyParent(const Param: TLyseeParam);
+    procedure MyModule(const Param: TLyseeParam);
+    procedure MyIsMainFunc(const Param: TLyseeParam);
+    procedure MyIsMethod(const Param: TLyseeParam);
+    procedure MyIsConstructor(const Param: TLyseeParam);
+    procedure MyIsChangeAble(const Param: TLyseeParam);
+    procedure MyParamCount(const Param: TLyseeParam);
+    procedure MyGetParamName(const Param: TLyseeParam);
+    procedure MySetParamName(const Param: TLyseeParam);
+    procedure MyGetParamType(const Param: TLyseeParam);
+    procedure MySetParamType(const Param: TLyseeParam);
+    procedure MyParamNames(const Param: TLyseeParam);
+    procedure MyParamTypes(const Param: TLyseeParam);
+    procedure MyClear(const Param: TLyseeParam);
+    procedure MyClearParams(const Param: TLyseeParam);
+    procedure MyClearCodes(const Param: TLyseeParam);
+    procedure MyAddParam(const Param: TLyseeParam);
+    procedure MyAddCode(const Param: TLyseeParam);
+    procedure MySetCode(const Param: TLyseeParam);
+    procedure MyGetResultType(const Param: TLyseeParam);
+    procedure MySetResultType(const Param: TLyseeParam);
     procedure Setup;override;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
   end;
 
-  { TLiType_module }
+  { TLyseeModuleType }
 
-  TLiType_module = class(TLiType)
+  TLyseeModuleType = class(TLyseeType)
   protected
-    procedure MyName(const Param: TLiParam);
-    procedure MyConsts(const Param: TLiParam);
-    procedure MyTypes(const Param: TLiParam);
-    procedure MyFuncs(const Param: TLiParam);
-    procedure MyUsings(const Param: TLiParam);
-    procedure MyFind(const Param: TLiParam);
+    procedure MyName(const Param: TLyseeParam);
+    procedure MyConsts(const Param: TLyseeParam);
+    procedure MyTypes(const Param: TLyseeParam);
+    procedure MyFuncs(const Param: TLyseeParam);
+    procedure MyUsings(const Param: TLyseeParam);
+    procedure MyFind(const Param: TLyseeParam);
     procedure Setup;override;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
   end;
 
-  { TLiType_list }
+  { TLyseeArrayType }
 
-  TLiType_list = class(TLiType)
+  TLyseeArrayType = class(TLyseeType)
   protected
-    procedure MyCreate(const Param: TLiParam);
-    procedure MyIsEmpty(const Param: TLiParam);
-    procedure MyClear(const Param: TLiParam);
-    procedure MyDelete(const Param: TLiParam);
-    procedure MyRemove(const Param: TLiParam);
-    procedure MyExchange(const Param: TLiParam);
-    procedure MyMove(const Param: TLiParam);
-    procedure MySort(const Param: TLiParam);
-    procedure MyInsert(const Param: TLiParam);
-    procedure MyAdd(const Param: TLiParam);
-    procedure MyIndexOf(const Param: TLiParam);
-    procedure MyCopy(const Param: TLiParam);
-    procedure MyLeft(const Param: TLiParam);
-    procedure MyRight(const Param: TLiParam);
-    procedure MyAssign(const Param: TLiParam);
-    procedure MyGetCount(const Param: TLiParam);
-    procedure MySetCount(const Param: TLiParam);
-    procedure MyGet(const Param: TLiParam);
-    procedure MySet(const Param: TLiParam);
+    procedure MyCreate(const Param: TLyseeParam);
+    procedure MyIsEmpty(const Param: TLyseeParam);
+    procedure MyClear(const Param: TLyseeParam);
+    procedure MyDelete(const Param: TLyseeParam);
+    procedure MyRemove(const Param: TLyseeParam);
+    procedure MyExchange(const Param: TLyseeParam);
+    procedure MyMove(const Param: TLyseeParam);
+    procedure MySort(const Param: TLyseeParam);
+    procedure MyInsert(const Param: TLyseeParam);
+    procedure MyAdd(const Param: TLyseeParam);
+    procedure MyIndexOf(const Param: TLyseeParam);
+    procedure MyCopy(const Param: TLyseeParam);
+    procedure MyLeft(const Param: TLyseeParam);
+    procedure MyRight(const Param: TLyseeParam);
+    procedure MyAssign(const Param: TLyseeParam);
+    procedure MyGetCount(const Param: TLyseeParam);
+    procedure MySetCount(const Param: TLyseeParam);
+    procedure MyGet(const Param: TLyseeParam);
+    procedure MySet(const Param: TLyseeParam);
     procedure Setup;override;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    procedure _GcMark(Obj: pointer);override;
-    function _Generate(Obj: pointer): TLiGenerate;override;
-    function _Length(Obj: pointer): int64;override;
-    function _Clear(Obj: pointer): boolean;override;
-    function _Add(Obj: pointer; Value: TLiValue): integer;override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
+    procedure GcMark(Obj: pointer);override;
+    function Generate(Obj: pointer): TLyseeGenerate;override;
+    function GetLength(Obj: pointer): int64;override;
+    function Clear(Obj: pointer): boolean;override;
+    function Add(Obj: pointer; Value: TLyseeValue): integer;override;
   end;
 
-  { TLiType_hash }
+  { TLyseeHashType }
 
-  TLiType_hash = class(TLiType)
+  TLyseeHashType = class(TLyseeType)
   protected
-    procedure MyCreate(const Param: TLiParam);
-    procedure MyIsEmpty(const Param: TLiParam);
-    procedure MyClear(const Param: TLiParam);
-    procedure MyHas(const Param: TLiParam);
-    procedure MyRemove(const Param: TLiParam);
-    procedure MyKeys(const Param: TLiParam);
-    procedure MyValues(const Param: TLiParam);
-    procedure MyGet(const Param: TLiParam);
-    procedure MySet(const Param: TLiParam);
+    procedure MyCreate(const Param: TLyseeParam);
+    procedure MyIsEmpty(const Param: TLyseeParam);
+    procedure MyClear(const Param: TLyseeParam);
+    procedure MyHas(const Param: TLyseeParam);
+    procedure MyRemove(const Param: TLyseeParam);
+    procedure MyKeys(const Param: TLyseeParam);
+    procedure MyValues(const Param: TLyseeParam);
+    procedure MyGet(const Param: TLyseeParam);
+    procedure MySet(const Param: TLyseeParam);
     procedure Setup;override;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    procedure _GcMark(Obj: pointer);override;
-    function _Clear(Obj: pointer): boolean;override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
+    procedure GcMark(Obj: pointer);override;
+    function Clear(Obj: pointer): boolean;override;
   end;
 
-  { TLiEnumItem }
+  { TLyseeEnumItem }
 
-  TLiEnumItem = class
+  TLyseeEnumItem = class
   private
-    FParent: TLiEnumType;
+    FParent: TLyseeEnumType;
     FName: string;
     FValue: integer;
   public
-    procedure SetValue(Value: TLiValue);
-    property Parent: TLiEnumType read FParent;
+    procedure SetValue(Value: TLyseeValue);
+    property Parent: TLyseeEnumType read FParent;
     property Name: string read FName;
     property Value: integer read FValue;
   end;
 
-  { TLiEnumType }
+  { TLyseeEnumType }
 
-  TLiEnumType = class(TLiType)
+  TLyseeEnumType = class(TLyseeType)
   private
-    FItems: array of TLiEnumItem;
+    FItems: array of TLyseeEnumItem;
     function GetCount: integer;
-    function GetItem(Index: integer): TLiEnumItem;
-    function GetDefValue: TLiEnumItem;
+    function GetItem(Index: integer): TLyseeEnumItem;
+    function GetDefValue: TLyseeEnumItem;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    procedure _Convert(Value: TLiValue);override;
-    procedure _SetDefault(Value: TLiValue);override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
+    function AsInteger(Obj: pointer): int64;override;
+    procedure Convert(Value: TLyseeValue);override;
+    procedure SetDefault(Value: TLyseeValue);override;
   public
-    constructor Create(const AName: string; AModule: TLiModule; AParent: TLiType);override;
+    constructor Create(const AName: string; AModule: TLyseeModule; AParent: TLyseeType);override;
     destructor Destroy;override;
-    procedure Add(const ItemNames: array of string);
-    function Find(const ItemName: string): TLiEnumItem;overload;
-    function Find(ItemValue: integer): TLiEnumItem;overload;
-    function ItemByName(const ItemName: string): TLiEnumItem;
-    function ItemByValue(ItemValue: integer): TLiEnumItem;
-    procedure SetValue(Value: TLiValue; Item: TLiEnumItem);overload;
-    procedure SetValue(Value: TLiValue; ItemValue: integer);overload;
-    procedure SetValue(Value: TLiValue; const ItemName: string);overload;
-    function NewEnumSetType(const AName: string): TLiEnumSetType;
+    procedure AddItems(const ItemNames: array of string);
+    function Find(const ItemName: string): TLyseeEnumItem;overload;
+    function Find(ItemValue: integer): TLyseeEnumItem;overload;
+    function ItemByName(const ItemName: string): TLyseeEnumItem;
+    function ItemByValue(ItemValue: integer): TLyseeEnumItem;
+    procedure SetValue(Value: TLyseeValue; Item: TLyseeEnumItem);overload;
+    procedure SetValue(Value: TLyseeValue; ItemValue: integer);overload;
+    procedure SetValue(Value: TLyseeValue; const ItemName: string);overload;
+    function NewEnumSetType(const AName: string): TLyseeEnumSetType;
     property Count: integer read GetCount;
-    property Items[Index: integer]: TLiEnumItem read GetItem;default;
-    property DefValue: TLiEnumItem read GetDefValue;
+    property Items[Index: integer]: TLyseeEnumItem read GetItem;default;
+    property DefValue: TLyseeEnumItem read GetDefValue;
   end;
 
-  { TLiEnumSet }
+  { TLyseeEnumSet }
 
-  TLiEnumSet = class(TLiObject)
+  TLyseeEnumSet = class(TBasicObject)
   private
-    FParent: TLiEnumSetType;
+    FParent: TLyseeEnumSetType;
     FSets: array of boolean;
-    function GetSource: TLiEnumType;
+    function GetSource: TLyseeEnumType;
     function GetCount: integer;
     function Get(Index: integer): boolean;
     procedure Put(Index: integer; Value: boolean);
   public
     destructor Destroy;override;
-    procedure SetValue(Value: TLiValue);
+    procedure SetValue(Value: TLyseeValue);
     function AsBoolean: boolean;
     function AsString: string;override;
-    function Equal(S: TLiEnumSet): boolean;
-    function Add(S: TLiEnumSet): TLiEnumSet;
-    function Dec(S: TLiEnumSet): TLiEnumSet;
-    function Mul(S: TLiEnumSet): TLiEnumSet;
-    function NotAll: TLiEnumSet;
-    property Parent: TLiEnumSetType read FParent;
-    property Source: TLiEnumType read GetSource;
+    function Equal(S: TLyseeEnumSet): boolean;
+    function Add(S: TLyseeEnumSet): TLyseeEnumSet;
+    function Dec(S: TLyseeEnumSet): TLyseeEnumSet;
+    function Mul(S: TLyseeEnumSet): TLyseeEnumSet;
+    function NotAll: TLyseeEnumSet;
+    property Parent: TLyseeEnumSetType read FParent;
+    property Source: TLyseeEnumType read GetSource;
     property Count: integer read GetCount;
     property Sets[Index: integer]: boolean read Get write Put;default;
   end;
 
-  { TLiEnumSetType }
+  { TLyseeEnumSetType }
 
-  TLiEnumSetType = class(TLiType)
+  TLyseeEnumSetType = class(TLyseeType)
   private
-    FSource: TLiEnumType;
-    FDefValue: TLiEnumSet;
-    function GetDefValue: TLiEnumSet;
+    FSource: TLyseeEnumType;
+    FDefValue: TLyseeEnumSet;
+    function GetDefValue: TLyseeEnumSet;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Convert(Value: TLiValue);override;
-    procedure _SetDefault(Value: TLiValue);override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+    procedure SetDefault(Value: TLyseeValue);override;
   public
     destructor Destroy;override;
-    procedure SetValue(Value: TLiValue; ASet: TLiEnumSet);
-    function NewEnumSet: TLiEnumSet;
-    property Source: TLiEnumType read FSource;
-    property DefValue: TLiEnumSet read GetDefValue;
+    procedure SetValue(Value: TLyseeValue; ASet: TLyseeEnumSet);
+    function NewEnumSet: TLyseeEnumSet;
+    property Source: TLyseeEnumType read FSource;
+    property DefValue: TLyseeEnumSet read GetDefValue;
   end;
 
-  { TLiValue }
+  { TLyseeValue }
 
-  PLiValue = ^RLiValue;
-  RLiValue = packed record
+  PLyseeValue = ^RLyseeValue;
+  RLyseeValue = packed record
     case integer of
     TID_CHAR    : (VChar: array[0..1] of char);
     TID_INTEGER : (VInteger: int64);
@@ -734,24 +725,24 @@ type
     TID_TYPE    : (VObject: pointer);
   end;
 
-  TLiValue = class
+  TLyseeValue = class
   private
-    FType: TLiType;
-    FValue: RLiValue;
+    FType: TLyseeType;
+    FValue: RLyseeValue;
     function GetAsInteger: int64;
     function GetAsChar: char;
     function GetAsBoolean: boolean;
     function GetAsFloat: double;
     function GetAsCurrency: currency;
     function GetAsTime: TDateTime;
-    function GetAsType: TLiType;
+    function GetAsType: TLyseeType;
     function GetAsString: string;
-    function GetAsFunc: TLiFunc;
-    function GetAsList: TLiList;
-    function GetAsHash: TLiHash;
-    function GetAsModule: TLiModule;
-    function GetAsEnum: TLiEnumItem;
-    function GetAsEnumSet: TLiEnumSet;
+    function GetAsFunc: TLyseeFunc;
+    function GetAsArray: TLyseeList;
+    function GetAsHash: TLyseeHash;
+    function GetAsModule: TLyseeModule;
+    function GetAsEnum: TLyseeEnumItem;
+    function GetAsEnumSet: TLyseeEnumSet;
     procedure SetAsString(const Value: string);
     procedure SetAsInteger(Value: int64);
     procedure SetAsChar(Value: char);
@@ -759,29 +750,29 @@ type
     procedure SetAsFloat(Value: double);
     procedure SetAsCurrency(Value: currency);
     procedure SetAsTime(Value: TDateTime);
-    procedure SetAsType(Value: TLiType);
-    procedure SetAsFunc(Value: TLiFunc);
-    procedure SetAsList(Value: TLiList);
-    procedure SetAsHash(Value: TLiHash);
-    procedure SetAsModule(Value: TLiModule);
-    procedure SetAsEnum(Value: TLiEnumItem);
-    procedure SetAsEnumSet(Value: TLiEnumSet);
-    procedure SetParentType(VT: TLiType);
+    procedure SetAsType(Value: TLyseeType);
+    procedure SetAsFunc(Value: TLyseeFunc);
+    procedure SetAsArray(Value: TLyseeList);
+    procedure SetAsHash(Value: TLyseeHash);
+    procedure SetAsModule(Value: TLyseeModule);
+    procedure SetAsEnum(Value: TLyseeEnumItem);
+    procedure SetAsEnumSet(Value: TLyseeEnumSet);
+    procedure SetParentType(VT: TLyseeType);
   public
     constructor Create;virtual;
     destructor Destroy;override;
     function IncRefcount: integer;
     function DecRefcount: integer;
     procedure MarkForSurvive;
-    procedure SetValue(Value: TLiValue);
+    procedure SetValue(Value: TLyseeValue);
     procedure SetNil;
-    procedure SetDefault(AType: TLiType);
-    procedure Convert(AType: TLiType; Cntx: TLiContext);
-    procedure SetFind(Finded: PLiFind);
-    function GetOA(Wanted: TLiType = nil): pointer; // get object|address
-    function GetTOA(var OA: pointer): TLiType; // get type and object|address
-    procedure SetTOA(T: TLiType; OA: pointer);
-    procedure SetObject(AType: TLiType; Aobj: pointer);
+    procedure SetDefault(AType: TLyseeType);
+    procedure Convert(AType: TLyseeType; Cntx: TLysee);
+    procedure SetFind(Finded: PLyseeFind);
+    function GetOA(Wanted: TLyseeType = nil): pointer; // get object|address
+    function GetTOA(var OA: pointer): TLyseeType; // get type and object|address
+    procedure SetTOA(T: TLyseeType; OA: pointer);
+    procedure SetObject(AType: TLyseeType; Aobj: pointer);
     function IsBasicValue: boolean;
     function IsObject: boolean;
     function IsNil: boolean;
@@ -789,22 +780,22 @@ type
     function IsBoolTrue: boolean;
     function IsFalse: boolean;
     function GetFileName: string;
-    function GetString: TLiString;
-    function GetFunc: TLiFunc;
-    function GetModule: TLiModule;
-    function GetList: TLiList;
-    function GetHashed: TLiHash;
+    function GetString: TLyseeString;
+    function GetFunc: TLyseeFunc;
+    function GetModule: TLyseeModule;
+    function GetArray: TLyseeList;
+    function GetHashed: TLyseeHash;
     function GetSelf(var Aobj): boolean;
-    function Operate(OP: TLiOperator; Value: TLiValue): boolean;
-    function Compare(Value: TLiValue): TLiCompare;overload;
-    function Compare(Value: TLiValue; Wanted: TLiCompares): boolean;overload;
-    function Same(Value: TLiValue): boolean;
-    function NewList: TLiList;
-    property VType: TLiType read FType write SetParentType;
-    property AsModule: TLiModule read GetAsModule write SetAsModule;
-    property AsFunc: TLiFunc read GetAsFunc write SetAsFunc;
-    property AsList: TLiList read GetAsList write SetAsList;
-    property AsHash: TLiHash read GetAsHash write SetAsHash;
+    function Operate(OP: TLyseeOperator; Value: TLyseeValue): boolean;
+    function Compare(Value: TLyseeValue): TCompare;overload;
+    function Compare(Value: TLyseeValue; Wanted: TCompares): boolean;overload;
+    function Same(Value: TLyseeValue): boolean;
+    function NewList: TLyseeList;
+    property VType: TLyseeType read FType write SetParentType;
+    property AsModule: TLyseeModule read GetAsModule write SetAsModule;
+    property AsFunc: TLyseeFunc read GetAsFunc write SetAsFunc;
+    property AsArray: TLyseeList read GetAsArray write SetAsArray;
+    property AsHash: TLyseeHash read GetAsHash write SetAsHash;
     property AsString: string read GetAsString write SetAsString;
     property AsChar: char read GetAsChar write SetAsChar;
     property AsInteger: int64 read GetAsInteger write SetAsInteger;
@@ -812,53 +803,53 @@ type
     property AsFloat: double read GetAsFloat write SetAsFloat;
     property AsCurrency: currency read GetAsCurrency write SetAsCurrency;
     property AsTime: TDateTime read GetAsTime write SetAsTime;
-    property AsType: TLiType read GetAsType write SetAsType;
-    property AsEnum: TLiEnumItem read GetAsEnum write SetAsEnum;
-    property AsEnumSet: TLiEnumSet read GetAsEnumSet write SetAsEnumSet;
+    property AsType: TLyseeType read GetAsType write SetAsType;
+    property AsEnum: TLyseeEnumItem read GetAsEnum write SetAsEnum;
+    property AsEnumSet: TLyseeEnumSet read GetAsEnumSet write SetAsEnumSet;
   end;
 
-  { TLiParam }
+  { TLyseeParam }
 
-  TLiParam = class
+  TLyseeParam = class
   private
-    FContext: TLiContext;
-    FFunc: TLiFunc;
-    FToken: TLiToken;
-    FParams: TLiList;
+    FContext: TLysee;
+    FFunc: TLyseeFunc;
+    FToken: TLyseeToken;
+    FParams: TLyseeList;
     FPrmc: integer;   {<--actual parameters' count passed to function}
-    FResult: TLiValue;
-    FPrev: TLiParam;
+    FResult: TLyseeValue;
+    FPrev: TLyseeParam;
     function GetCount: integer;
-    function GetItem(Index: integer): TLiValue;
-    function GetValue(const Name: string): TLiValue;
-    procedure SetResult(Value: TLiValue);
+    function GetItem(Index: integer): TLyseeValue;
+    function GetValue(const Name: string): TLyseeValue;
+    procedure SetResult(Value: TLyseeValue);
   public
     procedure Error(const Msg: string);overload;
     procedure Error(const Msg: string; const Args: array of const);overload;
-    procedure ErrorOper(OP: TLiOperator; L, R: TLiType);
-    procedure ErrorChangeFunc(AFunc: TLiFunc);
-    function TestChangeFunc(AFunc: TLiFunc): boolean;
-    procedure BeginExec(var Mark: integer; var Tmpv: TLiValue);overload;
+    procedure ErrorOper(OP: TLyseeOperator; L, R: TLyseeType);
+    procedure ErrorChangeFunc(AFunc: TLyseeFunc);
+    function TestChangeFunc(AFunc: TLyseeFunc): boolean;
+    procedure BeginExec(var Mark: integer; var Tmpv: TLyseeValue);overload;
     procedure BeginExec(var Mark: integer);overload;
     procedure EndExec(Mark: integer);
-    function GetVarbValue(Index: integer; var VT: TLiType): TLiValue;
+    function GetVarbValue(Index: integer; var VT: TLyseeType): TLyseeValue;
     function GetSelf(var Aobj): boolean;
-    function GetChangeAbleFunc(var F: TLiFunc): boolean;
-    property Context: TLiContext read FContext;
-    property Func: TLiFunc read FFunc;
-    property Params: TLiList read FParams;
-    property Result: TLiValue read FResult write SetResult;
-    property Token: TLiToken read FToken;
+    function GetChangeAbleFunc(var F: TLyseeFunc): boolean;
+    property Context: TLysee read FContext;
+    property Func: TLyseeFunc read FFunc;
+    property Params: TLyseeList read FParams;
+    property Result: TLyseeValue read FResult write SetResult;
+    property Token: TLyseeToken read FToken;
     property Prmc: integer read FPrmc;
     property Count: integer read GetCount;
-    property Items[Index: integer]: TLiValue read GetItem;default;
-    property Values[const Name: string]: TLiValue read GetValue;
+    property Items[Index: integer]: TLyseeValue read GetItem;default;
+    property Values[const Name: string]: TLyseeValue read GetValue;
   end;
 
-  { TLiToken }
+  { TLyseeToken }
 
-  TLiSymbol = (syError,
-    {keyword}syBegin, syUses, syConst, syFunc, syProc, syVar, syGet, sySet,
+  TLyseeSymbol = (syError,
+    {keyword}syBegin, syUses, syConst, syFunc, syProc, syArray, syVar, syGet, sySet,
     syIf, syElif, syThen, syElse, syCase, syOf, syFor, syWhile, syRepeat,
     syUntil, syDo, syResult, syDiv, syMod, syTo, syDownto, syNot, syIn, syIs,
     syAs, syLike, syAnd, syOr, syXor, syShr, syShl, syTry, syExcept,
@@ -866,72 +857,72 @@ type
     {operator} syBecome, syShi, syFill, syAdd, syReduce, syMul, syDivf,
     syLParen, syRParen, syLArray, syRArray, syDot, syRange, syVarArg, syColon,
     sySemic, syComma, syAt, sySame, syEQ, syNE, syLT, syLE, syMT, syME, syVert,
-    {abstract} syID, syNeg, syFloat, syInt, syStr, syChar, syList, syHash,
+    {abstract} syID, syNeg, syFloat, syInt, syStr, syChar, syHash,
     syCall, syEOF
   );
-  TLiSymbols = set of TLiSymbol;
+  TLyseeSymbols = set of TLyseeSymbol;
 
-  RLiTokenValue = packed record
-    case TLiSymbol of
+  RLyseeTokenValue = packed record
+    case TLyseeSymbol of
     syChar :(VChar: char);
     syInt  :(VInt: int64);
     syFloat:(VFloat: double);
-    syVert :(VFunc: TLiFunc);
+    syVert :(VFunc: TLyseeFunc);
   end;
 
-  TLiToken = class
+  TLyseeToken = class
   private
-    FSym: TLiSymbol;       // syTrue, syFalse
+    FSym: TLyseeSymbol;       // syTrue, syFalse
     FRow: integer;
     FCol: integer;
     FName: string;         // syBecome, syID, syStr
-    FValue: RLiTokenValue; // syChar, syInt, syFloat
-    FRight: TLiToken;
-    FLeft: TLiToken;
+    FValue: RLyseeTokenValue; // syChar, syInt, syFloat
+    FRight: TLyseeToken;
+    FLeft: TLyseeToken;
     FParams: TList;
     function GetParamCount: integer;
-    function GetParam(Index: integer): TLiToken;
-    function SetupParamList(Param: TLiParam; Host: TLiValue; Func: TLiFunc): TLiList;
-    function GetAt(Param: TLiParam; Host, Outv: TLiValue): boolean;
-    function GetProp(Param: TLiParam; Host, Outv: TLiValue): boolean;
-    function TryFunc(Func: TLiFunc; Param: TLiParam; Outv: TLiValue): boolean;
-    function TryMethod(Host: TLiValue; const Method: string;
-      Param: TLiParam; Outv: TLiValue; LastParam: TLiToken): boolean;
+    function GetParam(Index: integer): TLyseeToken;
+    function SetupParamList(Param: TLyseeParam; Host: TLyseeValue; Func: TLyseeFunc): TLyseeList;
+    function GetAt(Param: TLyseeParam; Host, Outv: TLyseeValue): boolean;
+    function GetProp(Param: TLyseeParam; Host, Outv: TLyseeValue): boolean;
+    function TryFunc(Func: TLyseeFunc; Param: TLyseeParam; Outv: TLyseeValue): boolean;
+    function TryMethod(Host: TLyseeValue; const Method: string;
+      Param: TLyseeParam; Outv: TLyseeValue; LastParam: TLyseeToken): boolean;
   protected
-    procedure ExecID(Param: TLiParam; Outv: TLiValue);
-    procedure ExecGet(Param: TLiParam; Outv: TLiValue);
-    procedure ExecSet(Param: TLiParam);
-    procedure ExecCall(Param: TLiParam; Outv: TLiValue);
+    procedure ExecID(Param: TLyseeParam; Outv: TLyseeValue);
+    procedure ExecGet(Param: TLyseeParam; Outv: TLyseeValue);
+    procedure ExecSet(Param: TLyseeParam);
+    procedure ExecCall(Param: TLyseeParam; Outv: TLyseeValue);
   public
-    constructor Create(T: TLiToken = nil);
-    constructor CreateWithLeft(LeftBranch: TLiToken; T: TLiToken = nil);
+    constructor Create(T: TLyseeToken = nil);
+    constructor CreateWithLeft(LeftBranch: TLyseeToken; T: TLyseeToken = nil);
     destructor Destroy;override;
-    procedure Assign(Source: TLiToken);
-    procedure Read(Source: TLiToken);
+    procedure Assign(Source: TLyseeToken);
+    procedure Read(Source: TLyseeToken);
     procedure Clear;
     procedure ClearParams;
-    procedure AddParam(AParam: TLiToken);
-    procedure Error(Param: TLiParam; const Msg: string);overload;
-    procedure Error(Param: TLiParam; const Msg: string; const Args: array of const);overload;
-    procedure FailGet(Param: TLiParam; const ID: string);overload;
-    procedure FailGet(Param: TLiParam; const Host, Prop: string);overload;
-    function ExecFunc(Func: TLiFunc; Param: TLiParam; Outv: TLiValue; Args: TLiList): boolean;
-    function Execute(Param: TLiParam; Outv: TLiValue): boolean;
+    procedure AddParam(AParam: TLyseeToken);
+    procedure Error(Param: TLyseeParam; const Msg: string);overload;
+    procedure Error(Param: TLyseeParam; const Msg: string; const Args: array of const);overload;
+    procedure FailGet(Param: TLyseeParam; const ID: string);overload;
+    procedure FailGet(Param: TLyseeParam; const Host, Prop: string);overload;
+    function ExecFunc(Func: TLyseeFunc; Param: TLyseeParam; Outv: TLyseeValue; Args: TLyseeList): boolean;
+    function Execute(Param: TLyseeParam; Outv: TLyseeValue): boolean;
     function Decompile(Level: integer = 0): string;
     property ParamCount: integer read GetParamCount;
-    property Params[Index: integer]: TLiToken read GetParam;
-    property Left: TLiToken read FLeft write FLeft;
-    property Right: TLiToken read FRight write FRight;
+    property Params[Index: integer]: TLyseeToken read GetParam;
+    property Left: TLyseeToken read FLeft write FLeft;
+    property Right: TLyseeToken read FRight write FRight;
   end;
 
-  { TLiTokenList }
+  { TLyseeTokenList }
 
-  TLiTokenList = class(TLiObject)
+  TLyseeTokenList = class(TBasicObject)
   private
     FItems: TList;
     function GetCount: integer;
-    function GetItem(Index: integer): TLiToken;
-    function GetLast: TLiToken;
+    function GetItem(Index: integer): TLyseeToken;
+    function GetLast: TLyseeToken;
   public
     constructor Create;
     destructor Destroy;override;
@@ -939,22 +930,22 @@ type
     procedure Clear;
     procedure ClearKeepLast;
     procedure DeleteLast(N: integer);
-    function Add(Pos: TLiToken = nil): TLiToken;
-    function AddToken(Token: TLiToken): TLiToken;overload;
-    function AddToken(Sym: TLiSymbol; Pos: TLiToken): TLiToken;overload;
-    function AddToken(Sym: TLiSymbol): TLiToken;overload;
+    function Add(Pos: TLyseeToken = nil): TLyseeToken;
+    function AddToken(Token: TLyseeToken): TLyseeToken;overload;
+    function AddToken(Sym: TLyseeSymbol; Pos: TLyseeToken): TLyseeToken;overload;
+    function AddToken(Sym: TLyseeSymbol): TLyseeToken;overload;
     property Count: integer read GetCount;
-    property Items[Index: integer]: TLiToken read GetItem;default;
-    property Last: TLiToken read GetLast;
+    property Items[Index: integer]: TLyseeToken read GetItem;default;
+    property Last: TLyseeToken read GetLast;
   end;
 
-  { TLiTokenizer }
+  { TLyseeTokenizer }
 
-  TLiTokenizer = class(TLiObject)
+  TLyseeTokenizer = class(TBasicObject)
   private
-    FTokens: TLiTokenList;
+    FTokens: TLyseeTokenList;
     FIndex: integer;
-    FCurrent: TLiToken;
+    FCurrent: TLyseeToken;
     FCode: string;
     FSize: integer;
     FPosition: integer;
@@ -970,270 +961,270 @@ type
     function ParseHex(var I: int64): boolean;
     function ParseChar(var C: char): boolean;
     function ParseString(var S: string): boolean;
-    function GetToken(token: TLiToken): boolean;
-    function GetCurrent: TLiToken;
+    function GetToken(token: TLyseeToken): boolean;
+    function GetCurrent: TLyseeToken;
   public
     constructor Create(const Script: string);
     destructor Destroy;override;
     function PackToCurrent: boolean;
-    function GetNext: TLiToken;
-    function PeekNextSymbol: TLiSymbol;
-    function PeekThirdSymbol: TLiSymbol;
+    function GetNext: TLyseeToken;
+    function PeekNextSymbol: TLyseeSymbol;
+    function PeekThirdSymbol: TLyseeSymbol;
     function NextIsBecome(OnHead: boolean): boolean;
-    property Current: TLiToken read GetCurrent;
+    property Current: TLyseeToken read GetCurrent;
     property Row: integer read FRow write FRow;
     property Col: integer read FCol write FCol;
     property Position: integer read FPosition;
     property Code: string read FCode;
   end;
 
-  { TLiParser }
+  { TLyseeParser }
 
-  TLiParser = class(TLiObject)
+  TLyseeParser = class(TBasicObject)
   private
-    FTokenizer: TLiTokenizer; {<--token analyzer}
-    FLast: TLiToken;          {<--last token}
-    FFunc: TLiFunc;           {<--current function}
-    FModule: TLiModule;       {<--current module}
-    FContext: TLiContext;     {<--current context}
+    FTokenizer: TLyseeTokenizer; {<--token analyzer}
+    FLast: TLyseeToken;          {<--last token}
+    FFunc: TLyseeFunc;           {<--current function}
+    FModule: TLyseeModule;       {<--current module}
+    FContext: TLysee;     {<--current context}
     FAfter: integer;
-    function UseToken(Token: TLiToken): TLiToken;
+    function UseToken(Token: TLyseeToken): TLyseeToken;
   protected
-    procedure EUnexpected(T: TLiToken = nil);
-    procedure ERedeclared(T: TLiToken = nil);
-    procedure ETypeNotFound(T: TLiToken = nil);
+    procedure EUnexpected(T: TLyseeToken = nil);
+    procedure ERedeclared(T: TLyseeToken = nil);
+    procedure ETypeNotFound(T: TLyseeToken = nil);
     procedure ESyntax(ERow, ECol: integer; const EMsg: string; const EArgs: array of const);
     { parsing }
     procedure ParseUsesConstFunc;
     procedure ParseUses;
     procedure ParseConst;
     procedure ParseFunc;
-    procedure ParseBlock(EndSyms: TLiSymbols; SX: TLiSTMTList);
-    procedure ParseStatement(OnHead: boolean; SX: TLiSTMTList);
-    procedure ParseType(OnHead: boolean; var T: TLiType);
-    procedure ParseArguments(EndSym: TLiSymbol);
+    procedure ParseBlock(EndSyms: TLyseeSymbols; SX: TLyseeSTMTList);
+    procedure ParseStatement(OnHead: boolean; SX: TLyseeSTMTList);
+    procedure ParseType(OnHead: boolean; var T: TLyseeType);
+    procedure ParseArguments(EndSym: TLyseeSymbol);
     { statement }
-    procedure ParseVar(SX: TLiSTMTList);
-    procedure ParseIf(SX: TLiSTMTList);
-    procedure ParseFor(SX: TLiSTMTList);
-    procedure ParseWhile(SX: TLiSTMTList);
-    procedure ParseRepeat(SX: TLiSTMTList);
-    procedure ParseCase(SX: TLiSTMTList);
-    procedure ParseTry(SX: TLiSTMTList);
-    procedure ParseRaise(SX: TLiSTMTList);
-    procedure ParsePuts(SX: TLiSTMTList);
-    procedure ParseAny(SX: TLiSTMTList);
+    procedure ParseVar(SX: TLyseeSTMTList);
+    procedure ParseIf(SX: TLyseeSTMTList);
+    procedure ParseFor(SX: TLyseeSTMTList);
+    procedure ParseWhile(SX: TLyseeSTMTList);
+    procedure ParseRepeat(SX: TLyseeSTMTList);
+    procedure ParseCase(SX: TLyseeSTMTList);
+    procedure ParseTry(SX: TLyseeSTMTList);
+    procedure ParseRaise(SX: TLyseeSTMTList);
+    procedure ParsePuts(SX: TLyseeSTMTList);
+    procedure ParseAny(SX: TLyseeSTMTList);
     { expression }
-    function ParseExpr(OnHead: boolean; EndSyms: TLiSymbols; DoCheck: boolean): TLiToken;
-    function ParseFact(Level: integer): TLiToken;
-    function ParseTerm: TLiToken;
+    function ParseExpr(OnHead: boolean; EndSyms: TLyseeSymbols; DoCheck: boolean): TLyseeToken;
+    function ParseFact(Level: integer): TLyseeToken;
+    function ParseTerm: TLyseeToken;
     { token }
     procedure SymGetNext;
     procedure SymGotoNext;
-    procedure SymTestNext(Syms: TLiSymbols);
-    procedure SymTestLast(Syms: TLiSymbols);
+    procedure SymTestNext(Syms: TLyseeSymbols);
+    procedure SymTestLast(Syms: TLyseeSymbols);
     procedure SymTestLastID;
     procedure SymTestNextID;
-    function SymPeekNext: TLiSymbol;
+    function SymPeekNext: TLyseeSymbol;
   public
-    constructor Create(AModule: TLiModule);
+    constructor Create(AModule: TLyseeModule);
     destructor Destroy;override;
-    function Parse(const Code: string; UsingModule: boolean = false): TLiFunc;
-    function ParseAndFree(const Code: string; UsingModule: boolean = false): TLiFunc;
+    function Parse(const Code: string; UsingModule: boolean = false): TLyseeFunc;
+    function ParseAndFree(const Code: string; UsingModule: boolean = false): TLyseeFunc;
   end;
 
-  { TLiSTMT }
+  { TLyseeSTMT }
 
-  TLiSTMTStyle = (ssNormal, ssConst, ssAssign, ssResult, ssPuts, ssIf, ssWhile,
-                  ssRepeat, ssFor, ssCase, ssTry, ssRaise);
+  TLyseeSTMTStyle = (ssNormal, ssConst, ssAssign, ssResult, ssPuts, ssIf,
+                     ssWhile, ssRepeat, ssFor, ssCase, ssTry, ssRaise);
 
-  TLiSTMT = class
+  TLyseeSTMT = class
   private
-    FStyle: TLiSTMTStyle;
-    FParent: TLiSTMTList;
-    FItems: TLiSTMTList;
-    FExpr: TLiToken;
-    function GetItems: TLiSTMTList;
+    FStyle: TLyseeSTMTStyle;
+    FParent: TLyseeSTMTList;
+    FItems: TLyseeSTMTList;
+    FExpr: TLyseeToken;
+    function GetItems: TLyseeSTMTList;
     function GetCount: integer;
   protected
-    procedure ExecNormal(Param: TLiParam);
-    procedure ExecPuts(Param: TLiParam);
-    procedure ExecWhile(Param: TLiParam);
-    procedure ExecRepeat(Param: TLiParam);
-    procedure ExecRaise(Param: TLiParam);
+    procedure ExecNormal(Param: TLyseeParam);
+    procedure ExecPuts(Param: TLyseeParam);
+    procedure ExecWhile(Param: TLyseeParam);
+    procedure ExecRepeat(Param: TLyseeParam);
+    procedure ExecRaise(Param: TLyseeParam);
   public
-    constructor Create(AParent: TLiSTMTList);virtual;
+    constructor Create(AParent: TLyseeSTMTList);virtual;
     destructor Destroy;override;
-    function Execute(Param: TLiParam): boolean;virtual;
+    function Execute(Param: TLyseeParam): boolean;virtual;
     procedure Decompile(Level: integer; Lines: TStrings);virtual;
-    property Style: TLiSTMTStyle read FStyle;
-    property Parent: TLiSTMTList read FParent;
-    property Items: TLiSTMTList read GetItems;
+    property Style: TLyseeSTMTStyle read FStyle;
+    property Parent: TLyseeSTMTList read FParent;
+    property Items: TLyseeSTMTList read GetItems;
     property Count: integer read GetCount;
-    property Expr: TLiToken read FExpr;
+    property Expr: TLyseeToken read FExpr;
   end;
 
-  { TLiSTMT_assign }
+  { TLyseeAssign }
 
-  TLiSTMT_assign = class(TLiSTMT)
+  TLyseeAssign = class(TLyseeSTMT)
   private
     FVarb: string;
   protected
-    procedure ExecConst(Param: TLiParam);
-    procedure ExecAssign(Param: TLiParam);
-    procedure ExecResult(Param: TLiParam);
+    procedure ExecConst(Param: TLyseeParam);
+    procedure ExecAssign(Param: TLyseeParam);
+    procedure ExecResult(Param: TLyseeParam);
   public
-    constructor Create(AParent: TLiSTMTList);override;
-    function Execute(Param: TLiParam): boolean;override;
+    constructor Create(AParent: TLyseeSTMTList);override;
+    function Execute(Param: TLyseeParam): boolean;override;
     procedure Decompile(Level: integer; Lines: TStrings);override;
     property Varb: string read FVarb;
   end;
 
-  { TLiSTMT_for }
+  { TLyseeFor }
 
-  TLiSTMT_for = class(TLiSTMT_assign)
+  TLyseeFor = class(TLyseeAssign)
   private
     FUpTo: boolean;
-    FEndValue: TLiToken;
+    FEndValue: TLyseeToken;
   public
-    constructor Create(AParent: TLiSTMTList);override;
+    constructor Create(AParent: TLyseeSTMTList);override;
     destructor Destroy;override;
-    function Execute(Param: TLiParam): boolean;override;
+    function Execute(Param: TLyseeParam): boolean;override;
     procedure Decompile(Level: integer; Lines: TStrings);override;
-    property EndValue: TLiToken read FEndValue;
+    property EndValue: TLyseeToken read FEndValue;
     property UpTo: boolean read FUpTo;
   end;
 
-  { TLiSTMT_if }
+  { TLyseeIf }
 
-  TLiSTMT_if = class(TLiSTMT)
+  TLyseeIf = class(TLyseeSTMT)
   private
-    FElseItems: TLiSTMTList;
-    function GetElseItems: TLiSTMTList;
+    FElseItems: TLyseeSTMTList;
+    function GetElseItems: TLyseeSTMTList;
     function GetElseCount: integer;
   public
-    constructor Create(AParent: TLiSTMTList);override;
+    constructor Create(AParent: TLyseeSTMTList);override;
     destructor Destroy;override;
-    function Execute(Param: TLiParam): boolean;override;
+    function Execute(Param: TLyseeParam): boolean;override;
     procedure Decompile(Level: integer; Lines: TStrings);override;
     function IsElif: boolean;
     property ElseCount: integer read GetElseCount;
-    property ElseItems: TLiSTMTList read GetElseItems;
+    property ElseItems: TLyseeSTMTList read GetElseItems;
   end;
 
-  { TLiSTMT_case }
+  { TLyseeCase }
 
-  TLiSTMT_case = class(TLiSTMT_if)
+  TLyseeCase = class(TLyseeIf)
   public
-    constructor Create(AParent: TLiSTMTList);override;
-    function Execute(Param: TLiParam): boolean;override;
+    constructor Create(AParent: TLyseeSTMTList);override;
+    function Execute(Param: TLyseeParam): boolean;override;
     procedure Decompile(Level: integer; Lines: TStrings);override;
   end;
 
-  { TLiSTMT_try }
+  { TLyseeTry }
 
-  TLiSTMT_try = class(TLiSTMT_if)
+  TLyseeTry = class(TLyseeIf)
   private
     FTryFinally: boolean;
   public
-    constructor Create(AParent: TLiSTMTList);override;
-    function Execute(Param: TLiParam): boolean;override;
+    constructor Create(AParent: TLyseeSTMTList);override;
+    function Execute(Param: TLyseeParam): boolean;override;
     procedure Decompile(Level: integer; Lines: TStrings);override;
     property TryFinally: boolean read FTryFinally;
   end;
 
-  { TLiSTMTList }
+  { TLyseeSTMTList }
 
-  TLiSTMTList = class
+  TLyseeSTMTList = class
   private
     FItems: TList;
     function GetCount: integer;
-    function GetItem(Index: integer): TLiSTMT;
+    function GetItem(Index: integer): TLyseeSTMT;
   public
     destructor Destroy;override;
     procedure Clear;
     procedure Delete(Index: integer);
-    function Add(Style: TLiSTMTStyle): TLiSTMT;overload;
-    function Add(STMT: TLiSTMT): integer;overload;
-    function Execute(Param: TLiParam): boolean;
+    function Add(Style: TLyseeSTMTStyle): TLyseeSTMT;overload;
+    function Add(STMT: TLyseeSTMT): integer;overload;
+    function Execute(Param: TLyseeParam): boolean;
     procedure Decompile(Level: integer; Lines: TStrings);
     property Count: integer read GetCount;
-    property Items[Index: integer]: TLiSTMT read GetItem;default;
+    property Items[Index: integer]: TLyseeSTMT read GetItem;default;
   end;
 
-  { TLiVarb }
+  { TLyseeVarb }
 
-  TLiVarb = class
+  TLyseeVarb = class
   private
     FName: string;
-    FType: TLiType;
+    FType: TLyseeType;
   public
-    constructor Create(const AName: string; AType: TLiType);
+    constructor Create(const AName: string; AType: TLyseeType);
     destructor Destroy;override;
     function Prototype: string;
     property Name: string read FName;
-    property ValueType: TLiType read FType;
+    property ValueType: TLyseeType read FType;
   end;
 
-  { TLiVarbList}
+  { TLyseeVarbList}
 
-  TLiVarbList = class
+  TLyseeVarbList = class
   private
-    FVarbs: array of TLiVarb;
+    FVarbs: array of TLyseeVarb;
     FLocalCount: integer;
     function GetCount: integer;
     function GetParamCount: integer;
-    function GetVarb(Index: integer): TLiVarb;
-    function DoAdd(const AName: string; AType: TLiType): TLiVarb;
+    function GetVarb(Index: integer): TLyseeVarb;
+    function DoAdd(const AName: string; AType: TLyseeType): TLyseeVarb;
   public
     constructor Create;
     destructor Destroy;override;
     procedure Clear;
-    procedure Assign(Source: TLiVarbList);
-    function Add(const AName: string; AType: TLiType): TLiVarb;
-    function AddLocal(const AName: string; AType: TLiType): TLiVarb;
+    procedure Assign(Source: TLyseeVarbList);
+    function Add(const AName: string; AType: TLyseeType): TLyseeVarb;
+    function AddLocal(const AName: string; AType: TLyseeType): TLyseeVarb;
     function IndexOf(const AName: string): integer;overload;
-    function IndexOf(const AVarb: TLiVarb): integer;overload;
-    function Find(const AName: string): TLiVarb;
+    function IndexOf(const AVarb: TLyseeVarb): integer;overload;
+    function Find(const AName: string): TLyseeVarb;
     property Count: integer read GetCount;
     property LocalCount: integer read FLocalCount;
     property ParamCount: integer read GetParamCount;
-    property Varbs[Index: integer]: TLiVarb read GetVarb;default;
+    property Varbs[Index: integer]: TLyseeVarb read GetVarb;default;
   end;
 
-  { TLiFunc }
+  { TLyseeFunc }
 
-  TLiFunc = class(TLiObject)
+  TLyseeFunc = class(TBasicObject)
   private
-    FModule: TLiModule;
+    FModule: TLyseeModule;
     FName: string;
-    FParent: TLiType;
-    FParams: TLiVarbList;
-    FResultType: TLiType;
-    FProc: TLiLyseeProc;
+    FParent: TLyseeType;
+    FParams: TLyseeVarbList;
+    FResultType: TLyseeType;
+    FProc: TLyseeProc;
     FData: pointer;
     FHasVarArg: boolean; // last param is ...
     FMinArgs: integer;
-    FSTMTs: TLiSTMTList;
-    function GetSTMTs: TLiSTMTList;
+    FSTMTs: TLyseeSTMTList;
+    function GetSTMTs: TLyseeSTMTList;
     function GetMinArgs: integer;
     function GetFullName: string;
   public
-    constructor Create(const AName: string; M: TLiModule; Proc: TLiLyseeProc);
-    constructor CreateMethod(const AName: string; P: TLiType; Proc: TLiLyseeProc);
+    constructor Create(const AName: string; M: TLyseeModule; Proc: TLyseeProc);
+    constructor CreateMethod(const AName: string; P: TLyseeType; Proc: TLyseeProc);
     destructor Destroy;override;
     function Prototype: string;
-    function FindInside(const ID: string; rec: PLiFind = nil): boolean;
-    function FindBy(const ID: string; rec: PLiFind; Range: TLiFinds = []): boolean;
-    function FindSave(const ID: string; Param: TLiParam; Outv: TLiValue): TLiFind;
-    function Context: TLiContext;
+    function FindInside(const ID: string; rec: PLyseeFind = nil): boolean;
+    function FindBy(const ID: string; rec: PLyseeFind; Range: TLyseeFinds = []): boolean;
+    function FindSave(const ID: string; Param: TLyseeParam; Outv: TLyseeValue): TLyseeFind;
+    function Context: TLysee;
     function IsMainFunc: boolean;
     function IsMethod: boolean;
     function IsConstructor: boolean;
     function IsProcedure: boolean;
     function IsFunction: boolean;
     function IsConst: boolean;
-    function MakeMethod: TLiFunc;
+    function MakeMethod: TLyseeFunc;
     function Executing: boolean;
     function ChangeAble: boolean;
     function AddCode(const Code: string): boolean;
@@ -1242,125 +1233,127 @@ type
     function AsString: string;override;
     property Name: string read FName;
     property HasVarArg: boolean read FHasVarArg;
-    property Parent: TLiType read FParent;
+    property Parent: TLyseeType read FParent;
     property FullName: string read GetFullName;
     property MinArgs: integer read GetMinArgs;
-    property Module: TLiModule read FModule;
-    property ResultType: TLiType read FResultType write FResultType;
-    property Params: TLiVarbList read FParams;
-    property Proc: TLiLyseeProc read FProc write FProc;
+    property Module: TLyseeModule read FModule;
+    property ResultType: TLyseeType read FResultType write FResultType;
+    property Params: TLyseeVarbList read FParams;
+    property Proc: TLyseeProc read FProc write FProc;
     property Data: pointer read FData;
-    property STMTs: TLiSTMTList read GetSTMTs;
+    property STMTs: TLyseeSTMTList read GetSTMTs;
   end;
 
-  { TLiFuncList }
+  { TLyseeFuncList }
 
-  TLiFuncList = class
+  TLyseeFuncList = class
   private
     FItems: TList;
     function GetCount: integer;
-    function GetItem(Index: integer): TLiFunc;
+    function GetItem(Index: integer): TLyseeFunc;
   public
     constructor Create;
     destructor Destroy;override;
-    function Get(const Name: string): TLiFunc;
+    function Get(const Name: string): TLyseeFunc;
     procedure Clear;
     procedure Delete(Index: integer);
     property Count: integer read GetCount;
-    property Items[Index: integer]: TLiFunc read GetItem;default;
+    property Items[Index: integer]: TLyseeFunc read GetItem;default;
   end;
 
-  { TLiModule }
+  { TLyseeModule }
 
-  TLiModule = class(TLiNamedObject)
+  TLyseeModule = class(TNamedObject)
   private
-    FContext: TLiContext;    {<--private: owner context}
-    FModules: TLiModuleList; {<--private: modules used by this module}
+    FContext: TLysee;    {<--private: owner context}
+    FModules: TLyseeModuleList; {<--private: modules used by this module}
     FImporters: TList;       {<--private: modules useing this module}
     FFileName: string;
     FTypeList: TList;
-    FFuncList: TLiFuncList;
-    FConsts: TLiHash;
-    FNeedSetup: boolean;
+    FFuncList: TLyseeFuncList;
+    FConsts: TLyseeHash;
+    FOnSetup: TNotifyEvent;
     procedure InitModule;
     procedure DeleteFunctions;
     procedure DeleteTypes;
+  protected
+    property OnSetup: TNotifyEvent read FOnSetup write FOnSetup;
   public
-    function AddFunc(const AName: string; T: TLiType;
-      const ParamNames: array of string; const ParamTypes: array of TLiType;
-      const Proc: TLiLyseeProc;
-      const Data: pointer = nil): TLiFunc;overload;
+    function AddFunc(const AName: string; T: TLyseeType;
+      const ParamNames: array of string; const ParamTypes: array of TLyseeType;
+      const Proc: TLyseeProc;
+      const Data: pointer = nil): TLyseeFunc;overload;
     function AddFunc(const AName: string;
-      const ParamNames: array of string; const ParamTypes: array of TLiType;
-      const Proc: TLiLyseeProc;
-      const Data: pointer = nil): TLiFunc;overload;
-    function AddFunc(const AName: string; T: TLiType;
-      const Proc: TLiLyseeProc;
-      const Data: pointer = nil): TLiFunc;overload;
+      const ParamNames: array of string; const ParamTypes: array of TLyseeType;
+      const Proc: TLyseeProc;
+      const Data: pointer = nil): TLyseeFunc;overload;
+    function AddFunc(const AName: string; T: TLyseeType;
+      const Proc: TLyseeProc;
+      const Data: pointer = nil): TLyseeFunc;overload;
     function AddFunc(const AName: string;
-      const Proc: TLiLyseeProc;
-      const Data: pointer = nil): TLiFunc;overload;
+      const Proc: TLyseeProc;
+      const Data: pointer = nil): TLyseeFunc;overload;
   public
     constructor Create(const AName: string);override;
-    constructor CreateEx(const AName: string; AContext: TLiContext);
+    constructor CreateEx(const AName: string; AContext: TLysee);
     destructor Destroy;override;
     procedure Setup;virtual;
-    procedure Use(M: TLiModule);
+    procedure Use(M: TLyseeModule);
     function EnsureName(const AName: string): string;
     function AddEnumType(const AName: string;
-      const ItemNames: array of string): TLiEnumType;
+      const ItemNames: array of string): TLyseeEnumType;
     function IsMainModule: boolean;
-    function SetupType(const T: TLiType): boolean;
+    function SetupType(const T: TLyseeType): boolean;
     function TypeCount: integer;
-    function GetType(Index: integer): TLiType;
-    function FindModule(const ID: string; FindPossible: boolean): TLiModule;
-    function FindType(const ID: string): TLiType;
-    function FindTypeBy(const ID, AModule: string): TLiType;
-    function FindFunc(const ID: string): TLiFunc;
-    function FindFuncBy(const ID: string): TLiFunc;
-    function Find(const ID: string; rec: PLiFind = nil): boolean;
-    function FindBy(const ID, AModule: string; rec: PLiFind): boolean;
-    function FindSave(const AName: string; Value: TLiValue): boolean;
-    function FindSaveBy(const AName: string; Value: TLiValue): boolean;
-    function UseModule(const AName: string): TLiModule;
+    function GetType(Index: integer): TLyseeType;
+    function FindModule(const ID: string; FindPossible: boolean): TLyseeModule;
+    function FindType(const ID: string): TLyseeType;
+    function FindTypeBy(const ID, AModule: string): TLyseeType;
+    function FindFunc(const ID: string): TLyseeFunc;
+    function FindFuncBy(const ID: string): TLyseeFunc;
+    function Find(const ID: string; rec: PLyseeFind = nil): boolean;
+    function FindBy(const ID, AModule: string; rec: PLyseeFind): boolean;
+    function FindSave(const AName: string; Value: TLyseeValue): boolean;
+    function FindSaveBy(const AName: string; Value: TLyseeValue): boolean;
+    function UseModule(const AName: string): TLyseeModule;
     function AsString: string;override;
-    property Modules: TLiModuleList read FModules;
+    property Modules: TLyseeModuleList read FModules;
     property FileName: string read FFileName write FFileName;
-    property Context: TLiContext read FContext;
-    property Consts: TLiHash read FConsts;
+    property Context: TLysee read FContext;
+    property Consts: TLyseeHash read FConsts;
   end;
 
-  { TLiModuleList }
+  { TLyseeModuleList }
 
-  TLiModuleList = class(TLiObject)
+  TLyseeModuleList = class(TBasicObject)
   private
-    FContext: TLiContext;
-    FImporter: TLiModule;
+    FContext: TLysee;
+    FImporter: TLyseeModule;
     FModules: TList;
-    function GetModule(Index: integer): TLiModule;
+    function GetModule(Index: integer): TLyseeModule;
     function GetCount: integer;
   public
-    constructor Create(AContext: TLiContext);
+    constructor Create(AContext: TLysee);
     destructor Destroy;override;
     procedure Setup;
-    function IndexOf(AModule: TLiModule): integer;overload;
+    function IndexOf(AModule: TLyseeModule): integer;overload;
     function IndexOf(const Name: string): integer;overload;
-    function Has(AModule: TLiModule): boolean;overload;
+    function Has(AModule: TLyseeModule): boolean;overload;
     function Has(const Name: string): boolean;overload;
-    function Find(const Name: string): TLiModule;
-    function Add(AModule: TLiModule): integer;
+    function Find(const Name: string): TLyseeModule;
+    function Add(AModule: TLyseeModule): integer;
     procedure Delete(Index: integer);
     procedure Clear;
     procedure DeleteFunctions;
     procedure ClearConsts;
-    function ToList: TLiList;
+    function ToList: TLyseeList;
     property Count: integer read GetCount;
-    property Modules[Index: integer]: TLiModule read GetModule;default;
+    property Modules[Index: integer]: TLyseeModule read GetModule;default;
   end;
 
-  { TLiString }
+  { TLyseeString }
 
-  TLiString = class(TLiObject)
+  TLyseeString = class(TBasicObject)
   private
     FValue: string;
   public
@@ -1371,12 +1364,12 @@ type
     property Value: string read FValue write FValue;
   end;
 
-  { TLiGarbage }
+  { TLyseeGarbage }
 
-  TLiGarbage = class(TLiObject)
+  TLyseeGarbage = class(TBasicObject)
   private
-    FPrev: TLiGarbage;
-    FNext: TLiGarbage;
+    FPrev: TLyseeGarbage;
+    FNext: TLyseeGarbage;
     FInChain: boolean;
     FSurvived: boolean;
   protected
@@ -1389,81 +1382,86 @@ type
     property InChain: boolean read FInChain write FInChain;
   end;
 
-  { TLiGarbageCollect }
+  { TLyseeCollect }
 
-  TLiGarbageCollect = class
+  TLyseeCollect = class
   private
-    FChain: TLiGarbage;
+    FChain: TLyseeGarbage;
     FDead: TList;
     FContexts: TList;
   protected
     procedure MarkSurvived;virtual;
-    procedure GcAdd(G: TLiGarbage);
-    procedure GcRemove(G: TLiGarbage);
+    procedure GcAdd(G: TLyseeGarbage);
+    procedure GcRemove(G: TLyseeGarbage);
   public
     constructor Create;virtual;
     destructor Destroy;override;
     function Collect: integer;virtual;
   end;
 
-  { TLiList }
+  { TLyseeList }
 
-  TLiList = class(TLiGarbage)
+  TLyseeList = class(TLyseeGarbage)
   private
     FItems: TList;
     FFormating: boolean;
+    FReadonly: boolean;
     function GetCount: integer;
     procedure SetCount(NewCount: integer);
-    function GetItem(Index: integer): TLiValue;
+    function GetItem(Index: integer): TLyseeValue;
   protected
     procedure MarkForSurvive;override;
+    procedure TestChange;
   public
     constructor Create;override;
     destructor Destroy;override;
     procedure Clear;override;
     procedure Delete(Index: integer);
     procedure DeleteLast;
-    procedure Remove(Value: TLiValue);
+    procedure Remove(Value: TLyseeValue);
     procedure Exchange(Index1, Index2: integer);
     procedure Move(CurIndex, NewIndex: integer);
-    procedure GetFirstTwo(var V1, V2: TLiValue);
-    procedure PrepareFor(Func: TLiFunc);
+    procedure GetFirstTwo(var V1, V2: TLyseeValue);
+    procedure PrepareFor(Func: TLyseeFunc);
     procedure Sort;
-    procedure AddStrings(List: TStrings);
-    function Add(Value: TLiValue = nil): TLiValue;
-    function AddList: TLiList;
-    function Insert(Index: integer; Value: TLiValue = nil): TLiValue;
-    function IndexOf(Value: TLiValue): integer;
-    function Copy(Index, ItemCount: integer): TLiList;
-    function CopyLeft(ItemCount: integer): TLiList;
-    function CopyRight(ItemCount: integer): TLiList;
-    function First: TLiValue;
-    function Last: TLiValue;
+    procedure Assign(AList: TLyseeList);
+    procedure AddStrings(Strs: TStrings);
+    function Add(Value: TLyseeValue = nil): TLyseeValue;
+    function AddList: TLyseeList;
+    function Insert(Index: integer; Value: TLyseeValue = nil): TLyseeValue;
+    function IndexOf(Value: TLyseeValue): integer;
+    function Copy(Index, ItemCount: integer): TLyseeList;
+    function CopyLeft(ItemCount: integer): TLyseeList;
+    function CopyRight(ItemCount: integer): TLyseeList;
+    function Clone: TLyseeList;
+    function First: TLyseeValue;
+    function Last: TLyseeValue;
     function AsString: string;override;
     property Count: integer read GetCount write SetCount;
-    property Items[Index: integer]: TLiValue read GetItem;default;
+    property Items[Index: integer]: TLyseeValue read GetItem;default;
+    property Readonly: boolean read FReadonly write FReadonly;
   end;
 
-  { TLiHashItem }
+  { TLyseeHashItem }
 
-  TLiHashItem = class(TLiValue)
+  TLyseeHashItem = class(TLyseeValue)
   private
     FKey: string;
-    FNext: TLiHashItem;
+    FNext: TLyseeHashItem;
   public
     function Format: string;
     property Key: string read FKey;
   end;
 
-  { TLiHash }
+  { TLyseeHash }
 
-  TLiHash = class(TLiGarbage)
+  TLyseeHash = class(TLyseeGarbage)
   private
-    FBuckets: array of TLiHashItem;
+    FBuckets: array of TLyseeHashItem;
     FCount: integer;
     FFormating: boolean;
     FCaseSensitive: boolean;
-    procedure FreeItem(H: TLiHashItem);
+    procedure FreeItem(H: TLyseeHashItem);
   protected
     procedure MarkForSurvive;override;
     function BucketCount: integer;
@@ -1474,35 +1472,35 @@ type
     destructor Destroy;override;
     procedure Clear;override;
     procedure Resize(NewSize: integer);
-    procedure ListKeys(List: TLiList);
-    procedure ListValues(List: TLiList);
-    function Add(const Name: string): TLiHashItem;
-    function Get(const Name: string): TLiHashItem;
-    function GetValue(const Name: string; Value: TLiValue): boolean;
+    procedure ListKeys(List: TLyseeList);
+    procedure ListValues(List: TLyseeList);
+    function Add(const Name: string): TLyseeHashItem;
+    function Get(const Name: string): TLyseeHashItem;
+    function GetValue(const Name: string; Value: TLyseeValue): boolean;
     function Has(const Name: string): boolean;
     function Remove(const Name: string): boolean;
     function IsEmpty: boolean;
     function SetupItemList: TList;
-    function DefConst(const Name, Value: string): TLiHashItem;overload;
-    function DefConst(const Name: string; Value: int64): TLiHashItem;overload;
-    function DefConst(const Name: string; Value: double): TLiHashItem;overload;
-    function DefConst(const Name: string; Value: boolean): TLiHashItem;overload;
+    function DefConst(const Name, Value: string): TLyseeHashItem;overload;
+    function DefConst(const Name: string; Value: int64): TLyseeHashItem;overload;
+    function DefConst(const Name: string; Value: double): TLyseeHashItem;overload;
+    function DefConst(const Name: string; Value: boolean): TLyseeHashItem;overload;
     function AsString: string;override;
     property Count: integer read FCount;
     property CaseSensitive: boolean read FCaseSensitive write FCaseSensitive;
   end;
 
-  { TLiGenerate }
+  { TLyseeGenerate }
 
-  TLiGenerate = class(TLiValue)
+  TLyseeGenerate = class(TLyseeValue)
   public
     function GetNext: boolean;virtual;
     function HasNext: boolean;virtual;
   end;
 
-  { TLiGenerate_string }
+  { TLyseeStringGenerate }
 
-  TLiGenerate_string = class(TLiGenerate)
+  TLyseeStringGenerate = class(TLyseeGenerate)
   private
     FS: string;
     FIndex: integer;
@@ -1512,33 +1510,21 @@ type
     function HasNext: boolean;override;
   end;
 
-  { TLiGenerate_list }
+  { TLyseeListGenerate }
 
-  TLiGenerate_list = class(TLiGenerate)
+  TLyseeListGenerate = class(TLyseeGenerate)
   private
-    FL: TLiList;
+    FL: TLyseeList;
     FIndex: integer;
   public
-    constructor CreateIn(const AList: TLiList);
+    constructor CreateIn(const AList: TLyseeList);
     function GetNext: boolean;override;
     function HasNext: boolean;override;
   end;
 
-  { TLiGenerate_strlist }
+  { TLyseeIntGenerate }
 
-  TLiGenerate_strlist = class(TLiGenerate)
-  private
-    FL: TStrings;
-    FIndex: integer;
-  public
-    constructor CreateIn(const List: TStrings);
-    function GetNext: boolean;override;
-    function HasNext: boolean;override;
-  end;
-
-  { TLiGenerate_int64 }
-
-  TLiGenerate_int64 = class(TLiGenerate)
+  TLyseeIntGenerate = class(TLyseeGenerate)
   private
     FV, FCount: int64;
     FUpto: boolean;
@@ -1549,9 +1535,9 @@ type
     function HasNext: boolean;override;
   end;
 
-  { TLiGenerate_char }
+  { TLyseeCharGenerate }
 
-  TLiGenerate_char = class(TLiGenerate)
+  TLyseeCharGenerate = class(TLyseeGenerate)
   private
     FV: char;
     FCount: integer;
@@ -1562,9 +1548,9 @@ type
     function HasNext: boolean;override;
   end;
 
-  { TLiGenerate_boolean }
+  { TLyseeBoolGenerate }
 
-  TLiGenerate_boolean = class(TLiGenerate)
+  TLyseeBoolGenerate = class(TLyseeGenerate)
   private
     FV: boolean;
     FCount: integer;
@@ -1575,124 +1561,123 @@ type
     function HasNext: boolean;override;
   end;
 
-  { TLiGenerate_enum }
+  { TLyseeEnumGenerate }
 
-  TLiGenerate_enum = class(TLiGenerate)
+  TLyseeEnumGenerate = class(TLyseeGenerate)
   private
-    FV: TLiEnumItem;
+    FV: TLyseeEnumItem;
     FCount: integer;
     FUpto: boolean;
   public
-    constructor CreateIn(V1, V2: TLiEnumItem; Upto: boolean);
+    constructor CreateIn(V1, V2: TLyseeEnumItem; Upto: boolean);
     function GetNext: boolean;override;
     function HasNext: boolean;override;
   end;
 
 function AcquireLock: boolean;
 function ReleaseLock: boolean;
-function AddModule(const Name: string): TLiModule;
+function AddModule(const Name: string): TLyseeModule;
 function Command: integer;
 function MatchID(const ID1, ID2: string): boolean;overload;
 function MatchID(const ID: string; const IDList: array of string): boolean;overload;
-function OperatorStr(OP: TLiOperator): string;
+function OperatorStr(OP: TLyseeOperator): string;
 function Keywords: string;
 function Hilights: string;
 function ExtractNameModule(const ID: string; var Module: string): string;
 function FormatChar(C: char): string;
 function FormatString(const S: string): string;
-function FormatValue(V: TLiValue): string;
+function FormatValue(V: TLyseeValue): string;
 function CompleteFileName(const FileName: string): string;
 function SortValueCompare(V1, V2: pointer): integer;
-procedure ErrorConvert(AType, NewType: TLiType);
-function GetGenerate(Value: TLiValue): TLiGenerate;overload;
-function GetGenerate(V1, V2: TLiValue; Upto: boolean): TLiGenerate;overload;
+procedure ErrorConvert(AType, NewType: TLyseeType);
+function GetGenerate(Value: TLyseeValue): TLyseeGenerate;overload;
+function GetGenerate(V1, V2: TLyseeValue; Upto: boolean): TLyseeGenerate;overload;
 function Margin(Level: integer): string;
-procedure FreeOperates(var Head: PLiOperate);
-procedure FreeCompares(var Head: PLiCompare);
-procedure FreeConverts(var Head: PLiConvert);
-function ParamOK(const Names: array of string; const Types: array of TLiType;
+procedure FreeOperates(var Head: PLyseeOperate);
+procedure FreeCompares(var Head: PLyseeCompare);
+function ParamOK(const Names: array of string; const Types: array of TLyseeType;
   IsMethod: boolean; var HasVarArg: boolean): boolean;
 
-function AddFunc(const Name: string; T: TLiType;
-  const ParamNames: array of string; const ParamTypes: array of TLiType;
-  Proc: TLiLyseeProc; Data: pointer = nil): TLiFunc;overload;
+function AddFunc(const Name: string; T: TLyseeType;
+  const ParamNames: array of string; const ParamTypes: array of TLyseeType;
+  Proc: TLyseeProc; Data: pointer = nil): TLyseeFunc;overload;
 
 function AddFunc(const Name: string;
-  const ParamNames: array of string; const ParamTypes: array of TLiType;
-  Proc: TLiLyseeProc; Data: pointer = nil): TLiFunc;overload;
+  const ParamNames: array of string; const ParamTypes: array of TLyseeType;
+  Proc: TLyseeProc; Data: pointer = nil): TLyseeFunc;overload;
 
-function AddFunc(const Name: string; T: TLiType;
-  Proc: TLiLyseeProc; Data: pointer = nil): TLiFunc;overload;
+function AddFunc(const Name: string; T: TLyseeType;
+  Proc: TLyseeProc; Data: pointer = nil): TLyseeFunc;overload;
 
 function AddFunc(const Name: string;
-  Proc: TLiLyseeProc; Data: pointer = nil): TLiFunc;overload;
+  Proc: TLyseeProc; Data: pointer = nil): TLyseeFunc;overload;
 
-function AddMethod(const AClass: TLiType; const AName: string;
-  const AType: TLiType; const ParamNames: array of string;
-  const ParamTypes: array of TLiType; const AProc: TLiLyseeProc): TLiFunc;overload;
+function AddMethod(const AClass: TLyseeType; const AName: string;
+  const AType: TLyseeType; const ParamNames: array of string;
+  const ParamTypes: array of TLyseeType; const AProc: TLyseeProc): TLyseeFunc;overload;
 
-function AddMethod(const AClass: TLiType; const AName: string;
+function AddMethod(const AClass: TLyseeType; const AName: string;
   const ParamNames: array of string;
-  const ParamTypes: array of TLiType; const AProc: TLiLyseeProc): TLiFunc;overload;
+  const ParamTypes: array of TLyseeType; const AProc: TLyseeProc): TLyseeFunc;overload;
 
-function AddMethod(const AClass: TLiType; const AName: string;
-  const AType: TLiType; const AProc: TLiLyseeProc): TLiFunc;overload;
+function AddMethod(const AClass: TLyseeType; const AName: string;
+  const AType: TLyseeType; const AProc: TLyseeProc): TLyseeFunc;overload;
 
-function AddMethod(const AClass: TLiType; const AName: string;
-  const AProc: TLiLyseeProc): TLiFunc;overload;
+function AddMethod(const AClass: TLyseeType; const AName: string;
+  const AProc: TLyseeProc): TLyseeFunc;overload;
 
-function SetupProp(const AClass: TLiType;
-  const AName: string; const AType: TLiType;
+function SetupProp(const AClass: TLyseeType;
+  const AName: string; const AType: TLyseeType;
   const IndexNames: array of string;
-  const IndexTypes: array of TLiType;
-  const GetProc, SetProc: TLiLyseeProc;
-  var GetFunc, SetFunc: TLiFunc): boolean;overload;
+  const IndexTypes: array of TLyseeType;
+  const GetProc, SetProc: TLyseeProc;
+  var GetFunc, SetFunc: TLyseeFunc): boolean;overload;
 
-function SetupProp(const AClass: TLiType;
-  const AName: string; const AType: TLiType;
+function SetupProp(const AClass: TLyseeType;
+  const AName: string; const AType: TLyseeType;
   const IndexNames: array of string;
-  const IndexTypes: array of TLiType;
-  const GetProc: TLiLyseeProc;
-  var GetFunc: TLiFunc): boolean;overload;
+  const IndexTypes: array of TLyseeType;
+  const GetProc: TLyseeProc;
+  var GetFunc: TLyseeFunc): boolean;overload;
 
-function SetupProp(const AClass: TLiType;
-  const AName: string; const AType: TLiType;
+function SetupProp(const AClass: TLyseeType;
+  const AName: string; const AType: TLyseeType;
   const IndexNames: array of string;
-  const IndexTypes: array of TLiType;
-  const GetProc: TLiLyseeProc;
-  const SetProc: TLiLyseeProc = nil): boolean;overload;
+  const IndexTypes: array of TLyseeType;
+  const GetProc: TLyseeProc;
+  const SetProc: TLyseeProc = nil): boolean;overload;
 
-function SetupProp(const AClass: TLiType;
-  const AName: string; const AType: TLiType;
-  const GetProc: TLiLyseeProc;
-  const SetProc: TLiLyseeProc = nil): boolean;overload;
+function SetupProp(const AClass: TLyseeType;
+  const AName: string; const AType: TLyseeType;
+  const GetProc: TLyseeProc;
+  const SetProc: TLyseeProc = nil): boolean;overload;
 
 var
   my_program    : string;            {<--program file name}
   my_kernel     : string;            {<--kernel file name}
-  my_gcman      : TLiGarbageCollect; {<--unique garbage collection manager}
-  my_system     : TLiModule;         {<--System module}
-  my_modules    : TLiModuleList;     {<--public module list}
-  my_types      : array[TID_VARIANT..TID_LIST] of TLiType;
+  my_gcman      : TLyseeCollect; {<--unique garbage collection manager}
+  my_system     : TLyseeModule;         {<--System module}
+  my_modules    : TLyseeModuleList;     {<--public module list}
+  my_types      : array[TID_VARIANT..TID_ARRAY] of TLyseeType;
   my_knpath     : string;            {<--kernel file path}
   my_kndir      : string;            {<--kernel file directory}
   my_home       : string;            {<--home path}
   my_tmpath     : string;            {<--temporary path}
   my_search_path: string;            {<--module search path list}
-  my_variant    : TLiType_variant;
-  my_nil        : TLiType_nil;
-  my_char       : TLiType_char;
-  my_int        : TLiType_integer;
-  my_float      : TLiType_float;
-  my_curr       : TLiType_currency;
-  my_time       : TLiType_time;
-  my_bool       : TLiType_boolean;
-  my_type       : TLiType_type;
-  my_string     : TLiType_string;
-  my_module     : TLiType_module;
-  my_func       : TLiType_func;
-  my_hash       : TLiType_hash;
-  my_list       : TLiType_list;
+  my_variant    : TLyseeVariantType;
+  my_nil        : TLyseeNilType;
+  my_char       : TLyseeCharType;
+  my_int        : TLyseeIntegerType;
+  my_float      : TLyseeFloatType;
+  my_curr       : TLyseeCurrencyType;
+  my_time       : TLyseeTimeType;
+  my_bool       : TLyseeBoolType;
+  my_type       : TLyseeTypeType;
+  my_string     : TLyseeStringType;
+  my_module     : TLyseeModuleType;
+  my_func       : TLyseeFuncType;
+  my_hash       : TLyseeHashType;
+  my_array      : TLyseeArrayType;
 
 implementation
 
@@ -1704,8 +1689,8 @@ const
 
   LSE_HASH_DELTA = 64;
 
-  Symbols: array[TLiSymbol] of packed record
-    SY: TLiSymbol; // symbol value
+  Symbols: array[TLyseeSymbol] of packed record
+    SY: TLyseeSymbol; // symbol value
     ID: string;    // symbol spelling
     SM: string;     // symbol description
   end = (
@@ -1715,6 +1700,7 @@ const
     (SY:syConst;     ID:'const';     SM:'define constant'),
     (SY:syFunc;      ID:'function';  SM:'define function'),
     (SY:syProc;      ID:'procedure'; SM:'define procedure'),
+    (SY:syArray;     ID:'array';     SM:'array'),
     (SY:syVar;       ID:'var';       SM:'var'),
     (SY:syGet;       ID:'get';       SM:'get'),
     (SY:sySet;       ID:'set';       SM:'set'),
@@ -1784,14 +1770,13 @@ const
     (SY:syInt;       ID:'';          SM:'push int'),
     (SY:syStr;       ID:'';          SM:'push string'),
     (SY:syChar;      ID:'';          SM:'push char'),
-    (SY:syList;      ID:'';          SM:'create variant list'),
     (SY:syHash;      ID:'';          SM:'create hash table'),
     (SY:syCall;      ID:'';          SM:'call function'),
     (sy:syEOF;       ID:'';          SM:'end of file')
   );
 
   NameSyms = [syID, syStr, syCall, syGet, sySet];
-  DataSyms = [syID, syResult, syFloat, syInt, syStr, syChar, syTrue, syFalse, syNil, syVarArg];
+  DataSyms = [syID, syResult, syFloat, syInt, syStr, syChar, syTrue, syFalse, syNil, syVarArg, syArray];
   ExprHead = DataSyms + [syLParen, syLArray, syNot, syReduce, syAt, syVert];
 
   OperSyms = [
@@ -1801,7 +1786,7 @@ const
     sySame, syEQ, syNE, syLT, syLE, syMT, syME, syIn, syLike, syAs, syIs,   // 3
     syAnd, syOr];                                                           // 4
 
-  OperLevel: array[0..4] of TLiSymbols = (
+  OperLevel: array[0..4] of TLyseeSymbols = (
     [syMul, syDiv, syDivf, syMod],                                          // 0
     [syAdd, syReduce],                                                      // 1
     [syXor, syShl, syShr, syShi, syFill],                                   // 2
@@ -1816,56 +1801,56 @@ var
   my_hilights: string;
   my_TID_seed: integer = 0;
 
-function IsVarArg(const ID: string; T: TLiType): boolean;
+function IsVarArg(const ID: string; T: TLyseeType): boolean;
 begin
-  Result := (ID = '...') and ((T = my_list) or (T = my_variant));
+  Result := (ID = '...') and ((T = my_array) or (T = my_variant));
 end;
 
-function IsParam(const ID: string; const T: TLiType): boolean;
+function IsParam(const ID: string; const T: TLyseeType): boolean;
 begin
   Result := (T <> nil) and (T <> my_nil) and (IsID(ID) or IsVarArg(ID, T));
 end;
 
-procedure LyseeObjectProc(const Param: TLiParam);
+procedure LyseeObjectProc(const Param: TLyseeParam);
 begin
   Param.FFunc.FParent.FProcs[PtrToInt(Param.FFunc.FData)](Param);
 end;
 
 // operator --------------------------------------------------------------------
 
-procedure variant_in_list(V1, V2: TLiValue);
+procedure variant_in_array(V1, V2: TLyseeValue);
 var
   I: integer;
-  A: TLiList;
+  A: TLyseeList;
 begin
-  A := V2.AsList;
+  A := TLyseeList(V2.GetOA);
   if A <> nil then
     I := A.IndexOf(V1) else
     I := -1;
-  V1.SetAsBoolean(I >= 0);
+  V1.AsBoolean := (I >= 0);
 end;
 
-procedure variant_is_type(V1, V2: TLiValue);
+procedure variant_is_type(V1, V2: TLyseeValue);
 begin
   V1.SetAsBoolean(V1.AsType.IsTypeOf(V2.AsType));
 end;
 
-procedure variant_as_type(V1, V2: TLiValue);
+procedure variant_as_type(V1, V2: TLyseeValue);
 begin
-  V2.AsType._Convert(V1);
+  V2.AsType.Convert(V1);
 end;
 
-procedure variant_shi_variant(V1, V2: TLiValue);
+procedure variant_shi_variant(V1, V2: TLyseeValue);
 var
   J: pointer;
 begin
   if V1.GetSelf(J) then
-    V1.FType._Add(J, V2);
+    V1.FType.Add(J, V2);
 end;
 
-procedure variant_fill_variant(V1, V2: TLiValue);
+procedure variant_fill_variant(V1, V2: TLyseeValue);
 var
-  G: TLiGenerate;
+  G: TLyseeGenerate;
   J: pointer;
 begin
   if V1.GetSelf(J) then
@@ -1874,19 +1859,19 @@ begin
     if G <> nil then
     try
       while G.GetNext do
-        V1.FType._Add(J, G);
+        V1.FType.Add(J, G);
     finally
       G.Free;
     end;
   end;
 end;
 
-procedure string_add_string(V1, V2: TLiValue);
+procedure string_add_string(V1, V2: TLyseeValue);
 begin
   V1.SetAsString(V1.AsString + V2.AsString);
 end;
 
-procedure string_mul_int(V1, V2: TLiValue);
+procedure string_mul_int(V1, V2: TLyseeValue);
 var
   I: integer;
   S, T: string;
@@ -1905,361 +1890,372 @@ begin
   V1.SetAsString(S);
 end;
 
-procedure string_in_string(V1, V2: TLiValue);
+procedure string_in_string(V1, V2: TLyseeValue);
 begin
   V1.SetAsBoolean(Pos(V1.AsString, V2.AsString) > 0);
 end;
 
-procedure string_in_hashed(V1, V2: TLiValue);
+procedure string_in_hashed(V1, V2: TLyseeValue);
 var
-  H: TLiHash;
+  H: TLyseeHash;
 begin
   H := V2.AsHash;
   V1.SetAsBoolean((H <> nil) and H.Has(V1.AsString));
 end;
 
-procedure string_like_string(V1, V2: TLiValue);
+procedure string_like_string(V1, V2: TLyseeValue);
 begin
   V1.SetAsBoolean(MatchPatten(V1.AsString, V2.AsString));
 end;
 
-procedure int_neg_int(V1, V2: TLiValue);
+procedure int_neg_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VInteger := - V1.FValue.VInteger;
 end;
 
-procedure int_not_int(V1, V2: TLiValue);
+procedure int_not_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VInteger := not V1.FValue.VInteger;
 end;
 
-procedure int_add_int(V1, V2: TLiValue);
+procedure int_add_int(V1, V2: TLyseeValue);
 begin
   Inc(V1.FValue.VInteger, V2.FValue.VInteger);
 end;
 
-procedure int_add_float(V1, V2: TLiValue);
+procedure int_add_float(V1, V2: TLyseeValue);
 begin
   V1.FType := my_float;
   V1.FValue.VFloat := V1.FValue.VInteger + V2.FValue.VFloat;
 end;
 
-procedure int_add_money(V1, V2: TLiValue);
+procedure int_add_money(V1, V2: TLyseeValue);
 begin
   V1.FType := my_curr;
   V1.FValue.VCurrency := V1.FValue.VInteger + V2.FValue.VCurrency;
 end;
 
-procedure int_dec_int(V1, V2: TLiValue);
+procedure int_dec_int(V1, V2: TLyseeValue);
 begin
   Dec(V1.FValue.VInteger, V2.FValue.VInteger);
 end;
 
-procedure int_dec_float(V1, V2: TLiValue);
+procedure int_dec_float(V1, V2: TLyseeValue);
 begin
   V1.FType := my_float;
   V1.FValue.VFloat := V1.FValue.VInteger - V2.FValue.VFloat;
 end;
 
-procedure int_dec_money(V1, V2: TLiValue);
+procedure int_dec_money(V1, V2: TLyseeValue);
 begin
   V1.FType := my_curr;
   V1.FValue.VCurrency := V1.FValue.VInteger - V2.FValue.VCurrency;
 end;
 
-procedure int_mul_int(V1, V2: TLiValue);
+procedure int_mul_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VInteger := V1.FValue.VInteger * V2.FValue.VInteger;
 end;
 
-procedure int_mul_float(V1, V2: TLiValue);
+procedure int_mul_float(V1, V2: TLyseeValue);
 begin
   V1.FType := my_float;
   V1.FValue.VFloat := V1.FValue.VInteger * V2.FValue.VFloat;
 end;
 
-procedure int_mul_money(V1, V2: TLiValue);
+procedure int_mul_money(V1, V2: TLyseeValue);
 begin
   V1.FType := my_curr;
   V1.FValue.VCurrency := V1.FValue.VInteger * V2.FValue.VCurrency;
 end;
 
-procedure int_div_int(V1, V2: TLiValue);
+procedure int_div_int(V1, V2: TLyseeValue);
 begin
   V1.FType := my_int;
   V1.FValue.VInteger := V1.FValue.VInteger div V2.FValue.VInteger;
 end;
 
-procedure int_divf_int(V1, V2: TLiValue);
+procedure int_divf_int(V1, V2: TLyseeValue);
 begin
   V1.FType := my_float;
   V1.FValue.VFloat := V1.FValue.VInteger / V2.FValue.VInteger;
 end;
 
-procedure int_divf_float(V1, V2: TLiValue);
+procedure int_divf_float(V1, V2: TLyseeValue);
 begin
   V1.FType := my_float;
   V1.FValue.VFloat := V1.FValue.VInteger / V2.FValue.VFloat;
 end;
 
-procedure int_divf_money(V1, V2: TLiValue);
+procedure int_divf_money(V1, V2: TLyseeValue);
 begin
   V1.FType := my_float;
   V1.FValue.VFloat := V1.FValue.VInteger / V2.FValue.VCurrency;
 end;
 
-procedure int_mod_int(V1, V2: TLiValue);
+procedure int_mod_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VInteger := V1.FValue.VInteger mod V2.FValue.VInteger;
 end;
 
-procedure int_xor_int(V1, V2: TLiValue);
+procedure int_xor_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VInteger := V1.FValue.VInteger xor V2.FValue.VInteger;
 end;
 
-procedure int_shl_int(V1, V2: TLiValue);
+procedure int_shl_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VInteger := V1.FValue.VInteger shl V2.FValue.VInteger;
 end;
 
-procedure int_shr_int(V1, V2: TLiValue);
+procedure int_shr_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VInteger := V1.FValue.VInteger shr V2.FValue.VInteger;
 end;
 
-procedure int_in_int(V1, V2: TLiValue);
+procedure int_in_int(V1, V2: TLyseeValue);
 begin
   V1.SetAsBoolean((V1.FValue.VInteger >= 0) and (V1.FValue.VInteger < V2.FValue.VInteger));
 end;
 
-procedure float_neg_float(V1, V2: TLiValue);
+procedure float_neg_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VFloat := - V1.FValue.VFloat;
 end;
 
-procedure float_add_float(V1, V2: TLiValue);
+procedure float_add_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VFloat := V1.FValue.VFloat + V2.FValue.VFloat;
 end;
 
-procedure float_add_int(V1, V2: TLiValue);
+procedure float_add_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VFloat := V1.FValue.VFloat + V2.FValue.VInteger;
 end;
 
-procedure float_add_money(V1, V2: TLiValue);
+procedure float_add_money(V1, V2: TLyseeValue);
 begin
   V1.FType := my_curr;
   V1.FValue.VCurrency := V1.FValue.VFloat + V2.FValue.VCurrency;
 end;
 
-procedure float_dec_float(V1, V2: TLiValue);
+procedure float_dec_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VFloat := V1.FValue.VFloat - V2.FValue.VFloat;
 end;
 
-procedure float_dec_int(V1, V2: TLiValue);
+procedure float_dec_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VFloat := V1.FValue.VFloat - V2.FValue.VInteger;
 end;
 
-procedure float_dec_money(V1, V2: TLiValue);
+procedure float_dec_money(V1, V2: TLyseeValue);
 begin
   V1.FType := my_curr;
   V1.FValue.VCurrency := V1.FValue.VFloat - V2.FValue.VCurrency;
 end;
 
-procedure float_mul_float(V1, V2: TLiValue);
+procedure float_mul_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VFloat := V1.FValue.VFloat * V2.FValue.VFloat;
 end;
 
-procedure float_mul_int(V1, V2: TLiValue);
+procedure float_mul_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VFloat := V1.FValue.VFloat * V2.FValue.VInteger;
 end;
 
-procedure float_mul_money(V1, V2: TLiValue);
+procedure float_mul_money(V1, V2: TLyseeValue);
 begin
   V1.FType := my_curr;
   V1.FValue.VCurrency := V1.FValue.VFloat * V2.FValue.VCurrency;
 end;
 
-procedure float_divf_float(V1, V2: TLiValue);
+procedure float_divf_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VFloat := V1.FValue.VFloat / V2.FValue.VFloat;
 end;
 
-procedure float_divf_int(V1, V2: TLiValue);
+procedure float_divf_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VFloat := V1.FValue.VFloat / V2.FValue.VInteger;
 end;
 
-procedure float_divf_money(V1, V2: TLiValue);
+procedure float_divf_money(V1, V2: TLyseeValue);
 begin
   V1.FValue.VFloat := V1.FValue.VFloat / V2.FValue.VCurrency;
 end;
 
-procedure money_neg_money(V1, V2: TLiValue);
+procedure money_neg_money(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := - V1.FValue.VCurrency;
 end;
 
-procedure money_add_money(V1, V2: TLiValue);
+procedure money_add_money(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency + V2.FValue.VCurrency;
 end;
 
-procedure money_add_int(V1, V2: TLiValue);
+procedure money_add_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency + V2.FValue.VInteger;
 end;
 
-procedure money_add_float(V1, V2: TLiValue);
+procedure money_add_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency + V2.FValue.VFloat;
 end;
 
-procedure money_dec_money(V1, V2: TLiValue);
+procedure money_dec_money(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency - V2.FValue.VCurrency;
 end;
 
-procedure money_dec_int(V1, V2: TLiValue);
+procedure money_dec_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency - V2.FValue.VInteger;
 end;
 
-procedure money_dec_float(V1, V2: TLiValue);
+procedure money_dec_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency - V2.FValue.VFloat;
 end;
 
-procedure money_mul_money(V1, V2: TLiValue);
+procedure money_mul_money(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency * V2.FValue.VCurrency;
 end;
 
-procedure money_mul_int(V1, V2: TLiValue);
+procedure money_mul_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency * V2.FValue.VInteger;
 end;
 
-procedure money_mul_float(V1, V2: TLiValue);
+procedure money_mul_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency * V2.FValue.VFloat;
 end;
 
-procedure money_divf_money(V1, V2: TLiValue);
+procedure money_divf_money(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency / V2.FValue.VCurrency;
 end;
 
-procedure money_divf_int(V1, V2: TLiValue);
+procedure money_divf_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency / V2.FValue.VInteger;
 end;
 
-procedure money_divf_float(V1, V2: TLiValue);
+procedure money_divf_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VCurrency := V1.FValue.VCurrency / V2.FValue.VFloat;
 end;
 
-procedure time_add_int(V1, V2: TLiValue);
+procedure time_add_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VTime := V1.FValue.VTime + V2.FValue.VInteger;
 end;
 
-procedure time_add_float(V1, V2: TLiValue);
+procedure time_add_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VTime := V1.FValue.VTime + V2.FValue.VFloat;
 end;
 
-procedure time_dec_int(V1, V2: TLiValue);
+procedure time_dec_int(V1, V2: TLyseeValue);
 begin
   V1.FValue.VTime := V1.FValue.VTime - V2.FValue.VInteger;
 end;
 
-procedure time_dec_float(V1, V2: TLiValue);
+procedure time_dec_float(V1, V2: TLyseeValue);
 begin
   V1.FValue.VTime := V1.FValue.VTime - V2.FValue.VFloat;
 end;
 
-procedure bool_not_bool(V1, V2: TLiValue);
+procedure bool_not_bool(V1, V2: TLyseeValue);
 begin
   V1.FValue.VBoolean := not V1.FValue.VBoolean;
 end;
 
-procedure bool_xor_bool(V1, V2: TLiValue);
+procedure bool_xor_bool(V1, V2: TLyseeValue);
 begin
   V1.FValue.VBoolean := V1.FValue.VBoolean xor V2.FValue.VBoolean;
 end;
 
-procedure list_add_list(V1, V2: TLiValue);
+procedure array_add_array(V1, V2: TLyseeValue);
 var
-  A, L: TLiList;
+  A, L: TLyseeList;
   I: integer;
+  T: TLyseeType;
 begin
-  A := TLiList.Create;
+  A := TLyseeList.Create;
   try
-    L := V1.AsList;
+    T := V1.FType;
+    L := TLyseeList(V1.GetOA);
     for I := 0 to L.Count - 1 do A.Add(L[I]);
-    L := V2.AsList;
+    L := TLyseeList(V2.GetOA);
     for I := 0 to L.Count - 1 do A.Add(L[I]);
   finally
-    V1.SetAsList(A);
+    V1.SetTOA(T, A);
   end;
 end;
 
-procedure list_dec_list(V1, V2: TLiValue);
+procedure array_dec_array(V1, V2: TLyseeValue);
 var
-  A, L, R: TLiList;
+  A, L, R: TLyseeList;
   I: integer;
+  T: TLyseeType;
 begin
-  A := TLiList.Create;
+  A := TLyseeList.Create;
   try
-    L := V1.AsList;
-    R := V2.AsList;
+    T := V1.FType;
+    L := TLyseeList(V1.GetOA);
+    R := TLyseeList(V2.GetOA);
     for I := 0 to L.Count - 1 do
       if ((R = nil) or (R.IndexOf(L[I]) < 0)) and (A.IndexOf(L[I]) < 0) then
         A.Add(L[I]);
   finally
-    V1.SetAsList(A);
+    V1.SetTOA(T, A);
   end;
 end;
 
-procedure list_mul_list(V1, V2: TLiValue);
+procedure array_mul_array(V1, V2: TLyseeValue);
 var
-  A, L, R: TLiList;
+  A, L, R: TLyseeList;
   I: integer;
+  T: TLyseeType;
 begin
-  A := TLiList.Create;
+  A := TLyseeList.Create;
   try
-    L := V1.AsList;
-    R := V2.AsList;
+    T := V1.FType;
+    L := TLyseeList(V1.GetOA);
+    R := TLyseeList(V2.GetOA);
     for I := 0 to L.Count - 1 do
       if (R <> nil) and (R.IndexOf(L[I]) >= 0) and (A.IndexOf(L[I]) < 0) then
         A.Add(L[I]);
   finally
-    V1.SetAsList(A);
+    V1.SetTOA(T, A);
   end;
 end;
 
-procedure list_shi_variant(V1, V2: TLiValue);
+procedure array_shi_variant(V1, V2: TLyseeValue);
 var
-  L: TLiList;
-begin
-  if V1.GetSelf(L) then L.Add(V2);
-end;
-
-procedure list_fill_variant(V1, V2: TLiValue);
-var
-  G: TLiGenerate;
-  L: TLiList;
+  L: TLyseeList;
 begin
   if V1.GetSelf(L) then
   begin
+    L.TestChange;
+    L.Add(V2);
+  end;
+end;
+
+procedure array_fill_variant(V1, V2: TLyseeValue);
+var
+  G: TLyseeGenerate;
+  L: TLyseeList;
+begin
+  if V1.GetSelf(L) then
+  begin
+    L.TestChange;
     G := GetGenerate(V2);
     if G <> nil then
     try
@@ -2270,140 +2266,140 @@ begin
   end;
 end;
 
-procedure enumset_add_enumset(V1, V2: TLiValue);
+procedure enumset_add_enumset(V1, V2: TLyseeValue);
 begin
   V1.AsEnumSet.Add(V2.AsEnumSet).SetValue(V1);
 end;
 
-procedure enumset_dec_enumset(V1, V2: TLiValue);
+procedure enumset_dec_enumset(V1, V2: TLyseeValue);
 begin
   V1.AsEnumSet.Dec(V2.AsEnumSet).SetValue(V1);
 end;
 
-procedure enumset_mul_enumset(V1, V2: TLiValue);
+procedure enumset_mul_enumset(V1, V2: TLyseeValue);
 begin
   V1.AsEnumSet.Mul(V2.AsEnumSet).SetValue(V1);
 end;
 
-procedure enumset_not_enumset(V1, V2: TLiValue);
+procedure enumset_not_enumset(V1, V2: TLyseeValue);
 begin
   V1.AsEnumSet.NotAll.SetValue(V1);
 end;
 
 // compare ---------------------------------------------------------------------
 
-function compare_variant_variant(V1, V2: TLiValue): TLiCompare;
+function compare_variant_variant(V1, V2: TLyseeValue): TCompare;
 begin
   if (V1.FType = V2.FType) and V1.FType.IsObject and (V1.FValue.VObject = V2.FValue.VObject) then
     Result := crEqual else
     Result := crDiff;
 end;
 
-function compare_variant_nil(V1, V2: TLiValue): TLiCompare;
+function compare_variant_nil(V1, V2: TLyseeValue): TCompare;
 begin
   if V1.IsNil or (V1.IsObject and (V1.FValue.VObject = nil)) then
     Result := crEqual else
     Result := crDiff;
 end;
 
-function compare_nil_variant(V1, V2: TLiValue): TLiCompare;
+function compare_nil_variant(V1, V2: TLyseeValue): TCompare;
 begin
   if V2.IsNil or (V2.IsObject and (V2.FValue.VObject = nil)) then
     Result := crEqual else
     Result := crDiff;
 end;
 
-function compare_string_string(V1, V2: TLiValue): TLiCompare;
+function compare_string_string(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareString(V1.AsString, V2.AsString);
 end;
 
-function compare_char_char(V1, V2: TLiValue): TLiCompare;
+function compare_char_char(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareChar(V1.FValue.VChar[0], V2.FValue.VChar[0]);
 end;
 
-function compare_int_int(V1, V2: TLiValue): TLiCompare;
+function compare_int_int(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareInt64(V1.FValue.VInteger, V2.FValue.VInteger);
 end;
 
-function compare_int_float(V1, V2: TLiValue): TLiCompare;
+function compare_int_float(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareFloat(V1.FValue.VInteger, V2.FValue.VFloat);
 end;
 
-function compare_int_money(V1, V2: TLiValue): TLiCompare;
+function compare_int_money(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareMoney(V1.FValue.VInteger, V2.FValue.VCurrency);
 end;
 
-function compare_int_time(V1, V2: TLiValue): TLiCompare;
+function compare_int_time(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareFloat(V1.FValue.VInteger, V2.FValue.VTime);
 end;
 
-function compare_float_float(V1, V2: TLiValue): TLiCompare;
+function compare_float_float(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareFloat(V1.FValue.VFloat, V2.FValue.VFloat);
 end;
 
-function compare_float_int(V1, V2: TLiValue): TLiCompare;
+function compare_float_int(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareFloat(V1.FValue.VFloat, V2.FValue.VInteger);
 end;
 
-function compare_float_money(V1, V2: TLiValue): TLiCompare;
+function compare_float_money(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareMoney(V1.FValue.VFloat, V2.FValue.VCurrency);
 end;
 
-function compare_float_time(V1, V2: TLiValue): TLiCompare;
+function compare_float_time(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareFloat(V1.FValue.VFloat, V2.FValue.VTime);
 end;
 
-function compare_money_money(V1, V2: TLiValue): TLiCompare;
+function compare_money_money(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareMoney(V1.FValue.VCurrency, V2.FValue.VCurrency);
 end;
 
-function compare_money_int(V1, V2: TLiValue): TLiCompare;
+function compare_money_int(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareMoney(V1.FValue.VCurrency, V2.FValue.VInteger);
 end;
 
-function compare_money_float(V1, V2: TLiValue): TLiCompare;
+function compare_money_float(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareMoney(V1.FValue.VCurrency, V2.FValue.VFloat);
 end;
 
-function compare_time_time(V1, V2: TLiValue): TLiCompare;
+function compare_time_time(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareFloat(V1.FValue.VTime, V2.FValue.VTime);
 end;
 
-function compare_time_int(V1, V2: TLiValue): TLiCompare;
+function compare_time_int(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareFloat(V1.FValue.VTime, V2.FValue.VInteger);
 end;
 
-function compare_time_float(V1, V2: TLiValue): TLiCompare;
+function compare_time_float(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareFloat(V1.FValue.VTime, V2.FValue.VFloat);
 end;
 
-function compare_bool_bool(V1, V2: TLiValue): TLiCompare;
+function compare_bool_bool(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareInteger(Ord(V1.FValue.VBoolean), Ord(V2.FValue.VBoolean));
 end;
 
-function compare_enum_enum(V1, V2: TLiValue): TLiCompare;
+function compare_enum_enum(V1, V2: TLyseeValue): TCompare;
 begin
   Result := CompareInteger(V1.AsEnum.FValue, V2.AsEnum.FValue);
 end;
 
-function compare_enumset_enumset(V1, V2: TLiValue): TLiCompare;
+function compare_enumset_enumset(V1, V2: TLyseeValue): TCompare;
 begin
   if V1.AsEnumSet.Equal(V2.AsEnumSet) then
     Result := crEqual else
@@ -2412,9 +2408,9 @@ end;
 
 // system.function -------------------------------------------------------------
 
-procedure pp_system_halt(const Param: TLiParam);
+procedure pp_system_halt(const Param: TLyseeParam);
 var
-  cntx: TLiContext;
+  cntx: TLysee;
 begin
   cntx := Param.FContext;
   if Param.FPrmc > 0 then
@@ -2424,30 +2420,30 @@ begin
   cntx.Terminate;
 end;
 
-procedure pp_system_exit(const Param: TLiParam);
+procedure pp_system_exit(const Param: TLyseeParam);
 begin
   Param.FContext.FState := csExit;
   if Param.FPrmc > 0 then
     Param.FPrev.FResult.SetValue(Param[0]);
 end;
 
-procedure pp_system_break(const Param: TLiParam);
+procedure pp_system_break(const Param: TLyseeParam);
 begin
   Param.FContext.FState := csBreak;
 end;
 
-procedure pp_system_continue(const Param: TLiParam);
+procedure pp_system_continue(const Param: TLyseeParam);
 begin
   Param.FContext.FState := csContinue;
 end;
 
-procedure pp_system_compile(const Param: TLiParam);
+procedure pp_system_compile(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
   L: TStrings;
   I: integer;
   A: array of string;
-  T: array of TLiType;
+  T: array of TLyseeType;
   V: boolean;
 begin
   if Param.FPrmc = 1 then
@@ -2484,10 +2480,10 @@ begin
   end;
 end;
 
-procedure pp_system_eval(const Param: TLiParam);
+procedure pp_system_eval(const Param: TLyseeParam);
 var
   code: string;
-  func: TLiFunc;
+  func: TLyseeFunc;
 begin
   code := TrimRight(Param[0].AsString);
   if code <> '' then
@@ -2499,7 +2495,7 @@ begin
   else Param.Result.SetNil;
 end;
 
-procedure pp_system_find(const Param: TLiParam);
+procedure pp_system_find(const Param: TLyseeParam);
 var
   S: string;
 begin
@@ -2509,14 +2505,14 @@ begin
       Param.Result.SetNil;
 end;
 
-procedure pp_system_typeof(const Param: TLiParam);
+procedure pp_system_typeof(const Param: TLyseeParam);
 begin
   Param.Result.AsType := Param[0].AsType;
 end;
 
-procedure pp_system_moduleof(const Param: TLiParam);
+procedure pp_system_moduleof(const Param: TLyseeParam);
 var
-  M: TLiModule;
+  M: TLyseeModule;
 begin
   M := Param[0].AsModule;
   if M = nil then
@@ -2524,9 +2520,9 @@ begin
   Param.Result.AsModule := M;
 end;
 
-procedure pp_system_fileof(const Param: TLiParam);
+procedure pp_system_fileof(const Param: TLyseeParam);
 var
-  M: TLiModule;
+  M: TLyseeModule;
 begin
   M := Param[0].AsModule;
   if M = nil then
@@ -2534,15 +2530,15 @@ begin
   Param.Result.AsString := M.FFileName;
 end;
 
-procedure pp_system_collectGarbage(const Param: TLiParam);
+procedure pp_system_collectGarbage(const Param: TLyseeParam);
 begin
   Param.Result.AsInteger := my_gcman.Collect;
 end;
 
-procedure pp_system_inc(const Param: TLiParam);
+procedure pp_system_inc(const Param: TLyseeParam);
 var
-  T: TLiType;
-  V: TLiValue;
+  T: TLyseeType;
+  V: TLyseeValue;
   X: int64;
 begin
   V := Param.GetVarbValue(0, T);
@@ -2566,10 +2562,10 @@ begin
   else Param.Error('variable not specified');
 end;
 
-procedure pp_system_dec(const Param: TLiParam);
+procedure pp_system_dec(const Param: TLyseeParam);
 var
-  T: TLiType;
-  V: TLiValue;
+  T: TLyseeType;
+  V: TLyseeValue;
   X: int64;
 begin
   V := Param.GetVarbValue(0, T);
@@ -2593,52 +2589,52 @@ begin
   else Param.Error('variable not specified');
 end;
 
-procedure pp_system_readln(const Param: TLiParam);
+procedure pp_system_readln(const Param: TLyseeParam);
 var
   S: string;
-  T: TLiType;
-  V: TLiValue;
+  T: TLyseeType;
+  V: TLyseeValue;
 begin
   Param.FContext.Readln(S);
   V := Param.GetVarbValue(0, T);
   if V <> nil then
   begin
     V.SetAsString(S);
-    T._Convert(V);
+    T.Convert(V);
     Param.Result.SetValue(V);
   end
   else Param.Result.AsString := S;
 end;
 
-procedure pp_system_write(const Param: TLiParam);
+procedure pp_system_write(const Param: TLyseeParam);
 begin
   Param.FContext.Write(Param[0].AsString);
 end;
 
-procedure pp_system_writeln(const Param: TLiParam);
+procedure pp_system_writeln(const Param: TLyseeParam);
 begin
   Param.FContext.Write(Param[0].AsString);
   Param.FContext.Write(sLineBreak);
 end;
 
-procedure pp_system_length(const Param: TLiParam);
+procedure pp_system_length(const Param: TLyseeParam);
 var
   O: pointer;
-  T: TLiType;
+  T: TLyseeType;
 begin
   T := Param[0].GetTOA(O);
-  Param.Result.AsInteger := T._Length(O);
+  Param.Result.AsInteger := T.GetLength(O);
 end;
 
-procedure pp_system_pass(const Param: TLiParam);
+procedure pp_system_pass(const Param: TLyseeParam);
 begin
   { do nothing }
 end;
 
-procedure pp_system_decompile(const Param: TLiParam);
+procedure pp_system_decompile(const Param: TLyseeParam);
 var
   L: TStringList;
-  T: TLiType;
+  T: TLyseeType;
   O: pointer;
 begin
   L := TStringList.Create;
@@ -2646,7 +2642,7 @@ begin
     T := Param[0].GetTOA(O);
     if O <> nil then
       if T = my_func then
-        TLiFunc(O).Decompile(0, L);
+        TLyseeFunc(O).Decompile(0, L);
     Param.Result.AsString := L.Text;
   finally
     L.Free;
@@ -2667,20 +2663,20 @@ begin
   if Result then my_spinlock.Release;
 end;
 
-function AddModule(const Name: string): TLiModule;
+function AddModule(const Name: string): TLyseeModule;
 begin
   if IsID(Name) then
   begin
     Result := my_modules.Find(Name);
     if Result = nil then
-      Result := TLiModule.Create(Name);
+      Result := TLyseeModule.Create(Name);
   end
   else Result := nil;
 end;
 
 function Command: integer;
 var
-  E: TLiContext;
+  E: TLysee;
   spath, code, line, temp: string;
   pause: boolean;
   index: integer;
@@ -2796,7 +2792,7 @@ begin
     else Break;
   end;
 
-  E := TLiContext.Create(nil);
+  E := TLysee.Create(nil);
   try
     if index <= ParamCount then
     begin
@@ -2804,10 +2800,7 @@ begin
         E.ExecuteFrom(index);
       finally
         if E.Excepted then
-        begin
           Writeln(E.Error.ErrorText);
-          pause := true;
-        end;
         if pause then do_pause;
       end;
     end
@@ -2858,7 +2851,7 @@ begin
   Result := false;
 end;
 
-function OperatorStr(OP: TLiOperator): string;
+function OperatorStr(OP: TLyseeOperator): string;
 begin
   case OP of
     opAdd : Result := Symbols[syAdd].ID;
@@ -2884,7 +2877,7 @@ end;
 
 function Keywords: string;
 var
-  I: TLiSymbol;
+  I: TLyseeSymbol;
   L: TStringList;
 begin
   if my_keywords = '' then
@@ -2943,9 +2936,9 @@ end;
 
 function SortValueCompare(V1, V2: pointer): integer;
 var
-  R: TLiCompare;
+  R: TCompare;
 begin
-  R := TLiValue(V1).Compare(TLiValue(V2));
+  R := TLyseeValue(V1).Compare(TLyseeValue(V2));
   if R = crLess then Result := -1 else
   if R = crMore then Result :=  1 else Result := 0;
 end;
@@ -3001,7 +2994,7 @@ begin
   until I > L;
 end;
 
-function FormatValue(V: TLiValue): string;
+function FormatValue(V: TLyseeValue): string;
 begin
   if V.FType = my_char then
     Result := FormatChar(V.FValue.VChar[0]) else
@@ -3010,21 +3003,21 @@ begin
     Result := V.AsString;
 end;
 
-procedure ErrorConvert(AType, NewType: TLiType);
+procedure ErrorConvert(AType, NewType: TLyseeType);
 begin
   Throw('can not convert %s to %s', [AType.FName, NewType.FName]);
 end;
 
-function GetGenerate(Value: TLiValue): TLiGenerate;
+function GetGenerate(Value: TLyseeValue): TLyseeGenerate;
 begin
   if Value <> nil then
-    Result := Value.FType._Generate(Value.GetOA) else
+    Result := Value.FType.Generate(Value.GetOA) else
     Result := nil;
 end;
 
-function GetGenerate(V1, V2: TLiValue; Upto: boolean): TLiGenerate;
+function GetGenerate(V1, V2: TLyseeValue; Upto: boolean): TLyseeGenerate;
 var
-  P: TLiCompare;
+  P: TCompare;
 begin
   Result := nil;
   if V1.FType = V2.FType then
@@ -3032,11 +3025,11 @@ begin
     P := V1.Compare(V2);
     if (P = crEqual) or (Upto and (P = crLess)) or (not Upto and (P = crMore)) then
       case V1.FType.FTID of
-        TID_INTEGER: Result := TLiGenerate_Int64.CreateIn(V1.AsInteger, V2.AsInteger, Upto);
-        TID_CHAR   : Result := TLiGenerate_Char.CreateIn(V1.AsChar, V2.AsChar, Upto);
-        TID_BOOLEAN: Result := TLiGenerate_Boolean.CreateIn(V1.AsBoolean, V2.AsBoolean, Upto);
+        TID_INTEGER: Result := TLyseeIntGenerate.CreateIn(V1.AsInteger, V2.AsInteger, Upto);
+        TID_CHAR   : Result := TLyseeCharGenerate.CreateIn(V1.AsChar, V2.AsChar, Upto);
+        TID_BOOLEAN: Result := TLyseeBoolGenerate.CreateIn(V1.AsBoolean, V2.AsBoolean, Upto);
         else if V1.FType.IsEnum then
-          Result := TLiGenerate_enum.CreateIn(V1.AsEnum, V2.AsEnum, Upto);
+          Result := TLyseeEnumGenerate.CreateIn(V1.AsEnum, V2.AsEnum, Upto);
       end;
   end;
 end;
@@ -3046,38 +3039,28 @@ begin
   Result := StringOfChar(' ', Level * 2);
 end;
 
-procedure FreeOperates(var Head: PLiOperate);
+procedure FreeOperates(var Head: PLyseeOperate);
 begin
   if Head <> nil then
   begin
     FreeOperates(Head^.o_next);
-    MemFree(Head, sizeof(RLiOperate));
+    MemFree(Head, sizeof(RLyseeOperate));
     Head := nil;
   end;
 end;
 
-procedure FreeCompares(var Head: PLiCompare);
+procedure FreeCompares(var Head: PLyseeCompare);
 begin
   if Head <> nil then
   begin
     FreeCompares(Head^.c_next);
-    MemFree(Head, sizeof(RLiCompare));
-    Head := nil;
-  end;
-end;
-
-procedure FreeConverts(var Head: PLiConvert);
-begin
-  if Head <> nil then
-  begin
-    FreeConverts(Head^.c_next);
-    MemFree(Head, sizeof(RLiConvert));
+    MemFree(Head, sizeof(RLyseeCompare));
     Head := nil;
   end;
 end;
 
 function ParamOK(const Names: array of string;
-                 const Types: array of TLiType;
+                 const Types: array of TLyseeType;
                  IsMethod: boolean;
                  var HasVarArg: boolean): boolean;
 var
@@ -3106,38 +3089,38 @@ begin
   end;
 end;
 
-function AddFunc(const Name: string; T: TLiType;
-  const ParamNames: array of string; const ParamTypes: array of TLiType;
-  Proc: TLiLyseeProc; Data: pointer): TLiFunc;
+function AddFunc(const Name: string; T: TLyseeType;
+  const ParamNames: array of string; const ParamTypes: array of TLyseeType;
+  Proc: TLyseeProc; Data: pointer): TLyseeFunc;
 begin
   Result := my_system.AddFunc(Name, T, ParamNames, ParamTypes, Proc, Data);
 end;
 
 function AddFunc(const Name: string;
-  const ParamNames: array of string; const ParamTypes: array of TLiType;
-  Proc: TLiLyseeProc; Data: pointer): TLiFunc;
+  const ParamNames: array of string; const ParamTypes: array of TLyseeType;
+  Proc: TLyseeProc; Data: pointer): TLyseeFunc;
 begin
   Result := AddFunc(Name, my_nil, ParamNames, ParamTypes, Proc, Data);
 end;
 
-function AddFunc(const Name: string; T: TLiType;
-  Proc: TLiLyseeProc; Data: pointer): TLiFunc;
+function AddFunc(const Name: string; T: TLyseeType;
+  Proc: TLyseeProc; Data: pointer): TLyseeFunc;
 begin
   Result := AddFunc(Name, T, [], [], Proc, Data);
 end;
 
 function AddFunc(const Name: string;
-  Proc: TLiLyseeProc; Data: pointer): TLiFunc;
+  Proc: TLyseeProc; Data: pointer): TLyseeFunc;
 begin
   Result := AddFunc(Name, my_nil, [], [], Proc, Data);
 end;
 
-function AddMethod(const AClass: TLiType;
+function AddMethod(const AClass: TLyseeType;
                    const AName: string;
-                   const AType: TLiType;
+                   const AType: TLyseeType;
                    const ParamNames: array of string;
-                   const ParamTypes: array of TLiType;
-                   const AProc: TLiLyseeProc): TLiFunc;
+                   const ParamTypes: array of TLyseeType;
+                   const AProc: TLyseeProc): TLyseeFunc;
 var
   I: integer;
   E: boolean;
@@ -3150,7 +3133,7 @@ begin
         if ParamOK(ParamNames, ParamTypes, true, E) then
           if not MatchID(AName, 'Create') or (AType = AClass) then
           begin
-            Result := TLiFunc.CreateMethod(AName, AClass, AProc);
+            Result := TLyseeFunc.CreateMethod(AName, AClass, AProc);
             Result.FResultType := AType;
             Result.FHasVarArg := E;
             if MatchID(AName, 'Create') then
@@ -3161,37 +3144,37 @@ begin
           end;
 end;
 
-function AddMethod(const AClass: TLiType;
+function AddMethod(const AClass: TLyseeType;
                    const AName: string;
                    const ParamNames: array of string;
-                   const ParamTypes: array of TLiType;
-                   const AProc: TLiLyseeProc): TLiFunc;
+                   const ParamTypes: array of TLyseeType;
+                   const AProc: TLyseeProc): TLyseeFunc;
 begin
   Result := AddMethod(AClass, AName, my_nil, ParamNames, ParamTypes, AProc);
 end;
 
-function AddMethod(const AClass: TLiType;
+function AddMethod(const AClass: TLyseeType;
                    const AName: string;
-                   const AType: TLiType;
-                   const AProc: TLiLyseeProc): TLiFunc;
+                   const AType: TLyseeType;
+                   const AProc: TLyseeProc): TLyseeFunc;
 begin
   Result := AddMethod(AClass, AName, AType, [], [], AProc);
 end;
 
-function AddMethod(const AClass: TLiType;
+function AddMethod(const AClass: TLyseeType;
                    const AName: string;
-                   const AProc: TLiLyseeProc): TLiFunc;
+                   const AProc: TLyseeProc): TLyseeFunc;
 begin
   Result := AddMethod(AClass, AName, my_nil, [], [], AProc);
 end;
 
-function SetupProp(const AClass: TLiType;
+function SetupProp(const AClass: TLyseeType;
                    const AName: string;
-                   const AType: TLiType;
+                   const AType: TLyseeType;
                    const IndexNames: array of string;
-                   const IndexTypes: array of TLiType;
-                   const GetProc, SetProc: TLiLyseeProc;
-                     var GetFunc, SetFunc: TLiFunc): boolean;
+                   const IndexTypes: array of TLyseeType;
+                   const GetProc, SetProc: TLyseeProc;
+                     var GetFunc, SetFunc: TLyseeFunc): boolean;
 
   procedure setup_get(const FuncName: string);
   var
@@ -3199,7 +3182,7 @@ function SetupProp(const AClass: TLiType;
   begin
     if AClass.FindMethod(FuncName) = nil then
     begin
-      GetFunc := TLiFunc.CreateMethod(FuncName, AClass, GetProc);
+      GetFunc := TLyseeFunc.CreateMethod(FuncName, AClass, GetProc);
       GetFunc.FResultType := AType;
       GetFunc.FParams.Add('Self', AClass);
       for I := 0 to Length(IndexNames) - 1 do
@@ -3214,7 +3197,7 @@ function SetupProp(const AClass: TLiType;
     if GetFunc <> nil then
       if Assigned(SetProc) and (AClass.FindMethod(FuncName) = nil) then
       begin
-        SetFunc := TLiFunc.CreateMethod(FuncName, AClass, SetProc);
+        SetFunc := TLyseeFunc.CreateMethod(FuncName, AClass, SetProc);
         SetFunc.FResultType := my_nil;
         SetFunc.FParams.Add('Self', AClass);
         for I := 0 to Length(IndexNames) - 1 do
@@ -3254,47 +3237,47 @@ begin
   Result := (GetFunc <> nil);
 end;
 
-function SetupProp(const AClass: TLiType;
+function SetupProp(const AClass: TLyseeType;
                    const AName: string;
-                   const AType: TLiType;
+                   const AType: TLyseeType;
                    const IndexNames: array of string;
-                   const IndexTypes: array of TLiType;
-                   const GetProc: TLiLyseeProc;
-                     var GetFunc: TLiFunc): boolean;
+                   const IndexTypes: array of TLyseeType;
+                   const GetProc: TLyseeProc;
+                     var GetFunc: TLyseeFunc): boolean;
 var
-  S: TLiFunc;
+  S: TLyseeFunc;
 begin
   Result := SetupProp(AClass, AName, AType, IndexNames, IndexTypes,
                       GetProc, nil, GetFunc, S);
 end;
 
-function SetupProp(const AClass: TLiType;
+function SetupProp(const AClass: TLyseeType;
                    const AName: string;
-                   const AType: TLiType;
+                   const AType: TLyseeType;
                    const IndexNames: array of string;
-                   const IndexTypes: array of TLiType;
-                   const GetProc, SetProc: TLiLyseeProc): boolean;
+                   const IndexTypes: array of TLyseeType;
+                   const GetProc, SetProc: TLyseeProc): boolean;
 var
-  G, S: TLiFunc;
+  G, S: TLyseeFunc;
 begin
   Result := SetupProp(AClass, AName, AType, IndexNames, IndexTypes,
                       GetProc, SetProc, G, S);
 end;
 
-function SetupProp(const AClass: TLiType;
+function SetupProp(const AClass: TLyseeType;
                    const AName: string;
-                   const AType: TLiType;
-                   const GetProc, SetProc: TLiLyseeProc): boolean;
+                   const AType: TLyseeType;
+                   const GetProc, SetProc: TLyseeProc): boolean;
 var
-  G, S: TLiFunc;
+  G, S: TLyseeFunc;
 begin
   Result := SetupProp(AClass, AName, AType, [], [],
                       GetProc, SetProc, G, S);
 end;
 
-{ TLiError }
+{ TLyseeError }
 
-procedure TLiError.Clear;
+procedure TLyseeError.Clear;
 begin
   FErrID := '';
   FMsg := '';
@@ -3304,12 +3287,12 @@ begin
   FCol := 0;
 end;
 
-constructor TLiError.Create(AContext: TLiContext);
+constructor TLyseeError.Create(AContext: TLysee);
 begin
   FContext := AContext;
 end;
 
-function TLiError.GetText: string;
+function TLyseeError.GetText: string;
 begin
   if (FErrID <> '') and (FMsg <> '') then
   begin
@@ -3322,7 +3305,7 @@ begin
   else Result := '';
 end;
 
-procedure TLiError.Runtime(const Msg, Module, FileName: string; Row, Col: integer);
+procedure TLyseeError.Runtime(const Msg, Module, FileName: string; Row, Col: integer);
 begin
   FErrID := 'RuntimeError';
   FMsg := Msg;
@@ -3333,7 +3316,7 @@ begin
   FContext.FExcepted := true;
 end;
 
-procedure TLiError.Syntax(const Msg, Module, FileName: string; Row, Col: integer);
+procedure TLyseeError.Syntax(const Msg, Module, FileName: string; Row, Col: integer);
 begin
   FErrID := 'SyntaxError';
   FMsg := Msg;
@@ -3345,19 +3328,19 @@ begin
   Abort;
 end;
 
-{ TLiContext }
+{ TLysee }
 
-procedure TLiContext.BeginExecute;
+procedure TLysee.BeginExecute;
 begin
   if Assigned(FOnExecuting) then FOnExecuting(Self);
 end;
 
-procedure TLiContext.EndExecute;
+procedure TLysee.EndExecute;
 begin
   if Assigned(FOnExecuted) then FOnExecuted(Self);
 end;
 
-function TLiContext.ExecuteFile(const FileName: string): boolean;
+function TLysee.ExecuteFile(const FileName: string): boolean;
 var
   F: string;
 begin
@@ -3371,7 +3354,7 @@ begin
   else Result := false;
 end;
 
-function TLiContext.ExecuteFrom(StartParamIndex: integer): boolean;
+function TLysee.ExecuteFrom(StartParamIndex: integer): boolean;
 var
   I: integer;
   F: string;
@@ -3389,73 +3372,73 @@ begin
   if not Result then Throw(FError.ErrorText);
 end;
 
-procedure TLiContext.Readln(var Text: string);
+procedure TLysee.Readln(var Text: string);
 begin
   if Assigned(FOnReadln) then
     FOnReadln(Self, Text) else
     System.Readln(Text);
 end;
 
-procedure TLiContext.RollbackRemove(AObj: TObject);
+procedure TLysee.RollbackRemove(AObj: TObject);
 begin
   if FRollbacks <> nil then
     FRollbacks.Remove(AObj);
 end;
 
-procedure TLiContext.SetMainFile(const Value: string);
+procedure TLysee.SetMainFile(const Value: string);
 begin
   FMainFile := ExpandFileName(Trim(Value));
 end;
 
-function TLiContext.Terminate: boolean;
+function TLysee.Terminate: boolean;
 begin
   Result := FTerminated;
   FTerminated := true;
 end;
 
-procedure TLiContext.Write(const Text: string);
+procedure TLysee.Write(const Text: string);
 begin
   if Assigned(FOnWrite) then
     FOnWrite(Self, Text) else
     System.Write(Text);
 end;
 
-procedure TLiContext.Write(const Text: string; const Args: array of const);
+procedure TLysee.Write(const Text: string; const Args: array of const);
 begin
   Write(Format(Text, Args));
 end;
 
-procedure TLiContext.Writeln;
+procedure TLysee.Writeln;
 begin
   Write(sLineBreak);
 end;
 
-procedure TLiContext.Writeln(const Text: string);
+procedure TLysee.Writeln(const Text: string);
 begin
   Write(Text);
   Write(sLineBreak);
 end;
 
-procedure TLiContext.Writeln(const Text: string; const Args: array of const);
+procedure TLysee.Writeln(const Text: string; const Args: array of const);
 begin
   Writeln(Format(Text, Args));
 end;
 
-function TLiContext.GetTerminated: boolean;
+function TLysee.GetTerminated: boolean;
 begin
   Result := FTerminated or not GetRunning;
 end;
 
-function TLiContext.GetTerminating: boolean;
+function TLysee.GetTerminating: boolean;
 begin
   Result := FTerminated and GetRunning;
 end;
 
-procedure TLiContext.MarkSurvived;
+procedure TLysee.MarkSurvived;
 var
   I: integer;
-  M: TLiModule;
-  P: TLiParam;
+  M: TLyseeModule;
+  P: TLyseeParam;
 begin
   FArgs.MarkForSurvive;
   FResult.MarkForSurvive;
@@ -3477,7 +3460,7 @@ begin
   end;
 end;
 
-procedure TLiContext.Clear(WillDestroy: boolean);
+procedure TLysee.Clear(WillDestroy: boolean);
 begin
   CheckNotRunning;
   FNameSeed := 0;
@@ -3489,23 +3472,23 @@ begin
   if not WillDestroy then GetMainModule;
 end;
 
-constructor TLiContext.Create(AOwner: TComponent);
+constructor TLysee.Create(AOwner: TComponent);
 begin
   inherited;
-  FResult := TLiValue.Create;
-  FError := TLiError.Create(Self);
-  FArgs := TLiList.Create;
+  FResult := TLyseeValue.Create;
+  FError := TLyseeError.Create(Self);
+  FArgs := TLyseeList.Create;
   FArgs.IncRefcount;
-  FMainLocals := TLiList.Create;
+  FMainLocals := TLyseeList.Create;
   FMainLocals.IncRefcount;
-  FModules := TLiModuleList.Create(Self);
+  FModules := TLyseeModuleList.Create(Self);
   GetMainModule;
   FState := csTerminated;
   FTerminated := true;
   FHalted := false;
 end;
 
-destructor TLiContext.Destroy;
+destructor TLysee.Destroy;
 begin
   Clear(true);
   FreeAndNil(FResult);
@@ -3517,7 +3500,7 @@ begin
   inherited;
 end;
 
-function TLiContext.Compile(const Code: string): TLiFunc;
+function TLysee.Compile(const Code: string): TLyseeFunc;
 begin
   Result := nil;
   Check(FRollbacks = nil, 'invalid embeded compiling');
@@ -3526,14 +3509,14 @@ begin
     if not GetRunning then
     begin
       FError.Clear;
-      Result := TLiParser.Create(GetMainModule).ParseAndFree(Code);
+      Result := TLyseeParser.Create(GetMainModule).ParseAndFree(Code);
       FreeAndNil(FRollbacks);
       FState := csReady;
     end
     else
     if StatusOK then
     begin
-      Result := TLiParser.Create(GetCodeModule).ParseAndFree(Code);
+      Result := TLyseeParser.Create(GetCodeModule).ParseAndFree(Code);
       if FExcepted then
       begin
         Rollback;
@@ -3548,34 +3531,34 @@ begin
   end;
 end;
 
-function TLiContext.GetMainFunc: TLiFunc;
+function TLysee.GetMainFunc: TLyseeFunc;
 begin
   if FMainFunc = nil then
-    FMainFunc := TLiFunc.Create(LSE_MAIN, FMainModule, nil);
+    FMainFunc := TLyseeFunc.Create(LSE_MAIN, FMainModule, nil);
   Result := FMainFunc;
 end;
 
-function TLiContext.GetMainModule: TLiModule;
+function TLysee.GetMainModule: TLyseeModule;
 begin
   if FMainModule = nil then
   begin
-    FMainModule := TLiModule.CreateEx(LSE_MAIN, Self);
+    FMainModule := TLyseeModule.CreateEx(LSE_MAIN, Self);
     FMainModule.FFileName := FMainFile;
   end;
   Result := FMainModule;
 end;
 
-function TLiContext.GetMainToken: TLiToken;
+function TLysee.GetMainToken: TLyseeToken;
 begin
   if FMainToken = nil then
   begin
-    FMainToken := TLiToken.Create;
+    FMainToken := TLyseeToken.Create;
     FMainToken.FSym := syCall;
   end;
   Result := FMainToken;
 end;
 
-function TLiContext.GetModuleFile(const AName: string): string;
+function TLysee.GetModuleFile(const AName: string): string;
 var
   L, P: string;
 begin
@@ -3597,17 +3580,17 @@ begin
   Result := '';
 end;
 
-function TLiContext.GetReady: boolean;
+function TLysee.GetReady: boolean;
 begin
   Result := (FState = csReady);
 end;
 
-function TLiContext.GetRunning: boolean;
+function TLysee.GetRunning: boolean;
 begin
   Result := (FState >= csRunning);
 end;
 
-procedure TLiContext.ExecMain;
+procedure TLysee.ExecMain;
 begin
   CheckNotRunning;
   Check(GetReady, 'context is not ready');
@@ -3622,7 +3605,7 @@ begin
     if not FTerminated then
     begin
       FMainLocals.PrepareFor(FMainFunc);
-      FCurrent := TLiParam.Create;
+      FCurrent := TLyseeParam.Create;
       try
         FCurrent.FContext := Self;
         FCurrent.FFunc := FMainFunc;
@@ -3645,7 +3628,7 @@ begin
   end;
 end;
 
-procedure TLiContext.Rollback;
+procedure TLysee.Rollback;
 var
   I: integer;
 begin
@@ -3653,38 +3636,38 @@ begin
   try
     for I := FRollbacks.Count - 1 downto 0 do
       if I < FRollbacks.Count then
-        TLiObject(FRollbacks[I]).Free;
+        TBasicObject(FRollbacks[I]).Free;
   finally
     FreeAndNil(FRollbacks);
   end;
 end;
 
-procedure TLiContext.SetResult(Value: TLiValue);
+procedure TLysee.SetResult(Value: TLyseeValue);
 begin
   if Value <> nil then
     FResult.SetValue(Value) else
     FResult.SetNil
 end;
 
-procedure TLiContext.RollbackAdd(AObj: TObject);
+procedure TLysee.RollbackAdd(AObj: TObject);
 begin
   if (FRollbacks <> nil) and (FRollbacks.IndexOf(AObj) < 0) then
     FRollbacks.Add(AObj);
 end;
 
-procedure TLiContext.CheckNotRunning;
+procedure TLysee.CheckNotRunning;
 begin
   Check(not GetRunning, 'current context is running');
 end;
 
-function TLiContext.StatusOK: boolean;
+function TLysee.StatusOK: boolean;
 begin
   Result := (FState = csRunning) and not (FTerminated or FExcepted);
 end;
 
-function TLiContext.Execute(const Code: string): boolean;
+function TLysee.Execute(const Code: string): boolean;
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   try
     Result := false;
@@ -3701,7 +3684,7 @@ begin
   end;
 end;
 
-function TLiContext.Resolve(const ID: string; Value: TLiValue): boolean;
+function TLysee.Resolve(const ID: string; Value: TLyseeValue): boolean;
 
   function resolve_reserved: boolean;
   begin
@@ -3711,11 +3694,11 @@ function TLiContext.Resolve(const ID: string; Value: TLiValue): boolean;
       if MatchID(ID, '__file')     then Value.SetAsString(CodeModule.FFileName) else
       if MatchID(ID, '__func')     then Value.SetAsFunc(CodeFunc) else
       if MatchID(ID, '__prmc')     then Value.SetAsInteger(FCurrent.FPrmc) else
-      if MatchID(ID, '__args')     then Value.SetAsList(FArgs) else
+      if MatchID(ID, '__args')     then Value.SetAsArray(FArgs) else
       if MatchID(ID, '__argc')     then Value.SetAsInteger(FArgs.Count) else
       if MatchID(ID, '__dir')      then Value.SetAsString(GetCurrentDir) else
-      if MatchID(ID, '__modules')  then Value.SetAsList(FModules.ToList) else
-      if MatchID(ID, '__libs')     then Value.SetAsList(my_modules.ToList) else
+      if MatchID(ID, '__modules')  then Value.SetAsArray(FModules.ToList) else
+      if MatchID(ID, '__libs')     then Value.SetAsArray(my_modules.ToList) else
       if MatchID(ID, '__hilights') then Value.SetAsString(Hilights) else
       if MatchID(ID, '__main')     then Value.SetAsFunc(FMainFunc) else
       if MatchID(ID, '__in_main')  then Value.SetAsBoolean(CodeFunc.IsMainFunc) else
@@ -3742,14 +3725,14 @@ begin
     (Assigned(FOnResolve) and FOnResolve(ID, Value)));
 end;
 
-procedure TLiContext.ForWhileRepeatEnded;
+procedure TLysee.ForWhileRepeatEnded;
 begin
   if FState in [csBreak, csContinue] then FState := csRunning;
 end;
 
-function TLiContext.GetCodeFunc: TLiFunc;
+function TLysee.GetCodeFunc: TLyseeFunc;
 var
-  P: TLiParam;
+  P: TLyseeParam;
 begin
   P := FCurrent;
   while P <> nil do
@@ -3761,9 +3744,9 @@ begin
   Result := nil;
 end;
 
-function TLiContext.GetCodeModule: TLiModule;
+function TLysee.GetCodeModule: TLyseeModule;
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   F := CodeFunc;
   if F <> nil then
@@ -3771,41 +3754,32 @@ begin
     Result := nil;
 end;
 
-{ TLiType }
+{ TLyseeType }
 
-function TLiType._IncRefcount(Obj: pointer): integer;
+function TLyseeType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then Result := 1 else Result := 0;
 end;
 
-function TLiType.AddCompare(AType: TLiType; AFunc: TLiCompareFunc): PLiCompare;
+function TLyseeType.AddCompare(AType: TLyseeType; AFunc: TLyseeCompareFunc): PLyseeCompare;
 begin
-  Result := MemAllocZero(sizeof(RLiCompare));
+  Result := MemAllocZero(sizeof(RLyseeCompare));
   Result^.c_type := AType;
   Result^.c_compare := AFunc;
   Result^.c_next := FCompare;
   FCompare := Result;
 end;
 
-function TLiType.AddConvert(AType: TLiType; AProc: TLiConvertProc): PLiConvert;
-begin
-  Result := MemAllocZero(sizeof(RLiConvert));
-  Result^.c_type := AType;
-  Result^.c_convert := AProc;
-  Result^.c_next := FConvert;
-  FConvert := Result;
-end;
-
-function TLiType.RegisterProc(AProc: TLiLyseeObjectProc): integer;
+function TLyseeType.RegisterProc(AProc: TLyseeObjectProc): integer;
 begin
   Result := Length(FProcs);
   SetLength(FProcs, Result + 1);
   FProcs[Result] := AProc;
 end;
 
-function TLiType.AddOperate(OP: TLiOperator; AType: TLiType; AProc: TLiOperateProc): PLiOperate;
+function TLyseeType.AddOperate(OP: TLyseeOperator; AType: TLyseeType; AProc: TLyseeOperateProc): PLyseeOperate;
 begin
-  Result := MemAllocZero(sizeof(RLiOperate));
+  Result := MemAllocZero(sizeof(RLyseeOperate));
   Result^.o_oper := OP;
   Result^.o_type := AType;
   Result^.o_operate := AProc;
@@ -3813,7 +3787,7 @@ begin
   FOperate[OP] := Result;
 end;
 
-constructor TLiType.Create(const AName: string; AModule: TLiModule; AParent: TLiType);
+constructor TLyseeType.Create(const AName: string; AModule: TLyseeModule; AParent: TLyseeType);
 begin
   if AParent <> nil then
     if ClassType.ClassParent = AParent.ClassType then
@@ -3828,116 +3802,114 @@ begin
   if FModule <> nil then
   begin
     FModule.FTypeList.Add(Self);
-    FModule.FNeedSetup := true;
-    FMethods := TLiFuncList.Create;
+    FMethods := TLyseeFuncList.Create;
   end;
 end;
 
-function TLiType.Define(const AProp: string; const AType: TLiType;
-  const IndexName: string; const IndexType: TLiType;
-  const GetProc, SetProc: TLiLyseeObjectProc): boolean;
+function TLyseeType.Define(const AProp: string; const AType: TLyseeType;
+  const IndexName: string; const IndexType: TLyseeType;
+  const GetProc, SetProc: TLyseeObjectProc): boolean;
 begin
   Result := Define(AProp, AType, [IndexName], [IndexType], GetProc, SetProc);
 end;
 
-destructor TLiType.Destroy;
+destructor TLyseeType.Destroy;
 var
-  I: TLiOperator;
+  I: TLyseeOperator;
 begin
-  for I := Low(TLiOperator) to High(TLiOperator) do
+  for I := Low(TLyseeOperator) to High(TLyseeOperator) do
     FreeOperates(FOperate[I]);
   FreeCompares(FCompare);
-  FreeConverts(FConvert);
   FreeAndNil(FMethods);
   inherited;
 end;
 
-function TLiType.GetFullName: string;
+function TLyseeType.GetFullName: string;
 begin
   Result := FModule.FName + '.' + FName
 end;
 
-procedure TLiType._GcMark(Obj: pointer);
+procedure TLyseeType.GcMark(Obj: pointer);
 begin
   { do nothing }
 end;
 
-function TLiType._Generate(Obj: pointer): TLiGenerate;
+function TLyseeType.Generate(Obj: pointer): TLyseeGenerate;
 begin
   Result := nil;
 end;
 
-function TLiType._Length(Obj: pointer): int64;
+function TLyseeType.GetLength(Obj: pointer): int64;
 begin
   Result := 0;
 end;
 
-function TLiType.GetMethod(Index: integer): TLiFunc;
+function TLyseeType.GetMethod(Index: integer): TLyseeFunc;
 begin
-  Result := TLiFunc(FMethods[Index]);
+  Result := TLyseeFunc(FMethods[Index]);
 end;
 
-function TLiType.GetMethodCount: integer;
+function TLyseeType.GetMethodCount: integer;
 begin
   if FMethods <> nil then
     Result := FMethods.Count else
     Result := 0;
 end;
 
-function TLiType.IsBasicValue: boolean;
+function TLyseeType.IsBasicValue: boolean;
 begin
   Result := (FStyle in [tsBasic, tsNil]);
 end;
 
-function TLiType.IsEnum: boolean;
+function TLyseeType.IsEnum: boolean;
 begin
   Result := (FStyle = tsEnum);
 end;
 
-function TLiType.IsEnumSet: boolean;
+function TLyseeType.IsEnumSet: boolean;
 begin
   Result := (FStyle = tsEnumSet);
 end;
 
-function TLiType.IsChildTypeOf(AType: TLiType): boolean;
+function TLyseeType.IsChildTypeOf(AType: TLyseeType): boolean;
 begin
   Result := (FParent <> nil) and FParent.IsTypeOf(AType);
 end;
 
-function TLiType.IsNil: boolean;
+function TLyseeType.IsNil: boolean;
 begin
   Result := (Self = my_nil);
 end;
 
-function TLiType.IsObject: boolean;
+function TLyseeType.IsObject: boolean;
 begin
   Result := (FStyle in [tsObject, tsEnum, tsEnumSet]);
 end;
 
-function TLiType.IsTypeOf(AType: TLiType): boolean;
+function TLyseeType.IsTypeOf(AType: TLyseeType): boolean;
 begin
   Result := (Self = AType) or IsChildTypeOf(AType);
 end;
 
-function TLiType.Method(const AName: string;
-                        const AProc: TLiLyseeObjectProc): TLiFunc;
+function TLyseeType.Method(const AName: string;
+                        const AProc: TLyseeObjectProc): TLyseeFunc;
 begin
   Result := Method(AName, my_nil, [], [], AProc);
 end;
 
-function TLiType.Method(const AName: string;
+function TLyseeType.Method(const AName: string;
                         const ParamNames: array of string;
-                        const ParamTypes: array of TLiType;
-                        const AProc: TLiLyseeObjectProc): TLiFunc;
+                        const ParamTypes: array of TLyseeType;
+                        const AProc: TLyseeObjectProc): TLyseeFunc;
 begin
   Result := Method(AName, my_nil, ParamNames, ParamTypes, AProc);
 end;
 
-function TLiType.Method(const AName: string;
-                        const AType: TLiType;
+function TLyseeType.Method(const AName: string;
+                        const AType: TLyseeType;
                         const ParamNames: array of string;
-                        const ParamTypes: array of TLiType;
-                        const AProc: TLiLyseeObjectProc): TLiFunc;
+                        const ParamTypes: array of TLyseeType;
+                        const AProc: TLyseeObjectProc): TLyseeFunc;
 begin
   Result := nil;
   if Assigned(AProc) then
@@ -3949,68 +3921,68 @@ begin
   end;
 end;
 
-function TLiType.Method(const AName: string;
-                        const AType: TLiType;
-                        const AProc: TLiLyseeObjectProc): TLiFunc;
+function TLyseeType.Method(const AName: string;
+                        const AType: TLyseeType;
+                        const AProc: TLyseeObjectProc): TLyseeFunc;
 begin
   Result := Method(AName, AType, [], [], AProc);
 end;
 
-function TLiType._Add(Obj: pointer; Value: TLiValue): integer;
+function TLyseeType.Add(Obj: pointer; Value: TLyseeValue): integer;
 begin
   Throw('%s is not container, can not add item value', [FName]);
   Result := -1;
 end;
 
-function TLiType._AsBoolean(Obj: pointer): boolean;
+function TLyseeType.AsBoolean(Obj: pointer): boolean;
 begin
   Result := (Obj <> nil);
 end;
 
-function TLiType._AsChar(Obj: pointer): char;
+function TLyseeType.AsChar(Obj: pointer): char;
 begin
   ErrorConvert(Self, my_char);
   Result := #0;
 end;
 
-function TLiType._AsFloat(Obj: pointer): double;
+function TLyseeType.AsFloat(Obj: pointer): double;
 begin
   ErrorConvert(Self, my_float);
   Result := 0;
 end;
 
-function TLiType._AsInteger(Obj: pointer): int64;
+function TLyseeType.AsInteger(Obj: pointer): int64;
 begin
   ErrorConvert(Self, my_int);
   Result := 0;
 end;
 
-function TLiType._AsCurrency(Obj: pointer): currency;
+function TLyseeType.AsCurrency(Obj: pointer): currency;
 begin
   ErrorConvert(Self, my_curr);
   Result := 0;
 end;
 
-function TLiType._AsString(Obj: pointer): string;
+function TLyseeType.AsString(Obj: pointer): string;
 begin
   ErrorConvert(Self, my_string);
   Result := '';
 end;
 
-function TLiType._AsTime(Obj: pointer): TDateTime;
+function TLyseeType.AsTime(Obj: pointer): TDateTime;
 begin
   ErrorConvert(Self, my_time);
   Result := 0;
 end;
 
-function TLiType._Clear(Obj: pointer): boolean;
+function TLyseeType.Clear(Obj: pointer): boolean;
 begin
   Result := false;
 end;
 
-function TLiType.FindCompare(AType: TLiType): PLiCompare;
+function TLyseeType.FindCompare(AType: TLyseeType): PLyseeCompare;
 var
-  P: PLiCompare;
+  P: PLyseeCompare;
 begin
   P := nil;
   Result := FCompare;
@@ -4034,17 +4006,7 @@ begin
   Result := P;
 end;
 
-function TLiType.FindConvert(AType: TLiType): PLiConvert;
-begin
-  Result := FConvert;
-  while Result <> nil do
-  begin
-    if Result^.c_type = AType then Exit;
-    Result := Result^.c_next;
-  end;
-end;
-
-function TLiType.FindMethod(const AName: string): TLiFunc;
+function TLyseeType.FindMethod(const AName: string): TLyseeFunc;
 var
   I: integer;
 begin
@@ -4057,9 +4019,9 @@ begin
   Result := nil;
 end;
 
-function TLiType.FindOperate(OP: TLiOperator; AType: TLiType): PLiOperate;
+function TLyseeType.FindOperate(OP: TLyseeOperator; AType: TLyseeType): PLyseeOperate;
 var
-  P: PLiOperate;
+  P: PLyseeOperate;
 begin
   P := nil;
   Result := FOperate[OP];
@@ -4083,19 +4045,19 @@ begin
   Result := P;
 end;
 
-function TLiType.Prototype(const AName: string): string;
+function TLyseeType.Prototype(const AName: string): string;
 begin
   if (Self <> my_variant) and (AName <> '...') then
     Result := AName + ':' + FName else
     Result := AName;
 end;
 
-function TLiType._DecRefcount(Obj: pointer): integer;
+function TLyseeType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then Result := 1 else Result := 0;
 end;
 
-procedure TLiType.SetParent(const Value: TLiType);
+procedure TLyseeType.SetParent(const Value: TLyseeType);
 begin
   if (FParent = nil) and (Value <> nil) then
     if ClassType.ClassParent = Value.ClassType then
@@ -4103,17 +4065,17 @@ begin
       Throw('%s is not parent of %s', [Value.FName, FName]);
 end;
 
-procedure TLiType.Setup;
+procedure TLyseeType.Setup;
 begin
-  { do nothing }
+  { setup class methods and properties here }
 end;
 
-function TLiType.Define(const AProp: string; const AType: TLiType;
-  const IndexNames: array of string; const IndexTypes: array of TLiType;
-  const GetProc, SetProc: TLiLyseeObjectProc): boolean;
+function TLyseeType.Define(const AProp: string; const AType: TLyseeType;
+  const IndexNames: array of string; const IndexTypes: array of TLyseeType;
+  const GetProc, SetProc: TLyseeObjectProc): boolean;
 var
-  G, S: TLiFunc;
-  F, P: TLiLyseeProc;
+  G, S: TLyseeFunc;
+  F, P: TLyseeProc;
 begin
   Result := Assigned(GetProc);
   if Result then
@@ -4132,162 +4094,167 @@ begin
   end;
 end;
 
-procedure TLiType._SetDefault(Value: TLiValue);
+procedure TLyseeType.SetDefault(Value: TLyseeValue);
 begin
   Value.SetNil;
   Value.FType := Self;
 end;
 
-procedure TLiType._Validate(Obj: pointer);
+procedure TLyseeType.Validate(Obj: pointer);
 begin
   if Obj = nil then
     Throw('invalid %s instance: nil', [FName]);
 end;
 
-procedure TLiType._Convert(Value: TLiValue);
-var
-  R: PLiConvert;
+procedure TLyseeType.Convert(Value: TLyseeValue);
 begin
   if Value.FType <> Self then
-  begin
-    R := FindConvert(Value.FType);
-    if R = nil then
-      Value.SetParentType(Self) else // allow inherited
-      R^.c_convert(Value);
-  end;
+    if not Value.FType.ConvertTo(Value, Self) then
+      Value.SetParentType(Self);
 end;
 
-function TLiType.Define(const AProp: string; const AType: TLiType;
-  const GetProc, SetProc: TLiLyseeObjectProc): boolean;
+function TLyseeType.ConvertTo(Value: TLyseeValue; T: TLyseeType): boolean;
+begin
+  Result := (T = Self) or (T = my_variant);
+end;
+
+function TLyseeType.Define(const AProp: string; const AType: TLyseeType;
+  const GetProc, SetProc: TLyseeObjectProc): boolean;
 begin
   Result := Define(AProp, AType, [], [], GetProc, SetProc);
 end;
 
-{ TLiType_variant }
+{ TLyseeVariantType }
 
-procedure TLiType_variant._SetDefault(Value: TLiValue);
+procedure TLyseeVariantType.SetDefault(Value: TLyseeValue);
 begin
   Value.SetNil;
 end;
 
-procedure TLiType_variant._Convert(Value: TLiValue);
+procedure TLyseeVariantType.Convert(Value: TLyseeValue);
 begin
   { do nothing }
 end;
 
-{ TLiType_nil }
+{ TLyseeNilType }
 
-function TLiType_nil._AsBoolean(Obj: pointer): boolean;
+function TLyseeNilType.AsBoolean(Obj: pointer): boolean;
 begin
   Result := false;
 end;
 
-function TLiType_nil._AsChar(Obj: pointer): char;
+function TLyseeNilType.AsChar(Obj: pointer): char;
 begin
   Result := #0;
 end;
 
-function TLiType_nil._AsFloat(Obj: pointer): double;
+function TLyseeNilType.AsFloat(Obj: pointer): double;
 begin
   Result := 0;
 end;
 
-function TLiType_nil._AsInteger(Obj: pointer): int64;
+function TLyseeNilType.AsInteger(Obj: pointer): int64;
 begin
   Result := 0;
 end;
 
-function TLiType_nil._AsCurrency(Obj: pointer): currency;
+function TLyseeNilType.AsCurrency(Obj: pointer): currency;
 begin
   Result := 0;
 end;
 
-function TLiType_nil._AsString(Obj: pointer): string;
+function TLyseeNilType.AsString(Obj: pointer): string;
 begin
   Result := '';
 end;
 
-function TLiType_nil._AsTime(Obj: pointer): TDateTime;
+function TLyseeNilType.AsTime(Obj: pointer): TDateTime;
 begin
   Result := 0;
 end;
 
-procedure TLiType_nil._Convert(Value: TLiValue);
+procedure TLyseeNilType.Convert(Value: TLyseeValue);
 begin
   Value.SetNil;
 end;
 
-procedure TLiType_nil._SetDefault(Value: TLiValue);
+function TLyseeNilType.ConvertTo(Value: TLyseeValue; T: TLyseeType): boolean;
+begin
+  T.SetDefault(Value);
+  Result := true;
+end;
+
+procedure TLyseeNilType.SetDefault(Value: TLyseeValue);
 begin
   Value.SetNil;
 end;
 
-function TLiType_nil._DecRefcount(Obj: pointer): integer;
+function TLyseeNilType.DecRefcount(Obj: pointer): integer;
 begin
   Result := 0;
 end;
 
-function TLiType_nil._IncRefcount(Obj: pointer): integer;
+function TLyseeNilType.IncRefcount(Obj: pointer): integer;
 begin
   Result := 0;
 end;
 
-{ TLiType_char }
+{ TLyseeCharType }
 
-function TLiType_char._AsBoolean(Obj: pointer): boolean;
+function TLyseeCharType.AsBoolean(Obj: pointer): boolean;
 begin
   Result := (PChar(Obj)^ <> #0);
 end;
 
-function TLiType_char._AsChar(Obj: pointer): char;
+function TLyseeCharType.AsChar(Obj: pointer): char;
 begin
   Result := PChar(Obj)^;
 end;
 
-function TLiType_char._AsFloat(Obj: pointer): double;
+function TLyseeCharType.AsFloat(Obj: pointer): double;
 begin
-  Result := _AsInteger(Obj);
+  Result := AsInteger(Obj);
 end;
 
-function TLiType_char._AsInteger(Obj: pointer): int64;
+function TLyseeCharType.AsInteger(Obj: pointer): int64;
 begin
-  Result := StrToInt(_AsString(Obj));
+  Result := StrToInt(AsString(Obj));
 end;
 
-function TLiType_char._AsCurrency(Obj: pointer): currency;
+function TLyseeCharType.AsCurrency(Obj: pointer): currency;
 begin
-  Result := _AsInteger(Obj);
+  Result := AsInteger(Obj);
 end;
 
-function TLiType_char._AsString(Obj: pointer): string;
+function TLyseeCharType.AsString(Obj: pointer): string;
 begin
   Result := PChar(Obj)^;
 end;
 
-procedure TLiType_char._Convert(Value: TLiValue);
+procedure TLyseeCharType.Convert(Value: TLyseeValue);
 var
   tmpv: char;
 begin
   if Value.FType <> Self then
   begin
-    tmpv := Value.FType._AsChar(Value.GetOA);
-    Value.FType._DecRefcount(Value.FValue.VObject);
+    tmpv := Value.FType.AsChar(Value.GetOA);
+    Value.FType.DecRefcount(Value.FValue.VObject);
     Value.FType := Self;
     Value.FValue.VChar[0] := tmpv;
     Value.FValue.VChar[1] := #0;
   end;
 end;
 
-procedure TLiType_char._SetDefault(Value: TLiValue);
+procedure TLyseeCharType.SetDefault(Value: TLyseeValue);
 begin
   inherited;
   Value.FValue.VChar[0] := #0;
   Value.FValue.VChar[1] := #0;
 end;
 
-{ TLiType_string }
+{ TLyseeStringType }
 
-procedure TLiType_string.MyGet(const Param: TLiParam);
+procedure TLyseeStringType.MyGet(const Param: TLyseeParam);
 var
   S: string;
 begin
@@ -4295,398 +4262,398 @@ begin
   Param.Result.AsChar := S[Param[1].AsInteger];
 end;
 
-procedure TLiType_string.Setup;
+procedure TLyseeStringType.Setup;
 begin
   Define('', my_char, 'Index', my_int, {$IFDEF FPC}@{$ENDIF}MyGet);
   inherited;
 end;
 
-function TLiType_string._AsBoolean(Obj: pointer): boolean;
+function TLyseeStringType.AsBoolean(Obj: pointer): boolean;
 begin
-  Result := (Obj <> nil) and (TLiString(Obj).FValue <> '');
+  Result := (Obj <> nil) and (TLyseeString(Obj).FValue <> '');
 end;
 
-function TLiType_string._AsChar(Obj: pointer): char;
+function TLyseeStringType.AsChar(Obj: pointer): char;
 begin
-  if (Obj <> nil) and (TLiString(Obj).FValue <> '') then
-    Result := TLiString(Obj).FValue[1] else
+  if (Obj <> nil) and (TLyseeString(Obj).FValue <> '') then
+    Result := TLyseeString(Obj).FValue[1] else
     Result := #0;
 end;
 
-function TLiType_string._AsFloat(Obj: pointer): double;
+function TLyseeStringType.AsFloat(Obj: pointer): double;
 begin
-  Result := StrToFloat(_AsString(Obj));
+  Result := StrToFloat(AsString(Obj));
 end;
 
-function TLiType_string._AsInteger(Obj: pointer): int64;
+function TLyseeStringType.AsInteger(Obj: pointer): int64;
 begin
-  Result := StrToInt(_AsString(Obj));
+  Result := StrToInt(AsString(Obj));
 end;
 
-function TLiType_string._AsCurrency(Obj: pointer): currency;
+function TLyseeStringType.AsCurrency(Obj: pointer): currency;
 begin
-  Result := StrToCurr(_AsString(Obj));
+  Result := StrToCurr(AsString(Obj));
 end;
 
-function TLiType_string._AsString(Obj: pointer): string;
+function TLyseeStringType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiString(Obj).FValue else
+    Result := TLyseeString(Obj).FValue else
     Result := '';
 end;
 
-function TLiType_string._AsTime(Obj: pointer): TDateTime;
+function TLyseeStringType.AsTime(Obj: pointer): TDateTime;
 begin
-  Result := StrToDateTime(_AsString(Obj));
+  Result := StrToDateTime(AsString(Obj));
 end;
 
-function TLiType_string._DecRefcount(Obj: pointer): integer;
+function TLyseeStringType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiString(Obj).DecRefcount else
+    Result := TLyseeString(Obj).DecRefcount else
     Result := 0;
 end;
 
-function TLiType_string._Generate(Obj: pointer): TLiGenerate;
+function TLyseeStringType.Generate(Obj: pointer): TLyseeGenerate;
 var
   S: string;
 begin
-  S := _AsString(Obj);
+  S := AsString(Obj);
   if S <> '' then
-    Result := TLiGenerate_string.CreateIn(S) else
+    Result := TLyseeStringGenerate.CreateIn(S) else
     Result := nil;
 end;
 
-function TLiType_string._IncRefcount(Obj: pointer): integer;
+function TLyseeStringType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiString(Obj).IncRefcount else
+    Result := TLyseeString(Obj).IncRefcount else
     Result := 0;
 end;
 
-function TLiType_string._Length(Obj: pointer): int64;
+function TLyseeStringType.GetLength(Obj: pointer): int64;
 begin
-  Result := Length(_AsString(Obj));
+  Result := Length(AsString(Obj));
 end;
 
-procedure TLiType_string._Convert(Value: TLiValue);
+procedure TLyseeStringType.Convert(Value: TLyseeValue);
 var
   tmpv: string;
 begin
   if Value.FType <> Self then
   begin
-    tmpv := Value.FType._AsString(Value.GetOA);
-    Value.FType._DecRefcount(Value.FValue.VObject);
+    tmpv := Value.FType.AsString(Value.GetOA);
+    Value.FType.DecRefcount(Value.FValue.VObject);
     Value.FType := Self;
-    Value.FValue.VObject := TLiString.CreateIncRefcount(tmpv);
+    Value.FValue.VObject := TLyseeString.CreateIncRefcount(tmpv);
   end;
 end;
 
-{ TLiType_integer }
+{ TLyseeIntegerType }
 
-function TLiType_integer._AsBoolean(Obj: pointer): boolean;
+function TLyseeIntegerType.AsBoolean(Obj: pointer): boolean;
 begin
   Result := (PInt64(Obj)^ <> 0);
 end;
 
-function TLiType_integer._AsChar(Obj: pointer): char;
+function TLyseeIntegerType.AsChar(Obj: pointer): char;
 begin
   Result := char(PInt64(Obj)^);
 end;
 
-function TLiType_integer._AsFloat(Obj: pointer): double;
+function TLyseeIntegerType.AsFloat(Obj: pointer): double;
 begin
   Result := PInt64(Obj)^;
 end;
 
-function TLiType_integer._AsInteger(Obj: pointer): int64;
+function TLyseeIntegerType.AsInteger(Obj: pointer): int64;
 begin
   Result := PInt64(Obj)^;
 end;
 
-function TLiType_integer._AsCurrency(Obj: pointer): currency;
+function TLyseeIntegerType.AsCurrency(Obj: pointer): currency;
 begin
   Result := PInt64(Obj)^;
 end;
 
-function TLiType_integer._AsString(Obj: pointer): string;
+function TLyseeIntegerType.AsString(Obj: pointer): string;
 begin
   Result := IntToStr(PInt64(Obj)^);
 end;
 
-function TLiType_integer._AsTime(Obj: pointer): TDateTime;
+function TLyseeIntegerType.AsTime(Obj: pointer): TDateTime;
 begin
   Result := PInt64(Obj)^;
 end;
 
-function TLiType_integer._Generate(Obj: pointer): TLiGenerate;
+function TLyseeIntegerType.Generate(Obj: pointer): TLyseeGenerate;
 begin
   if PInt64(Obj)^ > 0 then
-    Result := TLiGenerate_int64.CreateIn(PInt64(Obj)^) else
+    Result := TLyseeIntGenerate.CreateIn(PInt64(Obj)^) else
     Result := nil;
 end;
 
-procedure TLiType_integer._SetDefault(Value: TLiValue);
+procedure TLyseeIntegerType.SetDefault(Value: TLyseeValue);
 begin
   inherited;
   Value.FValue.VInteger := 0;
 end;
 
-procedure TLiType_integer._Convert(Value: TLiValue);
+procedure TLyseeIntegerType.Convert(Value: TLyseeValue);
 var
   tmpv: int64;
 begin
   if Value.FType <> Self then
   begin
-    tmpv := Value.FType._AsInteger(Value.GetOA);
-    Value.FType._DecRefcount(Value.FValue.VObject);
+    tmpv := Value.FType.AsInteger(Value.GetOA);
+    Value.FType.DecRefcount(Value.FValue.VObject);
     Value.FType := Self;
     Value.FValue.VInteger := tmpv;
   end;
 end;
 
-{ TLiType_float }
+{ TLyseeFloatType }
 
-function TLiType_float._AsBoolean(Obj: pointer): boolean;
+function TLyseeFloatType.AsBoolean(Obj: pointer): boolean;
 begin
   Result := not IsZero(PDouble(Obj)^);
 end;
 
-function TLiType_float._AsFloat(Obj: pointer): double;
+function TLyseeFloatType.AsFloat(Obj: pointer): double;
 begin
   Result := PDouble(Obj)^;
 end;
 
-function TLiType_float._AsInteger(Obj: pointer): int64;
+function TLyseeFloatType.AsInteger(Obj: pointer): int64;
 begin
   Result := Trunc(PDouble(Obj)^);
 end;
 
-function TLiType_float._AsCurrency(Obj: pointer): currency;
+function TLyseeFloatType.AsCurrency(Obj: pointer): currency;
 begin
   Result := PDouble(Obj)^;
 end;
 
-function TLiType_float._AsString(Obj: pointer): string;
+function TLyseeFloatType.AsString(Obj: pointer): string;
 begin
   Result := FloatToStr(PDouble(Obj)^);
 end;
 
-function TLiType_float._AsTime(Obj: pointer): TDateTime;
+function TLyseeFloatType.AsTime(Obj: pointer): TDateTime;
 begin
   Result := PDouble(Obj)^;
 end;
 
-procedure TLiType_float._SetDefault(Value: TLiValue);
+procedure TLyseeFloatType.SetDefault(Value: TLyseeValue);
 begin
   inherited;
   Value.FValue.VFloat := 0;
 end;
 
-procedure TLiType_float._Convert(Value: TLiValue);
+procedure TLyseeFloatType.Convert(Value: TLyseeValue);
 var
   tmpv: double;
 begin
   if Value.FType <> Self then
   begin
-    tmpv := Value.FType._AsFloat(Value.GetOA);
-    Value.FType._DecRefcount(Value.FValue.VObject);
+    tmpv := Value.FType.AsFloat(Value.GetOA);
+    Value.FType.DecRefcount(Value.FValue.VObject);
     Value.FType := Self;
     Value.FValue.VFloat := tmpv;
   end;
 end;
 
-{ TLiType_currency }
+{ TLyseeCurrencyType }
 
-function TLiType_currency._AsBoolean(Obj: pointer): boolean;
+function TLyseeCurrencyType.AsBoolean(Obj: pointer): boolean;
 begin
   Result := (PCurrency(Obj)^ <> 0);
 end;
 
-function TLiType_currency._AsFloat(Obj: pointer): double;
+function TLyseeCurrencyType.AsFloat(Obj: pointer): double;
 begin
   Result := PCurrency(Obj)^;
 end;
 
-function TLiType_currency._AsInteger(Obj: pointer): int64;
+function TLyseeCurrencyType.AsInteger(Obj: pointer): int64;
 begin
   Result := Trunc(PCurrency(Obj)^);
 end;
 
-function TLiType_currency._AsCurrency(Obj: pointer): currency;
+function TLyseeCurrencyType.AsCurrency(Obj: pointer): currency;
 begin
   Result := PCurrency(Obj)^;
 end;
 
-function TLiType_currency._AsString(Obj: pointer): string;
+function TLyseeCurrencyType.AsString(Obj: pointer): string;
 begin
   Result := CurrToStr(PCurrency(Obj)^);
 end;
 
-function TLiType_currency._AsTime(Obj: pointer): TDateTime;
+function TLyseeCurrencyType.AsTime(Obj: pointer): TDateTime;
 begin
   Result := PCurrency(Obj)^;
 end;
 
-procedure TLiType_currency._SetDefault(Value: TLiValue);
+procedure TLyseeCurrencyType.SetDefault(Value: TLyseeValue);
 begin
   inherited;
   Value.FValue.VCurrency := 0;
 end;
 
-procedure TLiType_currency._Convert(Value: TLiValue);
+procedure TLyseeCurrencyType.Convert(Value: TLyseeValue);
 var
   tmpv: currency;
 begin
   if Value.FType <> Self then
   begin
-    tmpv := Value.FType._AsCurrency(Value.GetOA);
-    Value.FType._DecRefcount(Value.FValue.VObject);
+    tmpv := Value.FType.AsCurrency(Value.GetOA);
+    Value.FType.DecRefcount(Value.FValue.VObject);
     Value.FType := Self;
     Value.FValue.VCurrency := tmpv;
   end;
 end;
 
-{ TLiType_time }
+{ TLyseeTimeType }
 
-function TLiType_time._AsBoolean(Obj: pointer): boolean;
+function TLyseeTimeType.AsBoolean(Obj: pointer): boolean;
 begin
   Result := not IsZero(PDateTime(Obj)^);
 end;
 
-function TLiType_time._AsFloat(Obj: pointer): double;
+function TLyseeTimeType.AsFloat(Obj: pointer): double;
 begin
   Result := PDateTime(Obj)^;
 end;
 
-function TLiType_time._AsInteger(Obj: pointer): int64;
+function TLyseeTimeType.AsInteger(Obj: pointer): int64;
 begin
   Result := Trunc(PDateTime(Obj)^);
 end;
 
-function TLiType_time._AsString(Obj: pointer): string;
+function TLyseeTimeType.AsString(Obj: pointer): string;
 begin
   Result := DateTimeToStr(PDateTime(Obj)^);
 end;
 
-function TLiType_time._AsTime(Obj: pointer): TDateTime;
+function TLyseeTimeType.AsTime(Obj: pointer): TDateTime;
 begin
   Result := PDateTime(Obj)^;
 end;
 
-procedure TLiType_time._SetDefault(Value: TLiValue);
+procedure TLyseeTimeType.SetDefault(Value: TLyseeValue);
 begin
   inherited;
   Value.FValue.VTime := 0;
 end;
 
-procedure TLiType_time._Convert(Value: TLiValue);
+procedure TLyseeTimeType.Convert(Value: TLyseeValue);
 var
   tmpv: TDateTime;
 begin
   if Value.FType <> Self then
   begin
-    tmpv := Value.FType._AsTime(Value.GetOA);
-    Value.FType._DecRefcount(Value.FValue.VObject);
+    tmpv := Value.FType.AsTime(Value.GetOA);
+    Value.FType.DecRefcount(Value.FValue.VObject);
     Value.FType := Self;
     Value.FValue.VTime := tmpv;
   end;
 end;
 
-{ TLiType_boolean }
+{ TLyseeBoolType }
 
-function TLiType_boolean._AsBoolean(Obj: pointer): boolean;
+function TLyseeBoolType.AsBoolean(Obj: pointer): boolean;
 begin
   Result := PBoolean(Obj)^;
 end;
 
-function TLiType_boolean._AsInteger(Obj: pointer): int64;
+function TLyseeBoolType.AsInteger(Obj: pointer): int64;
 begin
   Result := Ord(PBoolean(Obj)^);
 end;
 
-function TLiType_boolean._AsString(Obj: pointer): string;
+function TLyseeBoolType.AsString(Obj: pointer): string;
 begin
   Result := IntToStr(Ord(PBoolean(Obj)^));
 end;
 
-procedure TLiType_boolean._SetDefault(Value: TLiValue);
+procedure TLyseeBoolType.SetDefault(Value: TLyseeValue);
 begin
   inherited;
   Value.FValue.VBoolean := false;
 end;
 
-procedure TLiType_boolean._Convert(Value: TLiValue);
+procedure TLyseeBoolType.Convert(Value: TLyseeValue);
 var
   tmpv: boolean;
 begin
   if Value.FType <> Self then
   begin
-    tmpv := Value.FType._AsBoolean(Value.GetOA);
-    Value.FType._DecRefcount(Value.FValue.VObject);
+    tmpv := Value.FType.AsBoolean(Value.GetOA);
+    Value.FType.DecRefcount(Value.FValue.VObject);
     Value.FType := Self;
     Value.FValue.VBoolean := tmpv;
   end;
 end;
 
-{ TLiType_type }
+{ TLyseeTypeType }
 
-procedure TLiType_type.MyFindMethod(const Param: TLiParam);
+procedure TLyseeTypeType.MyFindMethod(const Param: TLyseeParam);
 begin
   Param.Result.AsFunc := Param[0].AsType.FindMethod(Param[1].AsString);
 end;
 
-procedure TLiType_type.MyIsChildTypeOf(const Param: TLiParam);
+procedure TLyseeTypeType.MyIsChildTypeOf(const Param: TLyseeParam);
 begin
   Param.Result.AsBoolean := Param[0].AsType.IsChildTypeOf(Param[1].AsType);
 end;
 
-procedure TLiType_type.MyIsEnum(const Param: TLiParam);
+procedure TLyseeTypeType.MyIsEnum(const Param: TLyseeParam);
 begin
   Param.Result.AsBoolean := Param[0].AsType.IsEnum;
 end;
 
-procedure TLiType_type.MyIsEnumSet(const Param: TLiParam);
+procedure TLyseeTypeType.MyIsEnumSet(const Param: TLyseeParam);
 begin
   Param.Result.AsBoolean := Param[0].AsType.IsEnumSet;
 end;
 
-procedure TLiType_type.MyIsNil(const Param: TLiParam);
+procedure TLyseeTypeType.MyIsNil(const Param: TLyseeParam);
 begin
   Param.Result.AsBoolean := Param[0].AsType.IsNil;
 end;
 
-procedure TLiType_type.MyIsObject(const Param: TLiParam);
+procedure TLyseeTypeType.MyIsObject(const Param: TLyseeParam);
 begin
   Param.Result.AsBoolean := Param[0].AsType.IsObject;
 end;
 
-procedure TLiType_type.MyIsTypeOf(const Param: TLiParam);
+procedure TLyseeTypeType.MyIsTypeOf(const Param: TLyseeParam);
 begin
   Param.Result.AsBoolean := Param[0].AsType.IsTypeOf(Param[1].AsType);
 end;
 
-procedure TLiType_type.MyItemValues(const Param: TLiParam);
+procedure TLyseeTypeType.MyItemValues(const Param: TLyseeParam);
 var
-  T: TLiType;
-  O: TLiEnumType;
-  L: TLiList;
+  T: TLyseeType;
+  O: TLyseeEnumType;
+  L: TLyseeList;
   I: integer;
 begin
   L := Param.Result.NewList;
   T := Param[0].AsType;
   if T.IsEnum then
   begin
-    O := TLiEnumType(T);
+    O := TLyseeEnumType(T);
     for I := 0 to O.GetCount - 1 do
       L.Add.SetTOA(O, O[I]);
   end;
 end;
 
-procedure TLiType_type.MyMethods(const Param: TLiParam);
+procedure TLyseeTypeType.MyMethods(const Param: TLyseeParam);
 var
-  T: TLiType;
-  L: TLiList;
+  T: TLyseeType;
+  L: TLyseeList;
   I: integer;
 begin
   L := Param.Result.NewList;
@@ -4695,32 +4662,32 @@ begin
     L.Add.AsFunc := T.GetMethod(I);
 end;
 
-procedure TLiType_type.MyModule(const Param: TLiParam);
+procedure TLyseeTypeType.MyModule(const Param: TLyseeParam);
 begin
   Param.Result.AsModule := Param[0].AsType.Module;
 end;
 
-procedure TLiType_type.MyName(const Param: TLiParam);
+procedure TLyseeTypeType.MyName(const Param: TLyseeParam);
 begin
   Param.Result.AsString := Param[0].AsType.Name;
 end;
 
-procedure TLiType_type.MyParent(const Param: TLiParam);
+procedure TLyseeTypeType.MyParent(const Param: TLyseeParam);
 begin
   Param.Result.AsType := Param[0].AsType.Parent;
 end;
 
-procedure TLiType_type.MyPrototype(const Param: TLiParam);
+procedure TLyseeTypeType.MyPrototype(const Param: TLyseeParam);
 begin
   Param.Result.AsString := Param[0].AsType.Prototype(Param[1].AsString);
 end;
 
-procedure TLiType_type.Setup;
+procedure TLyseeTypeType.Setup;
 begin
   Method('Name', my_string, {$IFDEF FPC}@{$ENDIF}MyName);
   Method('Parent', Self, {$IFDEF FPC}@{$ENDIF}MyParent);
   Method('Module', my_module, {$IFDEF FPC}@{$ENDIF}MyModule);
-  Method('Methods', my_list, {$IFDEF FPC}@{$ENDIF}MyMethods);
+  Method('Methods', my_array, {$IFDEF FPC}@{$ENDIF}MyMethods);
   Method('IsTypeOf', my_bool, ['AType'], [my_type],
          {$IFDEF FPC}@{$ENDIF}MyIsTypeOf);
   Method('IsChildTypeOf', my_bool, ['AType'], [my_type],
@@ -4729,7 +4696,7 @@ begin
   Method('IsNil', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsNil);
   Method('IsEnum', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsEnum);
   Method('IsEnumSet', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsEnumSet);
-  Method('ItemValues', my_list, {$IFDEF FPC}@{$ENDIF}MyItemValues);
+  Method('ItemValues', my_array, {$IFDEF FPC}@{$ENDIF}MyItemValues);
   Method('Prototype', my_string, ['Name'], [my_string],
          {$IFDEF FPC}@{$ENDIF}MyPrototype);
   Method('FindMethod', my_func, ['Name'], [my_string],
@@ -4737,65 +4704,65 @@ begin
   inherited;
 end;
 
-function TLiType_type._AsString(Obj: pointer): string;
+function TLyseeTypeType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiType(Obj).FullName else
+    Result := TLyseeType(Obj).FullName else
     Result := '';
 end;
 
-procedure TLiType_type._Convert(Value: TLiValue);
+procedure TLyseeTypeType.Convert(Value: TLyseeValue);
 var
-  tmpv: TLiType;
+  tmpv: TLyseeType;
 begin
   if Value.FType <> Self then
   begin
     tmpv := Value.FType;
-    Value.FType._DecRefcount(Value.FValue.VObject);
+    Value.FType.DecRefcount(Value.FValue.VObject);
     Value.FType := Self;
     Value.FValue.VObject := tmpv;
   end;
 end;
 
-{ TLiType_func }
+{ TLyseeFuncType }
 
-procedure TLiType_func.MyIsConstructor(const Param: TLiParam);
+procedure TLyseeFuncType.MyIsConstructor(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsBoolean := F.IsConstructor;
 end;
 
-procedure TLiType_func.MyIsMainFunc(const Param: TLiParam);
+procedure TLyseeFuncType.MyIsMainFunc(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsBoolean := F.IsMainFunc;
 end;
 
-procedure TLiType_func.MyIsMethod(const Param: TLiParam);
+procedure TLyseeFuncType.MyIsMethod(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsBoolean := F.IsMethod;
 end;
 
-procedure TLiType_func.MyAddCode(const Param: TLiParam);
+procedure TLyseeFuncType.MyAddCode(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetChangeAbleFunc(F) then
     Param.Result.AsBoolean := F.AddCode(Param[1].AsString);
 end;
 
-procedure TLiType_func.MyAddParam(const Param: TLiParam);
+procedure TLyseeFuncType.MyAddParam(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
   S: string;
-  T: TLiType;
+  T: TLyseeType;
 begin
   if Param.GetChangeAbleFunc(F) then
     if not F.FHasVarArg and (F.FParams.LocalCount = 0) then
@@ -4814,9 +4781,9 @@ begin
     end;
 end;
 
-procedure TLiType_func.MyClear(const Param: TLiParam);
+procedure TLyseeFuncType.MyClear(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetChangeAbleFunc(F) then
   begin
@@ -4827,17 +4794,17 @@ begin
   end;
 end;
 
-procedure TLiType_func.MyClearCodes(const Param: TLiParam);
+procedure TLyseeFuncType.MyClearCodes(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetChangeAbleFunc(F) then
     F.FSTMTs.Clear;
 end;
 
-procedure TLiType_func.MyClearParams(const Param: TLiParam);
+procedure TLyseeFuncType.MyClearParams(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetChangeAbleFunc(F) then
   begin
@@ -4847,66 +4814,66 @@ begin
   end;
 end;
 
-procedure TLiType_func.MyGetParamName(const Param: TLiParam);
+procedure TLyseeFuncType.MyGetParamName(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsString := F.Params[Param[1].AsInteger].FName;
 end;
 
-procedure TLiType_func.MyGetParamType(const Param: TLiParam);
+procedure TLyseeFuncType.MyGetParamType(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsType := F.Params[Param[1].AsInteger].FType;
 end;
 
-procedure TLiType_func.MyGetResultType(const Param: TLiParam);
+procedure TLyseeFuncType.MyGetResultType(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsType := F.ResultType;
 end;
 
-procedure TLiType_func.MyIsChangeAble(const Param: TLiParam);
+procedure TLyseeFuncType.MyIsChangeAble(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsBoolean := F.ChangeAble;
 end;
 
-procedure TLiType_func.MyModule(const Param: TLiParam);
+procedure TLyseeFuncType.MyModule(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsModule := F.FModule;
 end;
 
-procedure TLiType_func.MyName(const Param: TLiParam);
+procedure TLyseeFuncType.MyName(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsString := F.Name;
 end;
 
-procedure TLiType_func.MyParamCount(const Param: TLiParam);
+procedure TLyseeFuncType.MyParamCount(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsInteger := F.Params.ParamCount;
 end;
 
-procedure TLiType_func.MyParamNames(const Param: TLiParam);
+procedure TLyseeFuncType.MyParamNames(const Param: TLyseeParam);
 var
-  F: TLiFunc;
-  L: TLiList;
+  F: TLyseeFunc;
+  L: TLyseeList;
   I: integer;
 begin
   if Param.GetSelf(F) then
@@ -4917,10 +4884,10 @@ begin
   end;
 end;
 
-procedure TLiType_func.MyParamTypes(const Param: TLiParam);
+procedure TLyseeFuncType.MyParamTypes(const Param: TLyseeParam);
 var
-  F: TLiFunc;
-  L: TLiList;
+  F: TLyseeFunc;
+  L: TLyseeList;
   I: integer;
 begin
   if Param.GetSelf(F) then
@@ -4931,33 +4898,33 @@ begin
   end;
 end;
 
-procedure TLiType_func.MyParent(const Param: TLiParam);
+procedure TLyseeFuncType.MyParent(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsType := F.FParent;
 end;
 
-procedure TLiType_func.MyPrototype(const Param: TLiParam);
+procedure TLyseeFuncType.MyPrototype(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsString := F.Prototype;
 end;
 
-procedure TLiType_func.MySetCode(const Param: TLiParam);
+procedure TLyseeFuncType.MySetCode(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetChangeAbleFunc(F) then
     Param.Result.AsBoolean := F.SetCode(Param[1].AsString);
 end;
 
-procedure TLiType_func.MySetParamName(const Param: TLiParam);
+procedure TLyseeFuncType.MySetParamName(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
   S: string;
   X: integer;
 begin
@@ -4977,11 +4944,11 @@ begin
   end;
 end;
 
-procedure TLiType_func.MySetParamType(const Param: TLiParam);
+procedure TLyseeFuncType.MySetParamType(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
   X: integer;
-  T: TLiType;
+  T: TLyseeType;
 begin
   if Param.GetChangeAbleFunc(F) then
   begin
@@ -4996,15 +4963,15 @@ begin
   end;
 end;
 
-procedure TLiType_func.MySetResultType(const Param: TLiParam);
+procedure TLyseeFuncType.MySetResultType(const Param: TLyseeParam);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.GetChangeAbleFunc(F) then
     F.ResultType := Param[1].AsType;
 end;
 
-procedure TLiType_func.Setup;
+procedure TLyseeFuncType.Setup;
 begin
   Method('Name', my_string, {$IFDEF FPC}@{$ENDIF}MyName);
   Method('Prototype', my_string, {$IFDEF FPC}@{$ENDIF}MyPrototype);
@@ -5015,8 +4982,8 @@ begin
   Method('IsConstructor', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsConstructor);
   Method('IsChangeAble', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsChangeAble);
   Method('ParamCount', my_int, {$IFDEF FPC}@{$ENDIF}MyParamCount);
-  Method('ParamNames', my_list, {$IFDEF FPC}@{$ENDIF}MyParamNames);
-  Method('ParamTypes', my_list, {$IFDEF FPC}@{$ENDIF}MyParamTypes);
+  Method('ParamNames', my_array, {$IFDEF FPC}@{$ENDIF}MyParamNames);
+  Method('ParamTypes', my_array, {$IFDEF FPC}@{$ENDIF}MyParamTypes);
   Method('Clear', {$IFDEF FPC}@{$ENDIF}MyClear);
   Method('Clear', {$IFDEF FPC}@{$ENDIF}MyClearParams);
   Method('ClearCodes', {$IFDEF FPC}@{$ENDIF}MyClearCodes);
@@ -5038,71 +5005,71 @@ begin
   inherited;
 end;
 
-function TLiType_func._AsString(Obj: pointer): string;
+function TLyseeFuncType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiFunc(Obj).Prototype else
+    Result := TLyseeFunc(Obj).Prototype else
     Result := '';
 end;
 
-function TLiType_func._DecRefcount(Obj: pointer): integer;
+function TLyseeFuncType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiFunc(Obj).DecRefcount else
+    Result := TLyseeFunc(Obj).DecRefcount else
     Result := 0;
 end;
 
-function TLiType_func._IncRefcount(Obj: pointer): integer;
+function TLyseeFuncType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiFunc(Obj).IncRefcount else
+    Result := TLyseeFunc(Obj).IncRefcount else
     Result := 0;
 end;
 
-{ TLiType_module }
+{ TLyseeModuleType }
 
-procedure TLiType_module.MyConsts(const Param: TLiParam);
+procedure TLyseeModuleType.MyConsts(const Param: TLyseeParam);
 var
-  M: TLiModule;
+  M: TLyseeModule;
 begin
   if Param.GetSelf(M) then
     M.FConsts.ListKeys(Param.Result.NewList);
 end;
 
-procedure TLiType_module.MyFuncs(const Param: TLiParam);
+procedure TLyseeModuleType.MyFuncs(const Param: TLyseeParam);
 var
-  M: TLiModule;
-  L: TLiList;
+  M: TLyseeModule;
+  L: TLyseeList;
   I: integer;
 begin
   if Param.GetSelf(M) then
   begin
     L := Param.Result.NewList;
     for I := 0 to M.FFuncList.Count - 1 do
-      L.Add.SetAsFunc(TLiFunc(M.FFuncList[I]));
+      L.Add.SetAsFunc(TLyseeFunc(M.FFuncList[I]));
   end;
 end;
 
-procedure TLiType_module.MyFind(const Param: TLiParam);
+procedure TLyseeModuleType.MyFind(const Param: TLyseeParam);
 var
-  M: TLiModule;
+  M: TLyseeModule;
 begin
   if Param.GetSelf(M) then
     M.FindSave(Param[1].AsString, Param.FResult);
 end;
 
-procedure TLiType_module.MyName(const Param: TLiParam);
+procedure TLyseeModuleType.MyName(const Param: TLyseeParam);
 var
-  M: TLiModule;
+  M: TLyseeModule;
 begin
   if Param.GetSelf(M) then
     Param.Result.AsString := M.FName;
 end;
 
-procedure TLiType_module.MyTypes(const Param: TLiParam);
+procedure TLyseeModuleType.MyTypes(const Param: TLyseeParam);
 var
-  M: TLiModule;
-  L: TLiList;
+  M: TLyseeModule;
+  L: TLyseeList;
   I: integer;
 begin
   if Param.GetSelf(M) then
@@ -5113,94 +5080,105 @@ begin
   end;
 end;
 
-procedure TLiType_module.MyUsings(const Param: TLiParam);
+procedure TLyseeModuleType.MyUsings(const Param: TLyseeParam);
 var
-  M: TLiModule;
+  M: TLyseeModule;
 begin
   if Param.GetSelf(M) then
     if M.FModules <> nil then
-      Param.Result.AsList := M.FModules.ToList else
+      Param.Result.AsArray := M.FModules.ToList else
       Param.Result.NewList;
 end;
 
-procedure TLiType_module.Setup;
+procedure TLyseeModuleType.Setup;
 begin
   Method('Name', my_string, {$IFDEF FPC}@{$ENDIF}MyName);
-  Method('Consts', my_list, {$IFDEF FPC}@{$ENDIF}MyConsts);
-  Method('Types', my_list, {$IFDEF FPC}@{$ENDIF}MyTypes);
-  Method('Funcs', my_list, {$IFDEF FPC}@{$ENDIF}MyFuncs);
-  Method('Usings', my_list, {$IFDEF FPC}@{$ENDIF}MyUsings);
+  Method('Consts', my_array, {$IFDEF FPC}@{$ENDIF}MyConsts);
+  Method('Types', my_array, {$IFDEF FPC}@{$ENDIF}MyTypes);
+  Method('Funcs', my_array, {$IFDEF FPC}@{$ENDIF}MyFuncs);
+  Method('Usings', my_array, {$IFDEF FPC}@{$ENDIF}MyUsings);
   Method('Find', my_variant, ['Name'], [my_string], {$IFDEF FPC}@{$ENDIF}MyFind);
   inherited;
 end;
 
-function TLiType_module._AsString(Obj: pointer): string;
+function TLyseeModuleType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiModule(Obj).FName else
+    Result := TLyseeModule(Obj).FName else
     Result := '';
 end;
 
-function TLiType_module._DecRefcount(Obj: pointer): integer;
+function TLyseeModuleType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiModule(Obj).DecRefcount else
+    Result := TLyseeModule(Obj).DecRefcount else
     Result := 0;
 end;
 
-function TLiType_module._IncRefcount(Obj: pointer): integer;
+function TLyseeModuleType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiModule(Obj).IncRefcount else
+    Result := TLyseeModule(Obj).IncRefcount else
     Result := 0;
 end;
 
-{ TLiType_list }
+{ TLyseeArrayType }
 
-procedure TLiType_list.MyAdd(const Param: TLiParam);
+procedure TLyseeArrayType.MyAdd(const Param: TLyseeParam);
 var
-  L, A: TLiList;
+  L, A: TLyseeList;
   I: integer;
 begin
   if Param.GetSelf(L) then
   begin
+    L.TestChange;
     L.Add(Param[1]);
     Param.Result.AsInteger := L.Count - 1;
-    A := Param[2].AsList;
+    A := Param[2].AsArray;
     if A <> nil then
       for I := 0 to A.Count - 1 do
         L.Add(A[I]);
   end;
 end;
 
-procedure TLiType_list.MyAssign(const Param: TLiParam);
+procedure TLyseeArrayType.MyAssign(const Param: TLyseeParam);
 var
-  L, R: TLiList;
+  L, R: TLyseeList;
   I: integer;
+  T: TLyseeType;
 begin
   if Param.GetSelf(L) then
   begin
-    R := Param[1].AsList;
-    if L <> R then
+    L.TestChange;
+    T := Param.Params[1].FType;
+    if (T = my_array) or (T = Self) then
     begin
-      L.Clear;
-      if R <> nil then
-        for I := 0 to R.Count - 1 do
-          L.Add(R[I]);
+      R := TLyseeList(Param[1].GetOA);
+      if L <> R then
+      begin
+        L.Clear;
+        if R <> nil then
+          for I := 0 to R.Count - 1 do
+            L.Add(R[I]);
+      end;
     end;
   end;
 end;
 
-procedure TLiType_list.MyClear(const Param: TLiParam);
+procedure TLyseeArrayType.MyClear(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
-  if Param.GetSelf(L) then L.Clear;
+  if Param.GetSelf(L) then
+  begin
+    L.TestChange;
+    L.Clear;
+  end;
 end;
 
-procedure TLiType_list.MyCopy(const Param: TLiParam);
+procedure TLyseeArrayType.MyCopy(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
   X: integer;
   N: integer;
 begin
@@ -5208,140 +5186,162 @@ begin
   begin
     X := Param[1].AsInteger;
     N := Param[2].AsInteger;
-    Param.Result.AsList := L.Copy(X, N);
+    Param.Result.SetTOA(Self, L.Copy(X, N));
   end;
 end;
 
-procedure TLiType_list.MyCreate(const Param: TLiParam);
-var
-  L: TLiList;
+procedure TLyseeArrayType.MyCreate(const Param: TLyseeParam);
 begin
-  L := TLiList.Create;
-  Param.Result.AsList := L;
-  L.Count := Max(0, Param[0].AsInteger);
+  Param.Result.SetTOA(Self, TLyseeList.Create);
 end;
 
-procedure TLiType_list.MyDelete(const Param: TLiParam);
+procedure TLyseeArrayType.MyDelete(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
   if Param.GetSelf(L) then
+  begin
+    L.TestChange;
     L.Delete(Param[1].AsInteger);
+  end;
 end;
 
-procedure TLiType_list.MyExchange(const Param: TLiParam);
+procedure TLyseeArrayType.MyExchange(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
   if Param.GetSelf(L) then
+  begin
+    L.TestChange;
     L.Exchange(Param[1].AsInteger, Param[2].AsInteger);
+  end;
 end;
 
-procedure TLiType_list.MyGet(const Param: TLiParam);
+procedure TLyseeArrayType.MyGet(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
   if Param.GetSelf(L) then
     Param.Result.SetValue(L[Param[1].AsInteger]);
 end;
 
-procedure TLiType_list.MyGetCount(const Param: TLiParam);
+procedure TLyseeArrayType.MyGetCount(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsInteger := L.Count;
 end;
 
-procedure TLiType_list.MyIndexOf(const Param: TLiParam);
+procedure TLyseeArrayType.MyIndexOf(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsInteger := L.IndexOf(Param[1]);
 end;
 
-procedure TLiType_list.MyInsert(const Param: TLiParam);
+procedure TLyseeArrayType.MyInsert(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
   if Param.GetSelf(L) then
+  begin
+    L.TestChange;
     L.Insert(Param[1].AsInteger, Param[2]);
+  end;
 end;
 
-procedure TLiType_list.MyIsEmpty(const Param: TLiParam);
+procedure TLyseeArrayType.MyIsEmpty(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsBoolean := (L.Count = 0);
 end;
 
-procedure TLiType_list.MyLeft(const Param: TLiParam);
+procedure TLyseeArrayType.MyLeft(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
   N: integer;
 begin
   if Param.GetSelf(L) then
   begin
     N := Param[1].AsInteger;
-    Param.Result.AsList := L.CopyLeft(N);
+    Param.Result.SetTOA(Self, L.CopyLeft(N));
   end;
 end;
 
-procedure TLiType_list.MyMove(const Param: TLiParam);
+procedure TLyseeArrayType.MyMove(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
   if Param.GetSelf(L) then
+  begin
+    L.TestChange;
     L.Move(Param[1].AsInteger, Param[2].AsInteger);
+  end;
 end;
 
-procedure TLiType_list.MyRemove(const Param: TLiParam);
+procedure TLyseeArrayType.MyRemove(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
-  if Param.GetSelf(L) then L.Remove(Param[1]);
+  if Param.GetSelf(L) then
+  begin
+    L.TestChange;
+    L.Remove(Param[1]);
+  end;
 end;
 
-procedure TLiType_list.MyRight(const Param: TLiParam);
+procedure TLyseeArrayType.MyRight(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
   N: integer;
 begin
   if Param.GetSelf(L) then
   begin
     N := Param[1].AsInteger;
-    Param.Result.AsList := L.CopyRight(N);
+    Param.Result.SetTOA(Self, L.CopyRight(N));
   end;
 end;
 
-procedure TLiType_list.MySet(const Param: TLiParam);
+procedure TLyseeArrayType.MySet(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
   if Param.GetSelf(L) then
+  begin
+    L.TestChange;
     L[Param[1].AsInteger].SetValue(Param[2]);
+  end;
 end;
 
-procedure TLiType_list.MySetCount(const Param: TLiParam);
+procedure TLyseeArrayType.MySetCount(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
   if Param.GetSelf(L) then
+  begin
+    L.TestChange;
     L.SetCount(Param[1].AsInteger);
+  end;
 end;
 
-procedure TLiType_list.MySort(const Param: TLiParam);
+procedure TLyseeArrayType.MySort(const Param: TLyseeParam);
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
-  if Param.GetSelf(L) then L.Sort;
+  if Param.GetSelf(L) then
+  begin
+    L.TestChange;
+    L.Sort;
+  end;
 end;
 
-procedure TLiType_list.Setup;
+procedure TLyseeArrayType.Setup;
 begin
-  Method('Create', Self, ['_Count'], [my_int], {$IFDEF FPC}@{$ENDIF}MyCreate);
+  Method('Create', Self, {$IFDEF FPC}@{$ENDIF}MyCreate);
   Method('IsEmpty', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsEmpty);
   Method('Clear', {$IFDEF FPC}@{$ENDIF}MyClear);
   Method('Delete', ['Index'], [my_int], {$IFDEF FPC}@{$ENDIF}MyDelete);
@@ -5353,98 +5353,119 @@ begin
   Method('Sort', {$IFDEF FPC}@{$ENDIF}MySort);
   Method('Insert', ['X', '_Value'], [my_int, my_variant],
          {$IFDEF FPC}@{$ENDIF}MyInsert);
-  Method('Add', my_int, ['_Value', '...'], [my_variant, Self],
+  Method('Add', my_int, ['_Value', '...'], [my_variant, my_array],
          {$IFDEF FPC}@{$ENDIF}MyAdd);
+  Method('Assign', ['Source'], [my_variant], {$IFDEF FPC}@{$ENDIF}MyAssign);
   Method('IndexOf', my_int, ['Value'], [my_variant],
          {$IFDEF FPC}@{$ENDIF}MyIndexOf);
   Method('Copy', Self, ['Index', 'Count'], [my_int, my_int],
          {$IFDEF FPC}@{$ENDIF}MyCopy);
   Method('Left', Self, ['Count'], [my_int], {$IFDEF FPC}@{$ENDIF}MyLeft);
   Method('Right', Self, ['Count'], [my_int], {$IFDEF FPC}@{$ENDIF}MyRight);
-  Method('Assign', ['Source'], [Self], {$IFDEF FPC}@{$ENDIF}MyAssign);
   Define('Count', my_int,
          {$IFDEF FPC}@{$ENDIF}MyGetCount,
          {$IFDEF FPC}@{$ENDIF}MySetCount);
   Define('', my_variant, 'Index', my_int,
          {$IFDEF FPC}@{$ENDIF}MyGet,
          {$IFDEF FPC}@{$ENDIF}MySet);
+
+  my_variant.AddOperate(opIn, Self, {$IFDEF FPC}@{$ENDIF}variant_in_array);
+  AddOperate(opAdd, Self, {$IFDEF FPC}@{$ENDIF}array_add_array);
+  AddOperate(opDec, Self, {$IFDEF FPC}@{$ENDIF}array_dec_array);
+  AddOperate(opMul, Self, {$IFDEF FPC}@{$ENDIF}array_mul_array);
+  if Self <> my_array then
+  begin
+    AddOperate(opAdd, my_array, {$IFDEF FPC}@{$ENDIF}array_add_array);
+    AddOperate(opDec, my_array, {$IFDEF FPC}@{$ENDIF}array_dec_array);
+    AddOperate(opMul, my_array, {$IFDEF FPC}@{$ENDIF}array_mul_array);
+    my_array.AddOperate(opAdd, Self, {$IFDEF FPC}@{$ENDIF}array_add_array);
+    my_array.AddOperate(opDec, Self, {$IFDEF FPC}@{$ENDIF}array_dec_array);
+    my_array.AddOperate(opMul, Self, {$IFDEF FPC}@{$ENDIF}array_mul_array);
+  end;
+  AddOperate(opShi, my_variant, {$IFDEF FPC}@{$ENDIF}array_shi_variant);
+  AddOperate(opFill, my_variant, {$IFDEF FPC}@{$ENDIF}array_fill_variant);
   inherited;
 end;
 
-function TLiType_list._Add(Obj: pointer; Value: TLiValue): integer;
+function TLyseeArrayType.Add(Obj: pointer; Value: TLyseeValue): integer;
 var
-  L: TLiList;
+  L: TLyseeList;
 begin
-  L := TLiList(Obj);
+  Validate(Obj);
+  L := TLyseeList(Obj);
+  TLyseeList(Obj).TestChange;
   Result := L.Count;
   L.Add(Value);
 end;
 
-function TLiType_list._AsString(Obj: pointer): string;
+function TLyseeArrayType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiList(Obj).AsString else
+    Result := TLyseeList(Obj).AsString else
     Result := '';
 end;
 
-function TLiType_list._Clear(Obj: pointer): boolean;
+function TLyseeArrayType.Clear(Obj: pointer): boolean;
 begin
   Result := (Obj <> nil);
   if Result then
-    TLiList(Obj).Clear;
+  begin
+    TLyseeList(Obj).TestChange;
+    TLyseeList(Obj).Clear;
+  end;
 end;
 
-function TLiType_list._DecRefcount(Obj: pointer): integer;
+function TLyseeArrayType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiList(Obj).DecRefcount else
+    Result := TLyseeList(Obj).DecRefcount else
     Result := 0;
 end;
 
-procedure TLiType_list._GcMark(Obj: pointer);
+procedure TLyseeArrayType.GcMark(Obj: pointer);
 begin
-  if Obj <> nil then TLiList(Obj).MarkForSurvive;
+  if Obj <> nil then TLyseeList(Obj).MarkForSurvive;
 end;
 
-function TLiType_list._Generate(Obj: pointer): TLiGenerate;
+function TLyseeArrayType.Generate(Obj: pointer): TLyseeGenerate;
 begin
-  if (Obj <> nil) and (TLiList(Obj).Count > 0) then
-    Result := TLiGenerate_list.CreateIn(TLiList(Obj)) else
+  if (Obj <> nil) and (TLyseeList(Obj).Count > 0) then
+    Result := TLyseeListGenerate.CreateIn(TLyseeList(Obj)) else
     Result := nil;
 end;
 
-function TLiType_list._IncRefcount(Obj: pointer): integer;
+function TLyseeArrayType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiList(Obj).IncRefcount else
+    Result := TLyseeList(Obj).IncRefcount else
     Result := 0;
 end;
 
-function TLiType_list._Length(Obj: pointer): int64;
+function TLyseeArrayType.GetLength(Obj: pointer): int64;
 begin
   if Obj <> nil then
-    Result := TLiList(Obj).Count else
+    Result := TLyseeList(Obj).Count else
     Result := 0;
 end;
 
-{ TLiType_hash }
+{ TLyseeHashType }
 
-procedure TLiType_hash.MyClear(const Param: TLiParam);
+procedure TLyseeHashType.MyClear(const Param: TLyseeParam);
 var
-  H: TLiHash;
+  H: TLyseeHash;
 begin
   if Param.GetSelf(H) then H.Clear;
 end;
 
-procedure TLiType_hash.MyCreate(const Param: TLiParam);
+procedure TLyseeHashType.MyCreate(const Param: TLyseeParam);
 begin
-  Param.Result.AsHash := TLiHash.Create;
+  Param.Result.AsHash := TLyseeHash.Create;
 end;
 
-procedure TLiType_hash.MyGet(const Param: TLiParam);
+procedure TLyseeHashType.MyGet(const Param: TLyseeParam);
 var
-  H: TLiHash;
-  V: TLiValue;
+  H: TLyseeHash;
+  V: TLyseeValue;
 begin
   if Param.GetSelf(H) then
   begin
@@ -5454,122 +5475,122 @@ begin
   end;
 end;
 
-procedure TLiType_hash.MyHas(const Param: TLiParam);
+procedure TLyseeHashType.MyHas(const Param: TLyseeParam);
 var
-  H: TLiHash;
+  H: TLyseeHash;
 begin
   if Param.GetSelf(H) then
     Param.Result.AsBoolean := H.Has(Param[1].AsString);
 end;
 
-procedure TLiType_hash.MyIsEmpty(const Param: TLiParam);
+procedure TLyseeHashType.MyIsEmpty(const Param: TLyseeParam);
 var
-  H: TLiHash;
+  H: TLyseeHash;
 begin
   if Param.GetSelf(H) then
     Param.Result.AsBoolean := H.IsEmpty;
 end;
 
-procedure TLiType_hash.MyKeys(const Param: TLiParam);
+procedure TLyseeHashType.MyKeys(const Param: TLyseeParam);
 var
-  H: TLiHash;
-  L: TLiList;
+  H: TLyseeHash;
+  L: TLyseeList;
 begin
   if Param.GetSelf(H) then
   begin
-    L := TLiList.Create;
-    Param.Result.AsList := L;
+    L := TLyseeList.Create;
+    Param.Result.AsArray := L;
     H.ListKeys(L);
   end;
 end;
 
-procedure TLiType_hash.MyRemove(const Param: TLiParam);
+procedure TLyseeHashType.MyRemove(const Param: TLyseeParam);
 var
-  H: TLiHash;
+  H: TLyseeHash;
 begin
   if Param.GetSelf(H) then
     H.Remove(Param[1].AsString);
 end;
 
-procedure TLiType_hash.MySet(const Param: TLiParam);
+procedure TLyseeHashType.MySet(const Param: TLyseeParam);
 var
-  H: TLiHash;
+  H: TLyseeHash;
 begin
   if Param.GetSelf(H) then
     H.Add(Param[1].AsString).SetValue(Param[2]);
 end;
 
-procedure TLiType_hash.MyValues(const Param: TLiParam);
+procedure TLyseeHashType.MyValues(const Param: TLyseeParam);
 var
-  H: TLiHash;
-  L: TLiList;
+  H: TLyseeHash;
+  L: TLyseeList;
 begin
   if Param.GetSelf(H) then
   begin
-    L := TLiList.Create;
-    Param.Result.AsList := L;
+    L := TLyseeList.Create;
+    Param.Result.AsArray := L;
     H.ListValues(L);
   end;
 end;
 
-procedure TLiType_hash.Setup;
+procedure TLyseeHashType.Setup;
 begin
   Method('Create', Self, {$IFDEF FPC}@{$ENDIF}MyCreate);
   Method('IsEmpty', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsEmpty);
   Method('Clear', {$IFDEF FPC}@{$ENDIF}MyClear);
   Method('Has', my_bool, ['Key'], [my_string], {$IFDEF FPC}@{$ENDIF}MyHas);
   Method('Remove', ['Key'], [my_string], {$IFDEF FPC}@{$ENDIF}MyRemove);
-  Method('Keys', my_list, {$IFDEF FPC}@{$ENDIF}MyKeys);
-  Method('Values', my_list, {$IFDEF FPC}@{$ENDIF}MyValues);
+  Method('Keys', my_array, {$IFDEF FPC}@{$ENDIF}MyKeys);
+  Method('Values', my_array, {$IFDEF FPC}@{$ENDIF}MyValues);
   Define('', my_variant, 'Key', my_string,
          {$IFDEF FPC}@{$ENDIF}MyGet,
          {$IFDEF FPC}@{$ENDIF}MySet);
   inherited;
 end;
 
-function TLiType_hash._AsString(Obj: pointer): string;
+function TLyseeHashType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiHash(Obj).AsString else
+    Result := TLyseeHash(Obj).AsString else
     Result := '';
 end;
 
-function TLiType_hash._Clear(Obj: pointer): boolean;
+function TLyseeHashType.Clear(Obj: pointer): boolean;
 begin
   Result := (Obj <> nil);
   if Result then
-    TLiHash(Obj).Clear;
+    TLyseeHash(Obj).Clear;
 end;
 
-function TLiType_hash._DecRefcount(Obj: pointer): integer;
+function TLyseeHashType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiHash(Obj).DecRefcount else
+    Result := TLyseeHash(Obj).DecRefcount else
     Result := 0;
 end;
 
-procedure TLiType_hash._GcMark(Obj: pointer);
+procedure TLyseeHashType.GcMark(Obj: pointer);
 begin
-  if Obj <> nil then TLiHash(Obj).MarkForSurvive;
+  if Obj <> nil then TLyseeHash(Obj).MarkForSurvive;
 end;
 
-function TLiType_hash._IncRefcount(Obj: pointer): integer;
+function TLyseeHashType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiHash(Obj).IncRefcount else
+    Result := TLyseeHash(Obj).IncRefcount else
     Result := 0;
 end;
 
-{ TLiEnumItem }
+{ TLyseeEnumItem }
 
-procedure TLiEnumItem.SetValue(Value: TLiValue);
+procedure TLyseeEnumItem.SetValue(Value: TLyseeValue);
 begin
   Value.SetObject(FParent, Self);
 end;
 
-{ TLiEnumType }
+{ TLyseeEnumType }
 
-procedure TLiEnumType.Add(const ItemNames: array of string);
+procedure TLyseeEnumType.AddItems(const ItemNames: array of string);
 var
   I: integer;
 begin
@@ -5578,7 +5599,7 @@ begin
     SetLength(FItems, Length(ItemNames));
     for I := 0 to Length(FItems) - 1 do
     begin
-      FItems[I] := TLiEnumItem.Create;
+      FItems[I] := TLyseeEnumItem.Create;
       FItems[I].FParent := Self;
       FItems[I].FName := ItemNames[I];
       FItems[I].FValue := I;
@@ -5587,7 +5608,7 @@ begin
   end;
 end;
 
-constructor TLiEnumType.Create(const AName: string; AModule: TLiModule; AParent: TLiType);
+constructor TLyseeEnumType.Create(const AName: string; AModule: TLyseeModule; AParent: TLyseeType);
 begin
   inherited;
   FStyle := tsEnum;
@@ -5595,7 +5616,7 @@ begin
     AddCompare(Self, {$IFDEF FPC}@{$ENDIF}compare_enum_enum);
 end;
 
-destructor TLiEnumType.Destroy;
+destructor TLyseeEnumType.Destroy;
 var
   I: integer;
 begin
@@ -5605,7 +5626,7 @@ begin
   inherited;
 end;
 
-function TLiEnumType.Find(ItemValue: integer): TLiEnumItem;
+function TLyseeEnumType.Find(ItemValue: integer): TLyseeEnumItem;
 var
   I: integer;
 begin
@@ -5617,7 +5638,7 @@ begin
   Result := nil;
 end;
 
-function TLiEnumType.Find(const ItemName: string): TLiEnumItem;
+function TLyseeEnumType.Find(const ItemName: string): TLyseeEnumItem;
 var
   I: integer;
 begin
@@ -5629,43 +5650,43 @@ begin
   Result := nil;
 end;
 
-function TLiEnumType.GetCount: integer;
+function TLyseeEnumType.GetCount: integer;
 begin
   Result := Length(FItems);
 end;
 
-function TLiEnumType.GetDefValue: TLiEnumItem;
+function TLyseeEnumType.GetDefValue: TLyseeEnumItem;
 begin
   Result := FItems[0];
 end;
 
-function TLiEnumType.GetItem(Index: integer): TLiEnumItem;
+function TLyseeEnumType.GetItem(Index: integer): TLyseeEnumItem;
 begin
   Result := FItems[Index];
 end;
 
-function TLiEnumType.ItemByName(const ItemName: string): TLiEnumItem;
+function TLyseeEnumType.ItemByName(const ItemName: string): TLyseeEnumItem;
 begin
   Result := Find(ItemName);
   if Result = nil then
     Throw('%s value(name=''%s'') not exists', [Name, ItemName]);
 end;
 
-function TLiEnumType.ItemByValue(ItemValue: integer): TLiEnumItem;
+function TLyseeEnumType.ItemByValue(ItemValue: integer): TLyseeEnumItem;
 begin
   Result := Find(ItemValue);
   if Result = nil then
     Throw('%s value(ordinal=%d) not exists', [Name, ItemValue]);
 end;
 
-procedure TLiEnumType.SetValue(Value: TLiValue; const ItemName: string);
+procedure TLyseeEnumType.SetValue(Value: TLyseeValue; const ItemName: string);
 begin
   Value.SetObject(Self, ItemByName(ItemName));
 end;
 
-function TLiEnumType.NewEnumSetType(const AName: string): TLiEnumSetType;
+function TLyseeEnumType.NewEnumSetType(const AName: string): TLyseeEnumSetType;
 begin
-  Result := TLiEnumSetType.Create(AName, FModule, nil);
+  Result := TLyseeEnumSetType.Create(AName, FModule, nil);
   Result.FStyle := tsEnumSet;
   Result.FSource := Self;
   if FModule <> nil then
@@ -5678,33 +5699,33 @@ begin
   end;
 end;
 
-procedure TLiEnumType.SetValue(Value: TLiValue; ItemValue: integer);
+procedure TLyseeEnumType.SetValue(Value: TLyseeValue; ItemValue: integer);
 begin
   Value.SetObject(Self, ItemByValue(ItemValue));
 end;
 
-procedure TLiEnumType.SetValue(Value: TLiValue; Item: TLiEnumItem);
+procedure TLyseeEnumType.SetValue(Value: TLyseeValue; Item: TLyseeEnumItem);
 begin
   if Item = nil then
     Value.SetObject(Self, DefValue) else
     Value.SetObject(Self, Item);
 end;
 
-function TLiEnumType._AsInteger(Obj: pointer): int64;
+function TLyseeEnumType.AsInteger(Obj: pointer): int64;
 begin
   if Obj <> nil then
-    Result := TLiEnumItem(Obj).FValue else
+    Result := TLyseeEnumItem(Obj).FValue else
     Result := DefValue.FValue;
 end;
 
-function TLiEnumType._AsString(Obj: pointer): string;
+function TLyseeEnumType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiEnumItem(Obj).FName else
+    Result := TLyseeEnumItem(Obj).FName else
     Result := DefValue.FName;
 end;
 
-procedure TLiEnumType._Convert(Value: TLiValue);
+procedure TLyseeEnumType.Convert(Value: TLyseeValue);
 begin
   if Value.FType <> Self then
     if Value.FType = my_int then
@@ -5712,56 +5733,56 @@ begin
       ErrorConvert(Value.FType, Self);
 end;
 
-procedure TLiEnumType._SetDefault(Value: TLiValue);
+procedure TLyseeEnumType.SetDefault(Value: TLyseeValue);
 begin
   inherited;
   Value.FValue.VObject := DefValue;
 end;
 
-function TLiEnumType._DecRefcount(Obj: pointer): integer;
+function TLyseeEnumType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then Result := 1 else Result := 0;
 end;
 
-function TLiEnumType._IncRefcount(Obj: pointer): integer;
+function TLyseeEnumType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then Result := 1 else Result := 0;
 end;
 
-{ TLiEnumSet }
+{ TLyseeEnumSet }
 
-function TLiEnumSet.GetSource: TLiEnumType;
+function TLyseeEnumSet.GetSource: TLyseeEnumType;
 begin
   Result := FParent.FSource;
 end;
 
-function TLiEnumSet.GetCount: integer;
+function TLyseeEnumSet.GetCount: integer;
 begin
   Result := Length(FSets);
 end;
 
-function TLiEnumSet.Get(Index: integer): boolean;
+function TLyseeEnumSet.Get(Index: integer): boolean;
 begin
   Result := FSets[Index];
 end;
 
-procedure TLiEnumSet.Put(Index: integer; Value: boolean);
+procedure TLyseeEnumSet.Put(Index: integer; Value: boolean);
 begin
   FSets[Index] := Value;
 end;
 
-destructor TLiEnumSet.Destroy;
+destructor TLyseeEnumSet.Destroy;
 begin
   SetLength(FSets, 0);
   inherited;
 end;
 
-procedure TLiEnumSet.SetValue(Value: TLiValue);
+procedure TLyseeEnumSet.SetValue(Value: TLyseeValue);
 begin
   Value.SetObject(FParent, Self);
 end;
 
-function TLiEnumSet.AsBoolean: boolean;
+function TLyseeEnumSet.AsBoolean: boolean;
 var
   I: integer;
 begin
@@ -5774,7 +5795,7 @@ begin
   Result := false;
 end;
 
-function TLiEnumSet.AsString: string;
+function TLyseeEnumSet.AsString: string;
 var
   I: integer;
   F: boolean;
@@ -5792,7 +5813,7 @@ begin
   Result := Result + ']';
 end;
 
-function TLiEnumSet.Equal(S: TLiEnumSet): boolean;
+function TLyseeEnumSet.Equal(S: TLyseeEnumSet): boolean;
 var
   I: integer;
 begin
@@ -5807,7 +5828,7 @@ begin
   Result := true;
 end;
 
-function TLiEnumSet.Add(S: TLiEnumSet): TLiEnumSet;
+function TLyseeEnumSet.Add(S: TLyseeEnumSet): TLyseeEnumSet;
 var
   I: integer;
 begin
@@ -5816,7 +5837,7 @@ begin
     Result.FSets[I] := FSets[I] or S.FSets[I];
 end;
 
-function TLiEnumSet.Dec(S: TLiEnumSet): TLiEnumSet;
+function TLyseeEnumSet.Dec(S: TLyseeEnumSet): TLyseeEnumSet;
 var
   I: integer;
 begin
@@ -5825,7 +5846,7 @@ begin
     Result.FSets[I] := FSets[I] and not S.FSets[I];
 end;
 
-function TLiEnumSet.Mul(S: TLiEnumSet): TLiEnumSet;
+function TLyseeEnumSet.Mul(S: TLyseeEnumSet): TLyseeEnumSet;
 var
   I: integer;
 begin
@@ -5834,7 +5855,7 @@ begin
     Result.FSets[I] := FSets[I] and S.FSets[I];
 end;
 
-function TLiEnumSet.NotAll: TLiEnumSet;
+function TLyseeEnumSet.NotAll: TLyseeEnumSet;
 var
   I: integer;
 begin
@@ -5843,58 +5864,58 @@ begin
     Result.FSets[I] := not FSets[I];
 end;
 
-{ TLiEnumSetType }
+{ TLyseeEnumSetType }
 
-function TLiEnumSetType.GetDefValue: TLiEnumSet;
+function TLyseeEnumSetType.GetDefValue: TLyseeEnumSet;
 begin
   if FDefValue = nil then
   begin
-    FDefValue := TLiEnumSet.Create;
+    FDefValue := TLyseeEnumSet.Create;
     FDefValue.IncRefcount;
     FDefValue.FParent := Self;
   end;
   Result := FDefValue;
 end;
 
-function TLiEnumSetType._IncRefcount(Obj: pointer): integer;
+function TLyseeEnumSetType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiEnumSet(Obj).IncRefcount else
+    Result := TLyseeEnumSet(Obj).IncRefcount else
     Result := 0;
 end;
 
-function TLiEnumSetType._DecRefcount(Obj: pointer): integer;
+function TLyseeEnumSetType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiEnumSet(Obj).DecRefcount else
+    Result := TLyseeEnumSet(Obj).DecRefcount else
     Result := 0;
 end;
 
-function TLiEnumSetType._AsString(Obj: pointer): string;
+function TLyseeEnumSetType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiEnumSet(Obj).AsString else
+    Result := TLyseeEnumSet(Obj).AsString else
     Result := '[]';
 end;
 
-function TLiEnumSetType._AsBoolean(Obj: pointer): boolean;
+function TLyseeEnumSetType.AsBoolean(Obj: pointer): boolean;
 begin
-  Result := (Obj <> nil) and TLiEnumSet(Obj).Asboolean;
+  Result := (Obj <> nil) and TLyseeEnumSet(Obj).Asboolean;
 end;
 
-procedure TLiEnumSetType._Convert(Value: TLiValue);
+procedure TLyseeEnumSetType.Convert(Value: TLyseeValue);
 var
-  S: TLiEnumSet;
-  L: TLiList;
+  S: TLyseeEnumSet;
+  L: TLyseeList;
   I: integer;
-  V: TLiValue;
+  V: TLyseeValue;
 begin
   if Value.FType <> Self then
-    if Value.FType = my_list then
+    if Value.FType = my_array then
     begin
       S := NewEnumSet;
       try
-        L := Value.AsList;
+        L := Value.AsArray;
         if L <> nil then
           for I := 0 to L.Count - 1 do
           begin
@@ -5913,50 +5934,50 @@ begin
     end;
 end;
 
-procedure TLiEnumSetType._SetDefault(Value: TLiValue);
+procedure TLyseeEnumSetType.SetDefault(Value: TLyseeValue);
 begin
   DefValue.SetValue(Value);
 end;
 
-destructor TLiEnumSetType.Destroy;
+destructor TLyseeEnumSetType.Destroy;
 begin
   FreeAndNil(FDefValue);
   inherited;
 end;
 
-procedure TLiEnumSetType.SetValue(Value: TLiValue; ASet: TLiEnumSet);
+procedure TLyseeEnumSetType.SetValue(Value: TLyseeValue; ASet: TLyseeEnumSet);
 begin
   if ASet = nil then
     Value.SetObject(Self, DefValue) else
     Value.SetObject(Self, ASet);
 end;
 
-function TLiEnumSetType.NewEnumSet: TLiEnumSet;
+function TLyseeEnumSetType.NewEnumSet: TLyseeEnumSet;
 var
   I: integer;
 begin
-  Result := TLiEnumSet.Create;
+  Result := TLyseeEnumSet.Create;
   Result.FParent := Self;
   SetLength(Result.FSets, FSource.Count);
   for I := 0 to FSource.Count - 1 do
     Result.FSets[I] := false;
 end;
 
-{ TLiValue }
+{ TLyseeValue }
 
-function TLiValue.IncRefcount: integer;
+function TLyseeValue.IncRefcount: integer;
 begin
   if FType.IsBasicValue then Result := 1 else
   if FValue.VObject = nil then Result := 0 else
-    Result := FType._IncRefcount(FValue.VObject);
+    Result := FType.IncRefcount(FValue.VObject);
 end;
 
-function TLiValue.IsBasicValue: boolean;
+function TLyseeValue.IsBasicValue: boolean;
 begin
   Result := FType.IsBasicValue;
 end;
 
-function TLiValue.IsDefv: boolean;
+function TLyseeValue.IsDefv: boolean;
 begin
   case FType.FTID of
     TID_NIL    : Result := true;
@@ -5968,47 +5989,47 @@ begin
     TID_TIME   : Result := IsZero(FValue.VTime);
     TID_BOOLEAN   : Result := not FValue.VBoolean;
     else Result := (FValue.VObject = nil) or
-      ((FType = my_type) and (TLiType(FValue.VObject) = my_nil));
+      ((FType = my_type) and (TLyseeType(FValue.VObject) = my_nil));
   end;
 end;
 
-function TLiValue.IsFalse: boolean;
+function TLyseeValue.IsFalse: boolean;
 begin
   Result := (FType = my_bool) and not FValue.VBoolean;
 end;
 
-function TLiValue.IsNil: boolean;
+function TLyseeValue.IsNil: boolean;
 begin
   Result := FType.IsNil;
 end;
 
-function TLiValue.IsObject: boolean;
+function TLyseeValue.IsObject: boolean;
 begin
   Result := FType.IsObject;
 end;
 
-function TLiValue.IsBoolTrue: boolean;
+function TLyseeValue.IsBoolTrue: boolean;
 begin
   Result := (FType = my_bool) and FValue.VBoolean;
 end;
 
-procedure TLiValue.MarkForSurvive;
+procedure TLyseeValue.MarkForSurvive;
 begin
-  FType._GcMark(FValue.VObject);
+  FType.GcMark(FValue.VObject);
 end;
 
-function TLiValue.NewList: TLiList;
+function TLyseeValue.NewList: TLyseeList;
 begin
   SetNil;
-  Result := TLiList.Create;
+  Result := TLyseeList.Create;
   Result.IncRefcount;
-  FType := my_list;
+  FType := my_array;
   FValue.VObject := Result;
 end;
 
-function TLiValue.Operate(OP: TLiOperator; Value: TLiValue): boolean;
+function TLyseeValue.Operate(OP: TLyseeOperator; Value: TLyseeValue): boolean;
 var
-  R: PLiOperate;
+  R: PLyseeOperate;
 begin
   R := FType.FindOperate(OP, Value.FType);
   Result := (R <> nil);
@@ -6016,35 +6037,35 @@ begin
     R^.o_operate(Self, Value);
 end;
 
-function TLiValue.GetFileName: string;
+function TLyseeValue.GetFileName: string;
 begin
   if FType = my_string then
     Result := SetPD(Trim(GetAsString)) else
     Result := '';
 end;
 
-function TLiValue.GetFunc: TLiFunc;
+function TLyseeValue.GetFunc: TLyseeFunc;
 begin
   if FType = my_func then
-    Result := TLiFunc(FValue.VObject) else
+    Result := TLyseeFunc(FValue.VObject) else
     Result := nil;
 end;
 
-function TLiValue.GetHashed: TLiHash;
+function TLyseeValue.GetHashed: TLyseeHash;
 begin
   if FType = my_hash then
-    Result := TLiHash(FValue.VObject) else
+    Result := TLyseeHash(FValue.VObject) else
     Result := nil;
 end;
 
-function TLiValue.GetModule: TLiModule;
+function TLyseeValue.GetModule: TLyseeModule;
 begin
   if FType = my_module then
-    Result := TLiModule(FValue.VObject) else
+    Result := TLyseeModule(FValue.VObject) else
     Result := nil;
 end;
 
-procedure TLiValue.SetValue(Value: TLiValue);
+procedure TLyseeValue.SetValue(Value: TLyseeValue);
 begin
   if Value <> Self then
   begin
@@ -6058,16 +6079,16 @@ begin
   end;
 end;
 
-procedure TLiValue.SetParentType(VT: TLiType);
+procedure TLyseeValue.SetParentType(VT: TLyseeType);
 begin
   if FType.IsTypeOf(VT) then
     FType := VT else
     ErrorConvert(FType, VT);
 end;
 
-function TLiValue.Compare(Value: TLiValue): TLiCompare;
+function TLyseeValue.Compare(Value: TLyseeValue): TCompare;
 var
-  R: PLiCompare;
+  R: PLyseeCompare;
 begin
   R := FType.FindCompare(Value.FType);
   if R <> nil then
@@ -6075,22 +6096,22 @@ begin
     Result := crDiff;
 end;
 
-function TLiValue.Compare(Value: TLiValue; Wanted: TLiCompares): boolean;
+function TLyseeValue.Compare(Value: TLyseeValue; Wanted: TCompares): boolean;
 begin
   Result := (Compare(Value) in Wanted);
 end;
 
-procedure TLiValue.Convert(AType: TLiType; Cntx: TLiContext);
+procedure TLyseeValue.Convert(AType: TLyseeType; Cntx: TLysee);
 begin
-  AType._Convert(Self);
+  AType.Convert(Self);
 end;
 
-constructor TLiValue.Create;
+constructor TLyseeValue.Create;
 begin
   FType := my_nil;
 end;
 
-destructor TLiValue.Destroy;
+destructor TLyseeValue.Destroy;
 begin
   if Self <> nil then
   begin
@@ -6099,51 +6120,51 @@ begin
   end;
 end;
 
-function TLiValue.GetAsBoolean: boolean;
+function TLyseeValue.GetAsBoolean: boolean;
 begin
-  Result := FType._AsBoolean(GetOA);
+  Result := FType.AsBoolean(GetOA);
 end;
 
-function TLiValue.GetList: TLiList;
+function TLyseeValue.GetArray: TLyseeList;
 begin
-  if FType = my_list then
-    Result := TLiList(FValue.VObject) else
+  if FType = my_array then
+    Result := TLyseeList(FValue.VObject) else
     Result := nil;
 end;
 
-function TLiValue.GetAsList: TLiList;
+function TLyseeValue.GetAsArray: TLyseeList;
 begin
-  if FType = my_list then Result := TLiList(FValue.VObject) else
+  if FType = my_array then Result := TLyseeList(FValue.VObject) else
   begin
     Result := nil;
-    ErrorConvert(FType, my_list);
+    ErrorConvert(FType, my_array);
   end;
 end;
 
-function TLiValue.GetAsChar: char;
+function TLyseeValue.GetAsChar: char;
 begin
-  Result := FType._AsChar(GetOA);
+  Result := FType.AsChar(GetOA);
 end;
 
-function TLiValue.GetAsModule: TLiModule;
+function TLyseeValue.GetAsModule: TLyseeModule;
 begin
-  if FType = my_module then Result := TLiModule(FValue.VObject) else
+  if FType = my_module then Result := TLyseeModule(FValue.VObject) else
   begin
     Result := FType.FModule;
     if FValue.VObject <> nil then
       if FType = my_func then
-        Result := TLiFunc(FValue.VObject).FModule else
+        Result := TLyseeFunc(FValue.VObject).FModule else
       if FType = my_type then
-        Result := TLiType(FValue.VObject).FModule;
+        Result := TLyseeType(FValue.VObject).FModule;
   end;
 end;
 
-function TLiValue.GetAsCurrency: currency;
+function TLyseeValue.GetAsCurrency: currency;
 begin
-  Result := FType._AsCurrency(GetOA);
+  Result := FType.AsCurrency(GetOA);
 end;
 
-function TLiValue.GetOA(Wanted: TLiType): pointer;
+function TLyseeValue.GetOA(Wanted: TLyseeType): pointer;
 begin
   Result := nil;
   if (Wanted = nil) or (Wanted = FType) or (Wanted = my_variant) then
@@ -6159,201 +6180,201 @@ begin
     end;
 end;
 
-function TLiValue.GetAsFloat: double;
+function TLyseeValue.GetAsFloat: double;
 begin
-  Result := FType._AsFloat(GetOA);
+  Result := FType.AsFloat(GetOA);
 end;
 
-function TLiValue.GetAsFunc: TLiFunc;
+function TLyseeValue.GetAsFunc: TLyseeFunc;
 begin
-  if FType = my_func then Result := TLiFunc(FValue.VObject) else
+  if FType = my_func then Result := TLyseeFunc(FValue.VObject) else
   begin
     Result := nil;
     ErrorConvert(FType, my_func);
   end;
 end;
 
-function TLiValue.GetAsHash: TLiHash;
+function TLyseeValue.GetAsHash: TLyseeHash;
 begin
-  if FType = my_hash then Result := TLiHash(FValue.VObject) else
+  if FType = my_hash then Result := TLyseeHash(FValue.VObject) else
   begin
     Result := nil;
     ErrorConvert(FType, my_hash);
   end;
 end;
 
-function TLiValue.GetAsInteger: int64;
+function TLyseeValue.GetAsInteger: int64;
 begin
-  Result := FType._AsInteger(GetOA);
+  Result := FType.AsInteger(GetOA);
 end;
 
-function TLiValue.GetAsEnumSet: TLiEnumSet;
+function TLyseeValue.GetAsEnumSet: TLyseeEnumSet;
 begin
   if FType.FStyle = tsEnumSet then
   begin
-    Result := TLiEnumSet(FValue.VObject);
+    Result := TLyseeEnumSet(FValue.VObject);
     if Result = nil then
-      Result := TLiEnumSetType(FType).DefValue;
+      Result := TLyseeEnumSetType(FType).DefValue;
   end
   else Throw('%s is not enum set type', [FType.FullName]);
 end;
 
-function TLiValue.GetAsEnum: TLiEnumItem;
+function TLyseeValue.GetAsEnum: TLyseeEnumItem;
 begin
   if FType.IsEnum then
   begin
-    Result := TLiEnumItem(FValue.VObject);
+    Result := TLyseeEnumItem(FValue.VObject);
     if Result = nil then
-      Result := TLiEnumType(FType).DefValue;
+      Result := TLyseeEnumType(FType).DefValue;
   end
   else Throw('%s is not enum type', [FType.FullName]);
 end;
 
-procedure TLiValue.SetAsEnumSet(Value: TLiEnumSet);
+procedure TLyseeValue.SetAsEnumSet(Value: TLyseeEnumSet);
 begin
   if Value = nil then
     Throw('invalid enum set: nil') else
     SetTOA(Value.FParent, Value);
 end;
 
-function TLiValue.GetSelf(var Aobj): boolean;
+function TLyseeValue.GetSelf(var Aobj): boolean;
 begin
   Result := FType.IsObject;
   if Result then
   begin
-    FType._Validate(FValue.VObject);
+    FType.Validate(FValue.VObject);
     pointer(Aobj) := FValue.VObject;
   end;
 end;
 
-function TLiValue.GetString: TLiString;
+function TLyseeValue.GetString: TLyseeString;
 begin
   if FType = my_string then
-    Result := TLiString(FValue.VObject) else
+    Result := TLyseeString(FValue.VObject) else
     Result := nil;
 end;
 
-function TLiValue.GetAsString: string;
+function TLyseeValue.GetAsString: string;
 begin
-  Result := FType._AsString(GetOA);
+  Result := FType.AsString(GetOA);
 end;
 
-procedure TLiValue.SetAsEnum(Value: TLiEnumItem);
+procedure TLyseeValue.SetAsEnum(Value: TLyseeEnumItem);
 begin
   if Value = nil then
     Throw('invalid enum item: nil') else
     Value.SetValue(Self);
 end;
 
-function TLiValue.GetAsTime: TDateTime;
+function TLyseeValue.GetAsTime: TDateTime;
 begin
-  Result := FType._AsTime(GetOA);
+  Result := FType.AsTime(GetOA);
 end;
 
-function TLiValue.GetTOA(var OA: pointer): TLiType;
+function TLyseeValue.GetTOA(var OA: pointer): TLyseeType;
 begin
   Result := FType;
   OA := GetOA;
 end;
 
-function TLiValue.GetAsType: TLiType;
+function TLyseeValue.GetAsType: TLyseeType;
 begin
   if FType = my_type then
   begin
-    Result := TLiType(FValue.VObject);
+    Result := TLyseeType(FValue.VObject);
     if Result = nil then
       Result := my_nil;
   end
   else Result := FType;
 end;
 
-function TLiValue.DecRefcount: integer;
+function TLyseeValue.DecRefcount: integer;
 begin
   if FType.IsBasicValue then Result := 1 else
   if FValue.VObject = nil then Result := 0 else
   begin
-    Result := FType._DecRefcount(FValue.VObject);
+    Result := FType.DecRefcount(FValue.VObject);
     FValue.VObject := nil;
   end;
 end;
 
-procedure TLiValue.SetAsList(Value: TLiList);
+procedure TLyseeValue.SetAsArray(Value: TLyseeList);
 begin
-  my_list._IncRefcount(Value);
-  my_list._SetDefault(Self);
+  my_array.IncRefcount(Value);
+  my_array.SetDefault(Self);
   FValue.VObject := Value;
 end;
 
-procedure TLiValue.SetAsBoolean(Value: boolean);
+procedure TLyseeValue.SetAsBoolean(Value: boolean);
 begin
-  FType._DecRefcount(FValue.VObject);
+  FType.DecRefcount(FValue.VObject);
   FType := my_bool;
   FValue.VBoolean := Value;
 end;
 
-procedure TLiValue.SetAsChar(Value: char);
+procedure TLyseeValue.SetAsChar(Value: char);
 begin
-  FType._DecRefcount(FValue.VObject);
+  FType.DecRefcount(FValue.VObject);
   FType := my_char;
   FValue.VChar[0] := Value;
   FValue.VChar[1] := #0;
 end;
 
-procedure TLiValue.SetAsModule(Value: TLiModule);
+procedure TLyseeValue.SetAsModule(Value: TLyseeModule);
 begin
-  my_module._IncRefcount(Value);
-  my_module._SetDefault(Self);
+  my_module.IncRefcount(Value);
+  my_module.SetDefault(Self);
   FValue.VObject := Value;
 end;
 
-procedure TLiValue.SetAsCurrency(Value: currency);
+procedure TLyseeValue.SetAsCurrency(Value: currency);
 begin
-  FType._DecRefcount(FValue.VObject);
+  FType.DecRefcount(FValue.VObject);
   FType := my_curr;
   FValue.VCurrency := Value;
 end;
 
-procedure TLiValue.SetAsInteger(Value: int64);
+procedure TLyseeValue.SetAsInteger(Value: int64);
 begin
-  FType._DecRefcount(FValue.VObject);
+  FType.DecRefcount(FValue.VObject);
   FType := my_int;
   FValue.VInteger := Value;
 end;
 
-procedure TLiValue.SetAsString(const Value: string);
+procedure TLyseeValue.SetAsString(const Value: string);
 begin
-  my_string._SetDefault(Self);
-  FValue.VObject := TLiString.Create(Value);
-  TLiString(FValue.VObject).IncRefcount;
+  my_string.SetDefault(Self);
+  FValue.VObject := TLyseeString.Create(Value);
+  TLyseeString(FValue.VObject).IncRefcount;
 end;
 
-procedure TLiValue.SetAsTime(Value: TDateTime);
+procedure TLyseeValue.SetAsTime(Value: TDateTime);
 begin
-  FType._DecRefcount(FValue.VObject);
+  FType.DecRefcount(FValue.VObject);
   FType := my_time;
   FValue.VTime := Value;
 end;
 
-procedure TLiValue.SetAsType(Value: TLiType);
+procedure TLyseeValue.SetAsType(Value: TLyseeType);
 begin
   if FType <> my_type then
-    my_type._SetDefault(Self);
+    my_type.SetDefault(Self);
   if Value = nil then
     FValue.VObject := my_nil else
     FValue.VObject := Value;
 end;
 
-function TLiValue.Same(Value: TLiValue): boolean;
+function TLyseeValue.Same(Value: TLyseeValue): boolean;
 begin
   Result := (FType = Value.FType) and (Compare(Value) = crEqual);
 end;
 
-procedure TLiValue.SetDefault(AType: TLiType);
+procedure TLyseeValue.SetDefault(AType: TLyseeType);
 begin
-  AType._SetDefault(Self);
+  AType.SetDefault(Self);
 end;
 
-procedure TLiValue.SetFind(Finded: PLiFind);
+procedure TLyseeValue.SetFind(Finded: PLyseeFind);
 begin
   case Finded^.f_find of
     fiFunc  : SetAsFunc(Finded^.VFunc);
@@ -6364,38 +6385,38 @@ begin
   end;
 end;
 
-procedure TLiValue.SetAsFloat(Value: double);
+procedure TLyseeValue.SetAsFloat(Value: double);
 begin
-  FType._DecRefcount(FValue.VObject);
+  FType.DecRefcount(FValue.VObject);
   FType := my_float;
   FValue.VFloat := Value;
 end;
 
-procedure TLiValue.SetAsFunc(Value: TLiFunc);
+procedure TLyseeValue.SetAsFunc(Value: TLyseeFunc);
 begin
-  my_func._IncRefcount(Value);
-  my_func._SetDefault(Self);
+  my_func.IncRefcount(Value);
+  my_func.SetDefault(Self);
   FValue.VObject := Value;
 end;
 
-procedure TLiValue.SetAsHash(Value: TLiHash);
+procedure TLyseeValue.SetAsHash(Value: TLyseeHash);
 begin
-  my_hash._IncRefcount(Value);
-  my_hash._SetDefault(Self);
+  my_hash.IncRefcount(Value);
+  my_hash.SetDefault(Self);
   FValue.VObject := Value;
 end;
 
-procedure TLiValue.SetNil;
+procedure TLyseeValue.SetNil;
 begin
   if FValue.VObject <> nil then
   begin
-    FType._DecRefcount(FValue.VObject);
+    FType.DecRefcount(FValue.VObject);
     FValue.VObject := nil;
   end;
   FType := my_nil;
 end;
 
-procedure TLiValue.SetTOA(T: TLiType; OA: pointer);
+procedure TLyseeValue.SetTOA(T: TLyseeType; OA: pointer);
 begin
   if T.IsObject then SetObject(T, OA) else
   case T.FTID of
@@ -6409,20 +6430,20 @@ begin
   end;
 end;
 
-procedure TLiValue.SetObject(AType: TLiType; Aobj: pointer);
+procedure TLyseeValue.SetObject(AType: TLyseeType; Aobj: pointer);
 begin
-  AType._IncRefcount(Aobj);
-  FType._DecRefcount(FValue.VObject);
+  AType.IncRefcount(Aobj);
+  FType.DecRefcount(FValue.VObject);
   FType := AType;
   FValue.VObject := Aobj;
 end;
 
-{ TLiParam }
+{ TLyseeParam }
 
-procedure TLiParam.Error(const Msg: string);
+procedure TLyseeParam.Error(const Msg: string);
 var
-  F: TLiFunc;
-  M: TLiModule;
+  F: TLyseeFunc;
+  M: TLyseeModule;
   S: string;
 begin
   if not FContext.FExcepted then
@@ -6440,18 +6461,18 @@ begin
   end;
 end;
 
-procedure TLiParam.BeginExec(var Mark: integer; var Tmpv: TLiValue);
+procedure TLyseeParam.BeginExec(var Mark: integer; var Tmpv: TLyseeValue);
 begin
   Mark := FParams.Count;
   Tmpv := FParams.Add;
 end;
 
-procedure TLiParam.BeginExec(var Mark: integer);
+procedure TLyseeParam.BeginExec(var Mark: integer);
 begin
   Mark := FParams.Count;
 end;
 
-procedure TLiParam.EndExec(Mark: integer);
+procedure TLyseeParam.EndExec(Mark: integer);
 var
   I: integer;
 begin
@@ -6459,17 +6480,17 @@ begin
     FParams.Delete(I);
 end;
 
-procedure TLiParam.Error(const Msg: string; const Args: array of const);
+procedure TLyseeParam.Error(const Msg: string; const Args: array of const);
 begin
   Error(Format(Msg, Args));
 end;
 
-procedure TLiParam.ErrorChangeFunc(AFunc: TLiFunc);
+procedure TLyseeParam.ErrorChangeFunc(AFunc: TLyseeFunc);
 begin
   Error('can not change function: ' + AFunc.FullName);
 end;
 
-procedure TLiParam.ErrorOper(OP: TLiOperator; L, R: TLiType);
+procedure TLyseeParam.ErrorOper(OP: TLyseeOperator; L, R: TLyseeType);
 begin
   if L = nil then
     Error('unknown operation: %s %s', [OperatorStr(OP), R.FName]) else
@@ -6478,31 +6499,31 @@ begin
     Error('unknown operation: %s %s %s', [L.FName, OperatorStr(OP), R.FName]);
 end;
 
-function TLiParam.GetChangeAbleFunc(var F: TLiFunc): boolean;
+function TLyseeParam.GetChangeAbleFunc(var F: TLyseeFunc): boolean;
 begin
   F := GetItem(0).AsFunc;
-  my_func._Validate(F);
+  my_func.Validate(F);
   Result := (F <> nil) and TestChangeFunc(F);
 end;
 
-function TLiParam.GetCount: integer;
+function TLyseeParam.GetCount: integer;
 begin
   if FParams <> nil then
     Result := FParams.Count else
     Result := 0;
 end;
 
-function TLiParam.GetItem(Index: integer): TLiValue;
+function TLyseeParam.GetItem(Index: integer): TLyseeValue;
 begin
   Result := FParams[Index];
 end;
 
-function TLiParam.GetSelf(var Aobj): boolean;
+function TLyseeParam.GetSelf(var Aobj): boolean;
 begin
   Result := GetItem(0).GetSelf(Aobj);
 end;
 
-function TLiParam.GetValue(const Name: string): TLiValue;
+function TLyseeParam.GetValue(const Name: string): TLyseeValue;
 var
   I: integer;
 begin
@@ -6512,9 +6533,9 @@ begin
     Result := nil;
 end;
 
-function TLiParam.GetVarbValue(Index: integer; var VT: TLiType): TLiValue;
+function TLyseeParam.GetVarbValue(Index: integer; var VT: TLyseeType): TLyseeValue;
 var
-  T: TLiToken;
+  T: TLyseeToken;
 begin
   Result := nil;
   VT := nil;
@@ -6525,7 +6546,7 @@ begin
         Dec(Index);
     if (Index >= 0) and (Index < FPrmc) and (Index < FToken.GetParamCount) then
     begin
-      T := TLiToken(FToken.FParams[Index]);
+      T := TLyseeToken(FToken.FParams[Index]);
       if T.FSym = syID then
       begin
         Index := FPrev.Func.FParams.IndexOf(T.FName);
@@ -6545,29 +6566,29 @@ begin
   end;
 end;
 
-procedure TLiParam.SetResult(Value: TLiValue);
+procedure TLyseeParam.SetResult(Value: TLyseeValue);
 begin
   FResult.SetValue(Value);
-  FFunc.FResultType._Convert(FResult);
+  FFunc.FResultType.Convert(FResult);
 end;
 
-function TLiParam.TestChangeFunc(AFunc: TLiFunc): boolean;
+function TLyseeParam.TestChangeFunc(AFunc: TLyseeFunc): boolean;
 begin
   Result := AFunc.ChangeAble;
   if not Result then
     ErrorChangeFunc(AFunc);
 end;
 
-{ TLiToken }
+{ TLyseeToken }
 
-procedure TLiToken.AddParam(AParam: TLiToken);
+procedure TLyseeToken.AddParam(AParam: TLyseeToken);
 begin
   if FParams = nil then
     FParams := TList.Create;
   FParams.Add(AParam);
 end;
 
-procedure TLiToken.Assign(Source: TLiToken);
+procedure TLyseeToken.Assign(Source: TLyseeToken);
 begin
   FSym := Source.FSym;
   FRow := Source.FRow;
@@ -6576,7 +6597,7 @@ begin
   FValue := Source.FValue;
 end;
 
-procedure TLiToken.Clear;
+procedure TLyseeToken.Clear;
 begin
   if FSym = syVert then
     if FValue.VFunc <> nil then
@@ -6593,10 +6614,10 @@ begin
   ClearParams;
 end;
 
-procedure TLiToken.ClearParams;
+procedure TLyseeToken.ClearParams;
 var
   I: integer;
-  P: TLiToken;
+  P: TLyseeToken;
 begin
   for I := GetParamCount - 1 downto 0 do
   begin
@@ -6607,18 +6628,18 @@ begin
   FreeAndNil(FParams);
 end;
 
-constructor TLiToken.Create(T: TLiToken);
+constructor TLyseeToken.Create(T: TLyseeToken);
 begin
   if T <> nil then Read(T);
 end;
 
-constructor TLiToken.CreateWithLeft(LeftBranch: TLiToken; T: TLiToken);
+constructor TLyseeToken.CreateWithLeft(LeftBranch: TLyseeToken; T: TLyseeToken);
 begin
   Create(T);
   FLeft := LeftBranch;
 end;
 
-function TLiToken.Decompile(Level: integer): string;
+function TLyseeToken.Decompile(Level: integer): string;
 
   function decompile_params: string;
   var
@@ -6660,7 +6681,7 @@ function TLiToken.Decompile(Level: integer): string;
       Result := '@' + FName;
   end;
 
-  function decompile_list: string;
+  function decompile_array: string;
   begin
     if GetParamCount > 0 then
       Result := '[' + decompile_params + ']' else
@@ -6687,7 +6708,7 @@ function TLiToken.Decompile(Level: integer): string;
 
   function decompile_lambda: string;
   var
-    F: TLiFunc;
+    F: TLyseeFunc;
     I: integer;
   begin
     F := FValue.VFunc;
@@ -6715,7 +6736,7 @@ begin
     syVert  : Result := decompile_lambda;
     syNot   : Result := 'not ' + FRight.Decompile;
     syNeg   : Result := '- ' + FRight.Decompile;
-    syList  : Result := decompile_list;
+    syArray : Result := decompile_array;
     syHash  : Result := decompile_hash;
     syAt    : Result := decompile_at;
     else
@@ -6733,7 +6754,7 @@ begin
   end;
 end;
 
-destructor TLiToken.Destroy;
+destructor TLyseeToken.Destroy;
 begin
   if Self <> nil then
   begin
@@ -6742,37 +6763,37 @@ begin
   end;
 end;
 
-procedure TLiToken.Error(Param: TLiParam; const Msg: string; const Args: array of const);
+procedure TLyseeToken.Error(Param: TLyseeParam; const Msg: string; const Args: array of const);
 begin
   Error(Param, Format(Msg, Args));
 end;
 
-procedure TLiToken.FailGet(Param: TLiParam; const ID: string);
+procedure TLyseeToken.FailGet(Param: TLyseeParam; const ID: string);
 begin
   Error(Param, 'failed getting: ' + ID);
 end;
 
-procedure TLiToken.ExecCall(Param: TLiParam; Outv: TLiValue);
+procedure TLyseeToken.ExecCall(Param: TLyseeParam; Outv: TLyseeValue);
 var
-  tmpv: TLiValue;
+  tmpv: TLyseeValue;
   mark: integer;
 
   procedure exec_call;
   var
-    T: TLiType;
+    T: TLyseeType;
   begin
     if tmpv.FType = my_func then
     begin
-      if not TryFunc(TLiFunc(tmpv.FValue.VObject), Param, Outv) then
+      if not TryFunc(TLyseeFunc(tmpv.FValue.VObject), Param, Outv) then
         Error(Param, 'got no function to call');
     end
     else
     if (tmpv.FType = my_type) and (GetParamCount = 1) then
     begin
-      T := TLiType(tmpv.FValue.VObject);
+      T := TLyseeType(tmpv.FValue.VObject);
       if T = nil then T := my_nil;
       if GetParam(0).Execute(Param, Outv) then
-        T._Convert(Outv);
+        T.Convert(Outv);
     end
     else Error(Param, 'invalid calling: %s()', [tmpv.FType.FullName]);
   end;
@@ -6786,13 +6807,13 @@ var
 
   procedure exec_method;
   var
-    M: TLiModule;
-    T: TLiType;
+    M: TLyseeModule;
+    T: TLyseeType;
   begin
     if not TryMethod(tmpv, FName, Param, Outv, nil) then
     if (tmpv.FType = my_module) and (tmpv.FValue.VObject <> nil) then
     begin
-      M := TLiModule(tmpv.FValue.VObject);
+      M := TLyseeModule(tmpv.FValue.VObject);
       if M.FindSave(FName, tmpv) then
         exec_call else
         FailGet(Param, M.FName, FName);
@@ -6800,7 +6821,7 @@ var
     else
     if (tmpv.FType = my_type) and (tmpv.FValue.VObject <> nil) then
     begin
-      T := TLiType(tmpv.FValue.VObject);
+      T := TLyseeType(tmpv.FValue.VObject);
       if not TryFunc(T.FindMethod(FName), Param, Outv) then
         FailGet(Param, T.FName, FName);
     end
@@ -6819,9 +6840,9 @@ begin
   end;
 end;
 
-function TLiToken.TryFunc(Func: TLiFunc; Param: TLiParam; Outv: TLiValue): boolean;
+function TLyseeToken.TryFunc(Func: TLyseeFunc; Param: TLyseeParam; Outv: TLyseeValue): boolean;
 var
-  A: TLiList;
+  A: TLyseeList;
 begin
   Result := (Func <> nil);
   if Result then
@@ -6836,12 +6857,12 @@ begin
   end;
 end;
 
-function TLiToken.ExecFunc(Func: TLiFunc; Param: TLiParam; Outv: TLiValue; Args: TLiList): boolean;
+function TLyseeToken.ExecFunc(Func: TLyseeFunc; Param: TLyseeParam; Outv: TLyseeValue; Args: TLyseeList): boolean;
 
   function prepare_arguments: integer;
   var
     I, L, P: integer;
-    A: TLiList;
+    A: TLyseeList;
   begin
     L := Args.Count;
     P := Func.FParams.ParamCount;
@@ -6850,9 +6871,9 @@ function TLiToken.ExecFunc(Func: TLiFunc; Param: TLiParam; Outv: TLiValue; Args:
       Result := P;
       if Func.FHasVarArg then
       begin
-        A := TLiList.Create;
+        A := TLyseeList.Create;
         A.Add(Args[P - 1]);
-        Args[P - 1].SetAsList(A);
+        Args[P - 1].SetAsArray(A);
         for I := P to L - 1 do A.Add(Args[I]);
       end;
       Args.SetCount(P);
@@ -6879,7 +6900,7 @@ function TLiToken.ExecFunc(Func: TLiFunc; Param: TLiParam; Outv: TLiValue; Args:
   end;
 
 var
-  curr: TLiParam;
+  curr: TLyseeParam;
   mark: integer;
 begin
   Result := false;
@@ -6893,7 +6914,7 @@ begin
         try
           if Outv = nil then Outv := Param.FParams.Add;
           if Args = nil then Args := Param.FParams.AddList;
-          curr := TLiParam.Create;
+          curr := TLyseeParam.Create;
           try
             curr.FPrev := Param.FContext.FCurrent;
             curr.FContext := Param.FContext;
@@ -6903,11 +6924,11 @@ begin
             curr.FResult := Outv;
             curr.FToken := Self;
             Param.FContext.FCurrent := curr;
-            Func.FResultType._SetDefault(Outv);
+            Func.FResultType.SetDefault(Outv);
             if Assigned(Func.FProc) then
               Func.FProc(curr) else
               Func.FSTMTs.Execute(curr);
-            Func.FResultType._Convert(Outv);
+            Func.FResultType.Convert(Outv);
           finally
             Param.FContext.FCurrent := curr.FPrev;
             if Param.FContext.FState = csExit then
@@ -6926,9 +6947,9 @@ begin
   end;
 end;
 
-procedure TLiToken.ExecGet(Param: TLiParam; Outv: TLiValue);
+procedure TLyseeToken.ExecGet(Param: TLyseeParam; Outv: TLyseeValue);
 var
-  tmpv: TLiValue;
+  tmpv: TLyseeValue;
   mark: integer;
 
   // (expression)[...] ==> (expression).get[](...)
@@ -6963,10 +6984,10 @@ begin
   end;
 end;
 
-function TLiToken.GetProp(Param: TLiParam; Host, Outv: TLiValue): boolean;
+function TLyseeToken.GetProp(Param: TLyseeParam; Host, Outv: TLyseeValue): boolean;
 var
-  F: TLiFunc;
-  A: TLiList;
+  F: TLyseeFunc;
+  A: TLyseeList;
 begin
   Result := GetAt(Param, Host, Outv);
   if Result then
@@ -6974,7 +6995,7 @@ begin
     F := Outv.GetFunc;
     if F <> nil then
     begin
-      A := TLiList.Create;
+      A := TLyseeList.Create;
       try
         if F.FParent <> nil then
           if not F.IsConstructor then
@@ -6988,11 +7009,11 @@ begin
   end;
 end;
 
-procedure TLiToken.ExecID(Param: TLiParam; Outv: TLiValue);
+procedure TLyseeToken.ExecID(Param: TLyseeParam; Outv: TLyseeValue);
 var
-  R: RLiFind;
+  R: RLyseeFind;
   I: integer;
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   if Param.FFunc.FindBy(FName, @R) then
   begin
@@ -7018,9 +7039,9 @@ begin
     FailGet(Param, FName);
 end;
 
-procedure TLiToken.ExecSet(Param: TLiParam);
+procedure TLyseeToken.ExecSet(Param: TLyseeParam);
 var
-  tmpv: TLiValue;
+  tmpv: TLyseeValue;
   mark: integer;
 
   // (expression)[...] ==> (expression).set[](..., value)
@@ -7040,7 +7061,7 @@ var
   // (expression).ID[...] ==> (expression).set_ID[](..., value)
   procedure exec_set_prop_item;
   var
-    data: TLiValue;
+    data: TLyseeValue;
   begin
     if not TryMethod(tmpv, 'set_' + FName + '[]', Param, nil, FRight) then
     begin
@@ -7067,34 +7088,35 @@ begin
   end;
 end;
 
-function TLiToken.Execute(Param: TLiParam; Outv: TLiValue): boolean;
+function TLyseeToken.Execute(Param: TLyseeParam; Outv: TLyseeValue): boolean;
 var
-  tmpv: TLiValue;
+  tmpv: TLyseeValue;
   mark: integer;
 
-  procedure exec_list;
+  procedure exec_array;
   var
-    list: TLiList;
+    A: TLyseeList;
     I, N: integer;
   begin
-    list := TLiList.Create;
-    Outv.SetAsList(list);
+    A := TLyseeList.Create;
+    A.FReadonly := true;
+    Outv.SetAsArray(A);
     N := GetParamCount;
     I := 0;
     while (I < N) and GetParam(I).Execute(Param, tmpv) do
     begin
-      list.Add(tmpv);
+      A.Add(tmpv);
       Inc(I);
     end;
   end;
 
   procedure exec_hash;
   var
-    hash: TLiHash;
+    hash: TLyseeHash;
     I, N: integer;
     key: string;
   begin
-    hash := TLiHash.Create;
+    hash := TLyseeHash.Create;
     Outv.SetAsHash(hash);
     N := GetParamCount;
     I := 0;
@@ -7128,12 +7150,12 @@ var
         FailGet(Param, FName);
   end;
 
-  function GetLRV(L, R: TLiValue): boolean;
+  function GetLRV(L, R: TLyseeValue): boolean;
   begin
     Result := FLeft.Execute(Param, L) and FRight.Execute(Param, R);
   end;
 
-  procedure exec_oper(OP: TLiOperator);
+  procedure exec_oper(OP: TLyseeOperator);
   begin
     if OP in [opNot, opNeg] then
     begin
@@ -7175,7 +7197,7 @@ var
         (FRight.Execute(Param, Outv) and Outv.AsBoolean));
   end;
 
-  procedure exec_comp(Wanted: TLiCompares);
+  procedure exec_comp(Wanted: TCompares);
   begin
     Outv.SetAsBoolean(GetLRV(Outv, tmpv) and Outv.Compare(tmpv, Wanted));
   end;
@@ -7250,7 +7272,7 @@ begin
           syNot   : exec_oper(opNot);
           syNeg   : exec_oper(opNeg);
         { complexed }
-          syList  : exec_list;
+          syArray : exec_array;
           syHash  : exec_hash;
           syAt    : exec_at;
           syVarArg: exec_dot3;
@@ -7265,14 +7287,14 @@ begin
   Result := Param.FContext.StatusOK;
 end;
 
-procedure TLiToken.FailGet(Param: TLiParam; const Host, Prop: string);
+procedure TLyseeToken.FailGet(Param: TLyseeParam; const Host, Prop: string);
 begin
   FailGet(Param, Host + '.' + Prop);
 end;
 
-function TLiToken.GetAt(Param: TLiParam; Host, Outv: TLiValue): boolean;
+function TLyseeToken.GetAt(Param: TLyseeParam; Host, Outv: TLyseeValue): boolean;
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   Result := false;
   F := Host.FType.FindMethod(FName);
@@ -7285,39 +7307,39 @@ begin
   if Host.FValue.VObject <> nil then
     if Host.FType = my_module then
     begin
-      Result := TLiModule(Host.FValue.VObject).FindSave(FName, Outv);
+      Result := TLyseeModule(Host.FValue.VObject).FindSave(FName, Outv);
       if not Result then
-        FailGet(Param, TLiModule(Host.FValue.VObject).FName, FName);
+        FailGet(Param, TLyseeModule(Host.FValue.VObject).FName, FName);
     end
     else
     if Host.FType = my_type then
     begin
-      F := TLiType(Host.FValue.VObject).FindMethod(FName);
+      F := TLyseeType(Host.FValue.VObject).FindMethod(FName);
       Result := (F <> nil);
       if Result then
         Outv.SetAsFunc(F) else
-        FailGet(Param, TLiType(Host.FValue.VObject).FName, FName);
+        FailGet(Param, TLyseeType(Host.FValue.VObject).FName, FName);
     end;
   if not Result then
     if Param.FContext.StatusOK then
       FailGet(Param, Host.FType.FName, FName);
 end;
 
-function TLiToken.GetParam(Index: integer): TLiToken;
+function TLyseeToken.GetParam(Index: integer): TLyseeToken;
 begin
-  Result := TLiToken(FParams[Index]);
+  Result := TLyseeToken(FParams[Index]);
 end;
 
-function TLiToken.GetParamCount: integer;
+function TLyseeToken.GetParamCount: integer;
 begin
   if FParams <> nil then
     Result := FParams.Count else
     Result := 0;
 end;
 
-procedure TLiToken.Error(Param: TLiParam; const Msg: string);
+procedure TLyseeToken.Error(Param: TLyseeParam; const Msg: string);
 var
-  M: TLiModule;
+  M: TLyseeModule;
   S: string;
 begin
   if not Param.FContext.FExcepted then
@@ -7330,7 +7352,7 @@ begin
   end;
 end;
 
-procedure TLiToken.Read(Source: TLiToken);
+procedure TLyseeToken.Read(Source: TLyseeToken);
 begin
   FSym := Source.FSym;
   case FSym of
@@ -7345,11 +7367,11 @@ begin
   FCol := Source.FCol;
 end;
 
-function TLiToken.SetupParamList(Param: TLiParam; Host: TLiValue; Func: TLiFunc): TLiList;
+function TLyseeToken.SetupParamList(Param: TLyseeParam; Host: TLyseeValue; Func: TLyseeFunc): TLyseeList;
 var
   I, N: integer;
 begin
-  Result := TLiList.Create;
+  Result := TLyseeList.Create;
   if Host <> nil then
     if func.IsMethod and not func.IsConstructor then
       Result.Add(Host);
@@ -7364,12 +7386,12 @@ begin
     end;
 end;
 
-function TLiToken.TryMethod(Host: TLiValue; const Method: string;
-  Param: TLiParam; Outv: TLiValue; LastParam: TLiToken): boolean;
+function TLyseeToken.TryMethod(Host: TLyseeValue; const Method: string;
+  Param: TLyseeParam; Outv: TLyseeValue; LastParam: TLyseeToken): boolean;
 var
-  func: TLiFunc;
-  args: TLiList;
-  tmpv: TLiValue;
+  func: TLyseeFunc;
+  args: TLyseeList;
+  tmpv: TLyseeValue;
   mark: integer;
 
   function check_set_arguments: boolean;
@@ -7410,11 +7432,11 @@ begin
   end;
 end;
 
-{ TLiTokenList }
+{ TLyseeTokenList }
 
-function TLiTokenList.Add(Pos: TLiToken): TLiToken;
+function TLyseeTokenList.Add(Pos: TLyseeToken): TLyseeToken;
 begin
-  Result := TLiToken.Create;
+  Result := TLyseeToken.Create;
   if Pos <> nil then
   begin
     Result.FRow := Pos.FRow;
@@ -7423,25 +7445,25 @@ begin
   FItems.Add(Result);
 end;
 
-function TLiTokenList.AddToken(Sym: TLiSymbol): TLiToken;
+function TLyseeTokenList.AddToken(Sym: TLyseeSymbol): TLyseeToken;
 begin
   Result := AddToken(Sym, nil);
 end;
 
-procedure TLiTokenList.Clear;
+procedure TLyseeTokenList.Clear;
 var
   X: integer;
-  T: TLiToken;
+  T: TLyseeToken;
 begin
   for X := GetCount - 1 downto 0 do
   begin
-    T := TLiToken(FItems[X]);
+    T := TLyseeToken(FItems[X]);
     FItems.Delete(X);
     T.Free;
   end;
 end;
 
-procedure TLiTokenList.ClearKeepLast;
+procedure TLyseeTokenList.ClearKeepLast;
 var
   X: integer;
   L: pointer;
@@ -7459,48 +7481,48 @@ begin
   end;
 end;
 
-constructor TLiTokenList.Create;
+constructor TLyseeTokenList.Create;
 begin
   FItems := TList.Create;
 end;
 
-procedure TLiTokenList.DeleteLast(N: integer);
+procedure TLyseeTokenList.DeleteLast(N: integer);
 var
   X: integer;
-  T: TLiToken;
+  T: TLyseeToken;
 begin
   N := GetCount - N;
   for X := GetCount - 1 downto N do
   begin
-    T := TLiToken(FItems[X]);
+    T := TLyseeToken(FItems[X]);
     FItems.Delete(X);
     T.Free;
   end;
 end;
 
-destructor TLiTokenList.Destroy;
+destructor TLyseeTokenList.Destroy;
 begin
   Clear;
   FreeAndNil(FItems);
   inherited;
 end;
 
-function TLiTokenList.GetCount: integer;
+function TLyseeTokenList.GetCount: integer;
 begin
   Result := FItems.Count;
 end;
 
-function TLiTokenList.GetItem(Index: integer): TLiToken;
+function TLyseeTokenList.GetItem(Index: integer): TLyseeToken;
 begin
-  Result := TLiToken(FItems[Index]);
+  Result := TLyseeToken(FItems[Index]);
 end;
 
-function TLiTokenList.GetLast: TLiToken;
+function TLyseeTokenList.GetLast: TLyseeToken;
 begin
-  Result := TLiToken(FItems.Last);
+  Result := TLyseeToken(FItems.Last);
 end;
 
-procedure TLiTokenList.Reverse;
+procedure TLyseeTokenList.Reverse;
 var
   L, R: integer;
 begin
@@ -7514,23 +7536,23 @@ begin
   end;
 end;
 
-function TLiTokenList.AddToken(Token: TLiToken): TLiToken;
+function TLyseeTokenList.AddToken(Token: TLyseeToken): TLyseeToken;
 begin
   Result := Add;
   Result.Assign(Token);
 end;
 
-function TLiTokenList.AddToken(Sym: TLiSymbol; Pos: TLiToken): TLiToken;
+function TLyseeTokenList.AddToken(Sym: TLyseeSymbol; Pos: TLyseeToken): TLyseeToken;
 begin
   Result := Add(Pos);
   Result.FSym := Sym;
 end;
 
-{ TLiTokenizer }
+{ TLyseeTokenizer }
 
-constructor TLiTokenizer.Create(const Script: string);
+constructor TLyseeTokenizer.Create(const Script: string);
 var
-  T: TLiToken;
+  T: TLyseeToken;
 begin
   FCode := Script;
   FSize := Length(FCode);
@@ -7550,7 +7572,7 @@ begin
   end
   else FChar := #0;
   FCurrent := nil;
-  FTokens := TLiTokenList.Create;
+  FTokens := TLyseeTokenList.Create;
   repeat
     T := FTokens.Add(nil);
     GetToken(T);
@@ -7561,13 +7583,13 @@ begin
   FIndex := FTokens.Count - 1;
 end;
 
-destructor TLiTokenizer.Destroy;
+destructor TLyseeTokenizer.Destroy;
 begin
   FreeAndNil(FTokens);
   inherited;
 end;
 
-function TLiTokenizer.GetChar: boolean;
+function TLyseeTokenizer.GetChar: boolean;
 var
   F13: boolean;
 begin
@@ -7595,20 +7617,20 @@ begin
   else FChar := #0;
 end;
 
-function TLiTokenizer.GetCurrent: TLiToken;
+function TLyseeTokenizer.GetCurrent: TLyseeToken;
 begin
   if FCurrent = nil then GetNext;
   Result := FCurrent;
 end;
 
-function TLiTokenizer.PackToCurrent: boolean;
+function TLyseeTokenizer.PackToCurrent: boolean;
 begin
   Result := (FCurrent <> nil);
   if Result then
     FTokens.DeleteLast(FTokens.Count - (FIndex + 1));
 end;
 
-function TLiTokenizer.ParseChar(var C: char): boolean;
+function TLyseeTokenizer.ParseChar(var C: char): boolean;
 var
   V: cardinal;
 begin
@@ -7634,7 +7656,7 @@ begin
     end;
 end;
 
-function TLiTokenizer.ParseHex(var I: int64): boolean;
+function TLyseeTokenizer.ParseHex(var I: int64): boolean;
 begin
   Result := (FChar = '$') and GetChar and CharInSet(FChar, CS_HEX);
   if Result then
@@ -7645,7 +7667,7 @@ begin
   end;
 end;
 
-function TLiTokenizer.ParseString(var S: string): boolean;
+function TLyseeTokenizer.ParseString(var S: string): boolean;
 begin
   S := '';
   Result := (FChar = '''');
@@ -7661,7 +7683,7 @@ begin
   end;
 end;
 
-function TLiTokenizer.GetNext: TLiToken;
+function TLyseeTokenizer.GetNext: TLyseeToken;
 begin
   if FCurrent <> nil then
     Dec(FIndex) else
@@ -7674,7 +7696,7 @@ begin
   else Result := nil;
 end;
 
-function TLiTokenizer.GetToken(token: TLiToken): boolean;
+function TLyseeTokenizer.GetToken(token: TLyseeToken): boolean;
 
   function read_ID(const S: string): string;
   begin
@@ -7690,7 +7712,7 @@ function TLiTokenizer.GetToken(token: TLiToken): boolean;
 
   procedure parse_identity;
   var
-    I: TLiSymbol;
+    I: TLyseeSymbol;
   begin
     token.FName := read_ID(FChar);
     token.FSym := syID;
@@ -7778,9 +7800,9 @@ function TLiTokenizer.GetToken(token: TLiToken): boolean;
     end;
   end;
 
-  procedure parse_operator(DefSymbol: TLiSymbol;
+  procedure parse_operator(DefSymbol: TLyseeSymbol;
     const next: array of char;
-    const syms: array of TLiSymbol);
+    const syms: array of TLyseeSymbol);
   var
     count, index: integer;
   begin
@@ -7800,7 +7822,7 @@ function TLiTokenizer.GetToken(token: TLiToken): boolean;
     token.FName := Symbols[token.FSym].ID;
   end;
 
-  procedure parse_set(Symbol: TLiSymbol);
+  procedure parse_set(Symbol: TLyseeSymbol);
   begin
     token.FSym := Symbol;
     token.FName := Symbols[token.FSym].ID;
@@ -7882,35 +7904,35 @@ begin
   end;
 end;
 
-function TLiTokenizer.GotoChar(Chars: TSysCharSet): boolean;
+function TLyseeTokenizer.GotoChar(Chars: TSysCharSet): boolean;
 begin
   repeat Result := CharInSet(FChar, Chars) until Result or not GetChar;
 end;
 
-function TLiTokenizer.NextChar: char;
+function TLyseeTokenizer.NextChar: char;
 begin
   if FPosition < FSize then
     Result := FCode[FPosition + 1] else
     Result := #0;
 end;
 
-function TLiTokenizer.PrevChar: char;
+function TLyseeTokenizer.PrevChar: char;
 begin
   if FPosition > 1 then
     Result := FCode[FPosition - 1] else
     Result := #0;
 end;
 
-function TLiTokenizer.PeekNextSymbol: TLiSymbol;
+function TLyseeTokenizer.PeekNextSymbol: TLyseeSymbol;
 begin
   if FIndex > 0 then
     Result := FTokens[FIndex - 1].FSym else
     Result := syError;
 end;
 
-function TLiTokenizer.NextIsBecome(OnHead: boolean): boolean;
+function TLyseeTokenizer.NextIsBecome(OnHead: boolean): boolean;
 var
-  S: TLiSymbol;
+  S: TLyseeSymbol;
 begin
   if OnHead then
   begin
@@ -7927,14 +7949,14 @@ begin
   end;
 end;
 
-function TLiTokenizer.PeekThirdSymbol: TLiSymbol;
+function TLyseeTokenizer.PeekThirdSymbol: TLyseeSymbol;
 begin
   if FIndex > 1 then
     Result := FTokens[FIndex - 2].FSym else
     Result := syError;
 end;
 
-function TLiTokenizer.SkipSpaces: boolean;
+function TLyseeTokenizer.SkipSpaces: boolean;
 
   function skip_space: boolean;
   begin
@@ -7975,21 +7997,21 @@ begin
     else Result := true;
 end;
 
-{ TLiParser }
+{ TLyseeParser }
 
-constructor TLiParser.Create(AModule: TLiModule);
+constructor TLyseeParser.Create(AModule: TLyseeModule);
 begin
   FModule := AModule;
   FContext := FModule.FContext;
 end;
 
-destructor TLiParser.Destroy;
+destructor TLyseeParser.Destroy;
 begin
   FreeAndNil(FTokenizer);
   inherited;
 end;
 
-procedure TLiParser.EUnexpected(T: TLiToken);
+procedure TLyseeParser.EUnexpected(T: TLyseeToken);
 var
   S: string;
 begin
@@ -8000,16 +8022,16 @@ begin
   ESyntax(T.FRow, T.FCol, 'unexpected symbol: %s', [S]);
 end;
 
-procedure TLiParser.ERedeclared(T: TLiToken);
+procedure TLyseeParser.ERedeclared(T: TLyseeToken);
 begin
   if T = nil then T := FLast;
   ESyntax(T.FRow, T.FCol, 'object redeclared: %s', [T.FName]);
 end;
 
-function TLiParser.UseToken(Token: TLiToken): TLiToken;
+function TLyseeParser.UseToken(Token: TLyseeToken): TLyseeToken;
 var
   I: integer;
-  T: TLiToken;
+  T: TLyseeToken;
 begin
   Result := Token;
   if Token <> FTokenizer.FCurrent then
@@ -8028,20 +8050,20 @@ begin
   else FTokenizer.FTokens.FItems[FTokenizer.FIndex] := nil;
 end;
 
-procedure TLiParser.ETypeNotFound(T: TLiToken);
+procedure TLyseeParser.ETypeNotFound(T: TLyseeToken);
 begin
   if T = nil then T := FLast;
   ESyntax(FTokenizer.FRow, FTokenizer.FCol, 'type not found: %s', [T.FName]);
 end;
 
-procedure TLiParser.ESyntax(ERow, ECol: integer;
+procedure TLyseeParser.ESyntax(ERow, ECol: integer;
   const EMsg: string; const EArgs: array of const);
 begin
   FContext.FError.Syntax(Format(EMsg, EArgs), FModule.Name,
     FModule.FileName, ERow, ECol);
 end;
 
-procedure TLiParser.ParseUses;
+procedure TLyseeParser.ParseUses;
 begin
   FAfter := FLast.FCol;
   repeat
@@ -8053,10 +8075,10 @@ begin
   SymGetNext;
 end;
 
-procedure TLiParser.ParseConst;
+procedure TLyseeParser.ParseConst;
 var
-  L: TLiToken;
-  S: TLiSTMT_assign;
+  L: TLyseeToken;
+  S: TLyseeAssign;
 begin
   FAfter := FLast.FCol;
   SymTestNextID;
@@ -8064,21 +8086,21 @@ begin
     if FModule.Find(FLast.FName) then ERedeclared;
     L := FLast;
     SymTestNext([syEQ]);
-    FFunc := TLiFunc.Create('', FModule, nil);
+    FFunc := TLyseeFunc.Create('', FModule, nil);
     FModule.FConsts.Add(L.FName).SetAsFunc(FFunc);
-    S := FFunc.GetSTMTs.Add(ssConst) as TLiSTMT_assign;
+    S := FFunc.GetSTMTs.Add(ssConst) as TLyseeAssign;
     S.FVarb := L.FName;
     S.FExpr := ParseExpr(false, [sySemic], true);
     SymGetNext;
   until (FLast.FSym <> syID) or (FLast.FCol <= FAfter);
 end;
 
-procedure TLiParser.ParseFunc;
+procedure TLyseeParser.ParseFunc;
 begin
   FAfter := FLast.FCol;
   SymTestNext([syID]);
   if FModule.Find(FLast.FName) then ERedeclared;
-  FFunc := TLiFunc.Create(FLast.FName, FModule, nil);
+  FFunc := TLyseeFunc.Create(FLast.FName, FModule, nil);
 
   if FLast.FSym = syProc then
   begin
@@ -8104,12 +8126,12 @@ begin
   ParseBlock([], FFunc.GetSTMTs);
 end;
 
-function TLiParser.Parse(const Code: string; UsingModule: boolean): TLiFunc;
+function TLyseeParser.Parse(const Code: string; UsingModule: boolean): TLyseeFunc;
 begin
   Result := nil;
   FAfter := -1;
   FreeAndNil(FTokenizer);
-  FTokenizer := TLiTokenizer.Create(Code);
+  FTokenizer := TLyseeTokenizer.Create(Code);
   try
     SymGetNext;
     if UsingModule then ParseUsesConstFunc else
@@ -8120,7 +8142,7 @@ begin
         Result.STMTs.Clear;
         ParseUsesConstFunc;
       end
-      else Result := TLiFunc.Create('', FModule, nil);
+      else Result := TLyseeFunc.Create('', FModule, nil);
       while FLast.FSym <> syEOF do
       begin
         FAfter := -1;
@@ -8134,12 +8156,12 @@ begin
   end;
 end;
 
-procedure TLiParser.SymTestLast(Syms: TLiSymbols);
+procedure TLyseeParser.SymTestLast(Syms: TLyseeSymbols);
 begin
   if (Syms <> []) and not (FLast.FSym in Syms) then EUnexpected;
 end;
 
-procedure TLiParser.SymTestLastID;
+procedure TLyseeParser.SymTestLastID;
 begin
   SymTestLast([syID]);
   if not IsID(FLast.FName) then
@@ -8147,19 +8169,19 @@ begin
       'invalid identity: %s', [FLast.FName]);
 end;
 
-procedure TLiParser.SymTestNext(Syms: TLiSymbols);
+procedure TLyseeParser.SymTestNext(Syms: TLyseeSymbols);
 begin
   SymGotoNext;
   SymTestLast(Syms);
 end;
 
-procedure TLiParser.SymTestNextID;
+procedure TLyseeParser.SymTestNextID;
 begin
   SymGotoNext;
   SymTestLastID;
 end;
 
-procedure TLiParser.SymGetNext;
+procedure TLyseeParser.SymGetNext;
 begin
   FLast := FTokenizer.GetNext;
   if FLast = nil then
@@ -8167,7 +8189,7 @@ begin
       'symbol expected but reachs end of file', []);
 end;
 
-procedure TLiParser.SymGotoNext;
+procedure TLyseeParser.SymGotoNext;
 begin
   SymGetNext;
   if FLast.FCol <= FAfter then
@@ -8176,9 +8198,9 @@ begin
       [FLast.FCol + 1, FAfter + 1]);
 end;
 
-procedure TLiParser.ParseBlock(EndSyms: TLiSymbols; SX: TLiSTMTList);
+procedure TLyseeParser.ParseBlock(EndSyms: TLyseeSymbols; SX: TLyseeSTMTList);
 var
-  Syms: TLiSymbols;
+  Syms: TLyseeSymbols;
   after: integer;
 begin
   after := FAfter;
@@ -8197,7 +8219,7 @@ begin
   end;
 end;
 
-function TLiParser.ParseAndFree(const Code: string; UsingModule: boolean): TLiFunc;
+function TLyseeParser.ParseAndFree(const Code: string; UsingModule: boolean): TLyseeFunc;
 begin
   try
     Result := Parse(Code, UsingModule);
@@ -8206,7 +8228,7 @@ begin
   end;
 end;
 
-function TLiParser.ParseExpr(OnHead: boolean; EndSyms: TLiSymbols; DoCheck: boolean): TLiToken;
+function TLyseeParser.ParseExpr(OnHead: boolean; EndSyms: TLyseeSymbols; DoCheck: boolean): TLyseeToken;
 begin
   if not OnHead then SymGotoNext;
   Result := ParseFact(High(OperLevel));
@@ -8214,14 +8236,14 @@ begin
     SymTestLast(EndSyms);
 end;
 
-function TLiParser.ParseFact(Level: integer): TLiToken;
+function TLyseeParser.ParseFact(Level: integer): TLyseeToken;
 begin
   if Level > 0 then
     Result := ParseFact(Level - 1) else
     Result := ParseTerm;
   while (FLast.FSym in OperLevel[Level]) and (SymPeekNext in ExprHead) do
   begin
-    Result := TLiToken.CreateWithLeft(Result, FLast);
+    Result := TLyseeToken.CreateWithLeft(Result, FLast);
     SymGotoNext;
     if Level > 0 then
       Result.FRight := ParseFact(Level - 1) else
@@ -8229,7 +8251,7 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseStatement(OnHead: boolean; SX: TLiSTMTList);
+procedure TLyseeParser.ParseStatement(OnHead: boolean; SX: TLyseeSTMTList);
 begin
   if not OnHead then SymGotoNext;
   case FLast.FSym of
@@ -8248,10 +8270,10 @@ begin
   FTokenizer.PackToCurrent;
 end;
 
-procedure TLiParser.ParseIf(SX: TLiSTMTList);
+procedure TLyseeParser.ParseIf(SX: TLyseeSTMTList);
 var
   after: integer;
-  S: TLiSTMT_if;
+  S: TLyseeIf;
 begin
 { if CONDITION then ......
   elif CONDITION then ......
@@ -8259,7 +8281,7 @@ begin
   after := FAfter;
   try
     FAfter := FLast.FCol;
-    S := SX.Add(ssIf) as TLiSTMT_if;
+    S := SX.Add(ssIf) as TLyseeIf;
     S.FExpr := ParseExpr(false, [syThen], true);
     ParseBlock([], S.GetItems);
     if FLast.FCol = FAfter then
@@ -8272,7 +8294,7 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseUsesConstFunc;
+procedure TLyseeParser.ParseUsesConstFunc;
 begin
   while FLast.FSym in [syFunc, syConst, syUses] do
   begin
@@ -8286,12 +8308,12 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseVar(SX: TLiSTMTList);
+procedure TLyseeParser.ParseVar(SX: TLyseeSTMTList);
 var
   after: integer;
-  S: TLiSTMT_assign;
-  V: TLiVarb;
-  T: TLiType;
+  S: TLyseeAssign;
+  V: TLyseeVarb;
+  T: TLyseeType;
   I: integer;
 begin
 { var a, b, c, ...;
@@ -8328,7 +8350,7 @@ begin
 
       if FLast.FSym = syBecome then
       begin
-        S := SX.Add(ssAssign) as TLiSTMT_assign;
+        S := SX.Add(ssAssign) as TLyseeAssign;
         S.FVarb := FFunc.FParams[FFunc.FParams.Count - 1].FName;
         S.FExpr := ParseExpr(false, [sySemic], true);
       end;
@@ -8340,10 +8362,10 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseFor(SX: TLiSTMTList);
+procedure TLyseeParser.ParseFor(SX: TLyseeSTMTList);
 var
   after: integer;
-  S: TLiSTMT_for;
+  S: TLyseeFor;
 begin
 { for a in range do ....
   for a := low to high do ....
@@ -8351,7 +8373,7 @@ begin
   after := FAfter;
   try
     FAfter := FLast.FCol;
-    S := SX.Add(ssFor) as TLiSTMT_for;
+    S := SX.Add(ssFor) as TLyseeFor;
     SymTestNextID;
     S.FVarb := FLast.FName;
     FFunc.FParams.AddLocal(FLast.FName, my_variant);
@@ -8369,10 +8391,10 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseWhile(SX: TLiSTMTList);
+procedure TLyseeParser.ParseWhile(SX: TLyseeSTMTList);
 var
   after: integer;
-  S: TLiSTMT;
+  S: TLyseeSTMT;
 begin
 { while CONDITION do .... }
   after := FAfter;
@@ -8386,10 +8408,10 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseRepeat(SX: TLiSTMTList);
+procedure TLyseeParser.ParseRepeat(SX: TLyseeSTMTList);
 var
   after: integer;
-  S: TLiSTMT;
+  S: TLyseeSTMT;
 begin
 { repeat .... until CONDITION; }
   after := FAfter;
@@ -8408,15 +8430,15 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseCase(SX: TLiSTMTList);
+procedure TLyseeParser.ParseCase(SX: TLyseeSTMTList);
 var
   after: integer;
-  S: TLiSTMT_case;
+  S: TLyseeCase;
 
   procedure parse_branch;
   var
     A: integer;
-    T: TLiSTMT;
+    T: TLyseeSTMT;
   begin
     SymTestLast(ExprHead);
     A := FAfter;
@@ -8443,7 +8465,7 @@ begin
   after := FAfter;
   try
     FAfter := FLast.FCol;
-    S := SX.Add(ssCase) as TLiSTMT_case;
+    S := SX.Add(ssCase) as TLyseeCase;
     S.FExpr := ParseExpr(false, [syOf], true);
     SymGotoNext;
     parse_branch;
@@ -8452,10 +8474,10 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseTry(SX: TLiSTMTList);
+procedure TLyseeParser.ParseTry(SX: TLyseeSTMTList);
 var
   after: integer;
-  S, T: TLiSTMT_try;
+  S, T: TLyseeTry;
 begin
 { try ....
   except ....
@@ -8463,7 +8485,7 @@ begin
   after := FAfter;
   try
     FAfter := FLast.FCol;
-    S := SX.Add(ssTry) as TLiSTMT_try;
+    S := SX.Add(ssTry) as TLyseeTry;
     ParseBlock([syExcept, syFinally], S.GetItems);
     if FLast.FCol = FAfter then
     begin
@@ -8471,7 +8493,7 @@ begin
       ParseBlock([], S.GetElseItems);
       while (FLast.FSym in [syExcept, syFinally]) and (FLast.FCol = FAfter) do
       begin
-        T := SX.Add(ssTry) as TLiSTMT_try;
+        T := SX.Add(ssTry) as TLyseeTry;
         T.GetItems.FItems.Add(S);
         T.FTryFinally := (FLast.FSym = syFinally);
         ParseBlock([], T.GetElseItems);
@@ -8483,27 +8505,30 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseType(OnHead: boolean; var T: TLiType);
+procedure TLyseeParser.ParseType(OnHead: boolean; var T: TLyseeType);
 var
   I, M: string;
 begin
-  if not OnHead then SymTestNext([syID]);
-  if SymPeekNext = syDot then
+  if not OnHead then SymTestNext([syID, syArray]);
+  if FLast.FSym = syArray then T := my_array else
   begin
-    M := FLast.FName;
-    SymGotoNext;
-    SymTestNextID;
-  end
-  else M := '';
-  I := FLast.FName;
-  T := FModule.FindTypeBy(I, M);
-  if T = nil then ETypeNotFound;
+    if SymPeekNext = syDot then
+    begin
+      M := FLast.FName;
+      SymGotoNext;
+      SymTestNextID;
+    end
+    else M := '';
+    I := FLast.FName;
+    T := FModule.FindTypeBy(I, M);
+    if T = nil then ETypeNotFound;
+  end;
 end;
 
-procedure TLiParser.ParseRaise(SX: TLiSTMTList);
+procedure TLyseeParser.ParseRaise(SX: TLyseeSTMTList);
 var
   after: integer;
-  S: TLiSTMT;
+  S: TLyseeSTMT;
 begin
 { raise EXPRESSION; | raise; }
   after := FAfter;
@@ -8519,10 +8544,10 @@ begin
   end;
 end;
 
-procedure TLiParser.ParsePuts(SX: TLiSTMTList);
+procedure TLyseeParser.ParsePuts(SX: TLyseeSTMTList);
 var
   after: integer;
-  S, T: TLiSTMT;
+  S, T: TLyseeSTMT;
 begin
   after := FAfter;
   try
@@ -8538,11 +8563,11 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseAny(SX: TLiSTMTList);
+procedure TLyseeParser.ParseAny(SX: TLyseeSTMTList);
 var
   after: integer;
-  V: TLiToken;
-  S: TLiSTMT;
+  V: TLyseeToken;
+  S: TLyseeSTMT;
 begin
   after := FAfter;
   try
@@ -8553,7 +8578,7 @@ begin
       if FLast.FSym = syID then
       begin
         S := SX.Add(ssAssign);
-        TLiSTMT_assign(S).FVarb := FLast.FName;
+        TLyseeAssign(S).FVarb := FLast.FName;
         FFunc.FParams.AddLocal(FLast.FName, my_variant);
       end
       else S := SX.Add(ssResult);
@@ -8561,8 +8586,8 @@ begin
       SymGotoNext;
       if FLast.FSym <> syBecome then // +=, -=, *=, ....
       begin
-        S.FExpr := TLiToken.Create(FLast);  // operator
-        S.FExpr.FLeft := TLiToken.Create(V);
+        S.FExpr := TLyseeToken.Create(FLast);  // operator
+        S.FExpr.FLeft := TLyseeToken.Create(V);
         SymGotoNext;
         S.FExpr.FRight := ParseExpr(false, [sySemic], true);
       end
@@ -8586,9 +8611,9 @@ begin
   end;
 end;
 
-procedure TLiParser.ParseArguments(EndSym: TLiSymbol);
+procedure TLyseeParser.ParseArguments(EndSym: TLyseeSymbol);
 var
-  V: TLiVarb;
+  V: TLyseeVarb;
   I, count: integer;
 begin
   count := 0;
@@ -8597,7 +8622,7 @@ begin
   begin
     if FLast.FSym = syVarArg then
     begin
-      FFunc.FParams.Add('...', my_list);
+      FFunc.FParams.Add('...', my_array);
       FFunc.FHasVarArg := true;
       SymTestNext([EndSym]);
       Break;
@@ -8627,9 +8652,9 @@ begin
   end;
 end;
 
-function TLiParser.ParseTerm: TLiToken;
+function TLyseeParser.ParseTerm: TLyseeToken;
 
-  procedure parse_list;
+  procedure parse_array;
   begin
     while FLast.FSym <> syRArray do
       Result.AddParam(ParseExpr(false, [syComma, syRArray], true));
@@ -8646,7 +8671,7 @@ function TLiParser.ParseTerm: TLiToken;
     end;
   end;
 
-  procedure parse_call(EndSym: TLiSymbol);
+  procedure parse_call(EndSym: TLyseeSymbol);
   begin
     SymGotoNext;
     if FLast.FSym <> EndSym then
@@ -8659,7 +8684,7 @@ function TLiParser.ParseTerm: TLiToken;
   end;
 
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   Result := nil;
 
@@ -8691,6 +8716,12 @@ begin
   { ID | value | string | true | false | ... }
   if FLast.FSym in DataSyms then
   begin
+    if FLast.FSym = syArray then
+    begin
+      FLast.FSym := syID;
+      FLast.FName := 'array';
+    end
+    else
     if (FLast.FSym = syVarArg) and not FFunc.FHasVarArg then
       EUnexpected(FLast);
     Result := UseToken(FLast);
@@ -8705,7 +8736,7 @@ begin
   if FLast.FSym = syLArray then // list or hashed
   begin
     Result := UseToken(FLast);
-    Result.FSym := syList;
+    Result.FSym := syArray;
     SymGotoNext;
     if FLast.FSym in [syComma, syColon] then
     begin
@@ -8716,7 +8747,7 @@ begin
     if FLast.FSym <> syRArray then
     begin
       Result.AddParam(ParseExpr(true, [syComma, syColon, syRArray], true));
-      if FLast.FSym = syComma then parse_list else
+      if FLast.FSym = syComma then parse_array else
       if FLast.FSym = syColon then parse_hash;
     end;
   end
@@ -8726,7 +8757,7 @@ begin
     Result := UseToken(FLast);
     F := FFunc;
     try
-      FFunc := TLiFunc.Create('', FModule, nil);
+      FFunc := TLyseeFunc.Create('', FModule, nil);
       ParseArguments(syVert);
       FFunc.STMTs.Add(ssResult).FExpr := ParseExpr(false, [], false);
       Result.FValue.VFunc := FFunc;
@@ -8745,7 +8776,7 @@ begin
   begin
     if FLast.FSym = syLParen then // expression(...)
     begin
-      Result := TLiToken.CreateWithLeft(Result, FLast);
+      Result := TLyseeToken.CreateWithLeft(Result, FLast);
       Result.FSym := syCall;
       Result.FName := '';
       parse_call(syRParen);
@@ -8753,7 +8784,7 @@ begin
     else
     if FLast.FSym = syLArray then // expression[...]
     begin
-      Result := TLiToken.CreateWithLeft(Result, FLast);
+      Result := TLyseeToken.CreateWithLeft(Result, FLast);
       Result.FSym := syGet;
       Result.FName := '';
       parse_call(syRArray);
@@ -8761,7 +8792,7 @@ begin
     else // expression.ID
     begin
       SymTestNext([syBegin..syEnd, syID]);
-      Result := TLiToken.CreateWithLeft(Result, FLast);
+      Result := TLyseeToken.CreateWithLeft(Result, FLast);
       Result.FSym := syGet;
       Result.FName := FLast.FName;
       if SymPeekNext = syLParen then // expression.ID(...)
@@ -8781,21 +8812,21 @@ begin
   end;
 end;
 
-function TLiParser.SymPeekNext: TLiSymbol;
+function TLyseeParser.SymPeekNext: TLyseeSymbol;
 begin
   Result := FTokenizer.PeekNextSymbol;
 end;
 
-{ TLiSTMT }
+{ TLyseeSTMT }
 
-constructor TLiSTMT.Create(AParent: TLiSTMTList);
+constructor TLyseeSTMT.Create(AParent: TLyseeSTMTList);
 begin
   FStyle := ssNormal;
   FParent := AParent;
   FParent.FItems.Add(Self);
 end;
 
-procedure TLiSTMT.Decompile(Level: integer; Lines: TStrings);
+procedure TLyseeSTMT.Decompile(Level: integer; Lines: TStrings);
 
   procedure decompile_normal;
   begin
@@ -8849,7 +8880,7 @@ begin
   end;
 end;
 
-destructor TLiSTMT.Destroy;
+destructor TLyseeSTMT.Destroy;
 begin
   if FParent <> nil then
     FParent.FItems.Remove(Self);
@@ -8858,9 +8889,9 @@ begin
   inherited;
 end;
 
-procedure TLiSTMT.ExecNormal(Param: TLiParam);
+procedure TLyseeSTMT.ExecNormal(Param: TLyseeParam);
 var
-  tmpv: TLiValue;
+  tmpv: TLyseeValue;
   mark: integer;
 begin
   Param.BeginExec(mark, tmpv);
@@ -8871,9 +8902,9 @@ begin
   end;
 end;
 
-procedure TLiSTMT.ExecPuts(Param: TLiParam);
+procedure TLyseeSTMT.ExecPuts(Param: TLyseeParam);
 var
-  tmpv: TLiValue;
+  tmpv: TLyseeValue;
   mark, I: integer;
 begin
   Param.BeginExec(mark, tmpv);
@@ -8895,9 +8926,9 @@ begin
   end;
 end;
 
-procedure TLiSTMT.ExecRaise(Param: TLiParam);
+procedure TLyseeSTMT.ExecRaise(Param: TLyseeParam);
 var
-  tmpv: TLiValue;
+  tmpv: TLyseeValue;
   mark: integer;
 begin
   if FExpr <> nil then
@@ -8912,10 +8943,10 @@ begin
   else Param.FContext.FExcepted := true;
 end;
 
-procedure TLiSTMT.ExecRepeat(Param: TLiParam);
+procedure TLyseeSTMT.ExecRepeat(Param: TLyseeParam);
 var
-  cntx: TLiContext;
-  tmpv: TLiValue;
+  cntx: TLysee;
+  tmpv: TLyseeValue;
   mark: integer;
 begin
   cntx := Param.FContext;
@@ -8935,7 +8966,7 @@ begin
   end;
 end;
 
-function TLiSTMT.Execute(Param: TLiParam): boolean;
+function TLyseeSTMT.Execute(Param: TLyseeParam): boolean;
 begin
   case FStyle of
     ssNormal: ExecNormal(Param);
@@ -8947,10 +8978,10 @@ begin
   Result := Param.FContext.StatusOK;
 end;
 
-procedure TLiSTMT.ExecWhile(Param: TLiParam);
+procedure TLyseeSTMT.ExecWhile(Param: TLyseeParam);
 var
-  cntx: TLiContext;
-  tmpv: TLiValue;
+  cntx: TLysee;
+  tmpv: TLyseeValue;
   mark: integer;
 begin
   cntx := Param.FContext;
@@ -8969,29 +9000,29 @@ begin
   end;
 end;
 
-function TLiSTMT.GetCount: integer;
+function TLyseeSTMT.GetCount: integer;
 begin
   if FItems <> nil then
     Result := FItems.Count else
     Result := 0;
 end;
 
-function TLiSTMT.GetItems: TLiSTMTList;
+function TLyseeSTMT.GetItems: TLyseeSTMTList;
 begin
   if FItems = nil then
-    FItems := TLiSTMTList.Create;
+    FItems := TLyseeSTMTList.Create;
   Result := FItems;
 end;
 
-{ TLiSTMT_assign }
+{ TLyseeAssign }
 
-constructor TLiSTMT_assign.Create(AParent: TLiSTMTList);
+constructor TLyseeAssign.Create(AParent: TLyseeSTMTList);
 begin
   inherited;
   FStyle := ssAssign;
 end;
 
-procedure TLiSTMT_assign.Decompile(Level: integer; Lines: TStrings);
+procedure TLyseeAssign.Decompile(Level: integer; Lines: TStrings);
 
   procedure decompile_const;
   begin
@@ -9016,33 +9047,33 @@ begin
   end;
 end;
 
-procedure TLiSTMT_assign.ExecAssign(Param: TLiParam);
+procedure TLyseeAssign.ExecAssign(Param: TLyseeParam);
 var
   I: integer;
-  V: TLiValue;
+  V: TLyseeValue;
 begin
   I := Param.FFunc.FParams.IndexOf(FVarb);
   V := Param.FParams[I];
   if FExpr.Execute(Param, V) then
-    Param.FFunc.FParams[I].FType._Convert(V);
+    Param.FFunc.FParams[I].FType.Convert(V);
 end;
 
-procedure TLiSTMT_assign.ExecConst(Param: TLiParam);
+procedure TLyseeAssign.ExecConst(Param: TLyseeParam);
 begin
   if FExpr.Execute(Param, Param.FResult) then
   begin
-    Param.FFunc.FResultType._Convert(Param.FResult);
+    Param.FFunc.FResultType.Convert(Param.FResult);
     Param.FFunc.FModule.FConsts.Add(FVarb).SetValue(Param.FResult);
   end;
 end;
 
-procedure TLiSTMT_assign.ExecResult(Param: TLiParam);
+procedure TLyseeAssign.ExecResult(Param: TLyseeParam);
 begin
   if FExpr.Execute(Param, Param.FResult) then
-    Param.FFunc.FResultType._Convert(Param.FResult);
+    Param.FFunc.FResultType.Convert(Param.FResult);
 end;
 
-function TLiSTMT_assign.Execute(Param: TLiParam): boolean;
+function TLyseeAssign.Execute(Param: TLyseeParam): boolean;
 begin
   case FStyle of
     ssConst : ExecConst(Param);
@@ -9052,15 +9083,15 @@ begin
   Result := Param.FContext.StatusOK;
 end;
 
-{ TLiSTMT_for }
+{ TLyseeFor }
 
-constructor TLiSTMT_for.Create(AParent: TLiSTMTList);
+constructor TLyseeFor.Create(AParent: TLyseeSTMTList);
 begin
   inherited;
   FStyle := ssFor;
 end;
 
-procedure TLiSTMT_for.Decompile(Level: integer; Lines: TStrings);
+procedure TLyseeFor.Decompile(Level: integer; Lines: TStrings);
 var
   S: string;
 begin
@@ -9079,23 +9110,23 @@ begin
     Lines[Lines.Count - 1] := Lines[Lines.Count - 1] + ';';
 end;
 
-destructor TLiSTMT_for.Destroy;
+destructor TLyseeFor.Destroy;
 begin
   FreeAndNil(FEndValue);
   inherited;
 end;
 
-function TLiSTMT_for.Execute(Param: TLiParam): boolean;
+function TLyseeFor.Execute(Param: TLyseeParam): boolean;
 var
-  cntx: TLiContext;
+  cntx: TLysee;
   mark, I: integer;
-  G: TLiGenerate;
-  V: TLiValue;
-  T: TLiType;
+  G: TLyseeGenerate;
+  V: TLyseeValue;
+  T: TLyseeType;
 
-  function get_generate: TLiGenerate;
+  function get_generate: TLyseeGenerate;
   var
-    begv, endv: TLiValue;
+    begv, endv: TLyseeValue;
   begin
     Result := nil;
     begv := Param.FParams.Add;
@@ -9122,7 +9153,7 @@ begin
       while cntx.StatusOK and G.GetNext do
       begin
         V.SetValue(G);
-        T._Convert(V);
+        T.Convert(V);
         if not FItems.Execute(Param) then
           if cntx.FState in [csBreak, csContinue] then
           begin
@@ -9140,24 +9171,24 @@ begin
   Result := cntx.StatusOK;
 end;
 
-{ TLiIfSTMT }
+{ TLyseeIfSTMT }
 
-constructor TLiSTMT_if.Create(AParent: TLiSTMTList);
+constructor TLyseeIf.Create(AParent: TLyseeSTMTList);
 begin
   inherited;
   FStyle := ssIf;
 end;
 
-procedure TLiSTMT_if.Decompile(Level: integer; Lines: TStrings);
+procedure TLyseeIf.Decompile(Level: integer; Lines: TStrings);
 
-  procedure decompile_else(S: TLiSTMT_if);
+  procedure decompile_else(S: TLyseeIf);
   begin
     if S.IsElif then
     begin
       Lines.Add(Margin(Level) + 'elif ' + S.FExpr.Decompile + ' then');
       if S.GetCount > 0 then
         S.FItems.Decompile(Level + 1, Lines);
-      decompile_else(S.FElseItems[0] as TLiSTMT_if);
+      decompile_else(S.FElseItems[0] as TLyseeIf);
     end
     else
     if GetElseCount > 0 then
@@ -9174,15 +9205,15 @@ begin
   decompile_else(Self);
 end;
 
-destructor TLiSTMT_if.Destroy;
+destructor TLyseeIf.Destroy;
 begin
   FreeAndNil(FElseItems);
   inherited;
 end;
 
-function TLiSTMT_if.Execute(Param: TLiParam): boolean;
+function TLyseeIf.Execute(Param: TLyseeParam): boolean;
 var
-  tmpv: TLiValue;
+  tmpv: TLyseeValue;
   mark: integer;
 begin
   Param.BeginExec(mark, tmpv);
@@ -9197,37 +9228,37 @@ begin
   end;
 end;
 
-function TLiSTMT_if.GetElseCount: integer;
+function TLyseeIf.GetElseCount: integer;
 begin
   if FElseItems <> nil then
     Result := FElseItems.Count else
     Result := 0;
 end;
 
-function TLiSTMT_if.GetElseItems: TLiSTMTList;
+function TLyseeIf.GetElseItems: TLyseeSTMTList;
 begin
   if FElseItems = nil then
-    FElseItems := TLiSTMTList.Create;
+    FElseItems := TLyseeSTMTList.Create;
   Result := FElseItems;
 end;
 
-function TLiSTMT_if.IsElif: boolean;
+function TLyseeIf.IsElif: boolean;
 begin
   Result := (GetElseCount = 1) and (FElseItems[0].FStyle = ssIf);
 end;
 
-{ TLiSTMT_case }
+{ TLyseeCase }
 
-constructor TLiSTMT_case.Create(AParent: TLiSTMTList);
+constructor TLyseeCase.Create(AParent: TLyseeSTMTList);
 begin
   inherited;
   FStyle := ssCase;
 end;
 
-procedure TLiSTMT_case.Decompile(Level: integer; Lines: TStrings);
+procedure TLyseeCase.Decompile(Level: integer; Lines: TStrings);
 var
   I: integer;
-  S: TLiSTMT;
+  S: TLyseeSTMT;
 begin
   Lines.Add(Margin(Level) + 'case ' + FExpr.Decompile + ' of');
   for I := 0 to GetCount - 1 do
@@ -9243,9 +9274,9 @@ begin
   end;
 end;
 
-function TLiSTMT_case.Execute(Param: TLiParam): boolean;
+function TLyseeCase.Execute(Param: TLyseeParam): boolean;
 var
-  tmpv, T: TLiValue;
+  tmpv, T: TLyseeValue;
   mark, I: integer;
 begin
   Result := false;;
@@ -9271,15 +9302,15 @@ begin
   end;
 end;
 
-{ TLiSTMT_try }
+{ TLyseeTry }
 
-constructor TLiSTMT_try.Create(AParent: TLiSTMTList);
+constructor TLyseeTry.Create(AParent: TLyseeSTMTList);
 begin
   inherited;
   FStyle := ssTry;
 end;
 
-procedure TLiSTMT_try.Decompile(Level: integer; Lines: TStrings);
+procedure TLyseeTry.Decompile(Level: integer; Lines: TStrings);
 begin
   Lines.Add(Margin(Level) + 'try');
   FItems.Decompile(Level + 1, Lines);
@@ -9289,7 +9320,7 @@ begin
   FElseItems.Decompile(Level + 1, Lines);
 end;
 
-function TLiSTMT_try.Execute(Param: TLiParam): boolean;
+function TLyseeTry.Execute(Param: TLyseeParam): boolean;
 var
   E: boolean;
 begin
@@ -9303,30 +9334,30 @@ begin
   Result := Param.FContext.StatusOK;
 end;
 
-{ TLiSTMTList }
+{ TLyseeSTMTList }
 
-function TLiSTMTList.Add(Style: TLiSTMTStyle): TLiSTMT;
+function TLyseeSTMTList.Add(Style: TLyseeSTMTStyle): TLyseeSTMT;
 begin
   if FItems = nil then FItems := TList.Create;
   Result := nil;
   case Style of
-    ssNormal: Result := TLiSTMT.Create(Self);
-    ssConst : Result := TLiSTMT_assign.Create(Self);
-    ssAssign: Result := TLiSTMT_assign.Create(Self);
-    ssResult: Result := TLiSTMT_assign.Create(Self);
-    ssPuts  : Result := TLiSTMT.Create(Self);
-    ssIf    : Result := TLiSTMT_if.Create(Self);
-    ssWhile : Result := TLiSTMT.Create(Self);
-    ssRepeat: Result := TLiSTMT.Create(Self);
-    ssFor   : Result := TLiSTMT_for.Create(Self);
-    ssCase  : Result := TLiSTMT_case.Create(Self);
-    ssTry   : Result := TLiSTMT_try.Create(Self);
-    ssRaise : Result := TLiSTMT.Create(Self);
+    ssNormal: Result := TLyseeSTMT.Create(Self);
+    ssConst : Result := TLyseeAssign.Create(Self);
+    ssAssign: Result := TLyseeAssign.Create(Self);
+    ssResult: Result := TLyseeAssign.Create(Self);
+    ssPuts  : Result := TLyseeSTMT.Create(Self);
+    ssIf    : Result := TLyseeIf.Create(Self);
+    ssWhile : Result := TLyseeSTMT.Create(Self);
+    ssRepeat: Result := TLyseeSTMT.Create(Self);
+    ssFor   : Result := TLyseeFor.Create(Self);
+    ssCase  : Result := TLyseeCase.Create(Self);
+    ssTry   : Result := TLyseeTry.Create(Self);
+    ssRaise : Result := TLyseeSTMT.Create(Self);
   end;
   Result.FStyle := Style;
 end;
 
-function TLiSTMTList.Add(STMT: TLiSTMT): integer;
+function TLyseeSTMTList.Add(STMT: TLyseeSTMT): integer;
 begin
   if FItems = nil then FItems := TList.Create;
   if STMT.FParent <> Self then
@@ -9337,7 +9368,7 @@ begin
   Result := FItems.Add(STMT);
 end;
 
-procedure TLiSTMTList.Clear;
+procedure TLyseeSTMTList.Clear;
 var
   I: integer;
 begin
@@ -9345,7 +9376,7 @@ begin
   FreeAndNil(FItems);
 end;
 
-procedure TLiSTMTList.Decompile(Level: integer; Lines: TStrings);
+procedure TLyseeSTMTList.Decompile(Level: integer; Lines: TStrings);
 var
   I: integer;
 begin
@@ -9354,9 +9385,9 @@ begin
     GetItem(I).Decompile(Level, Lines);
 end;
 
-procedure TLiSTMTList.Delete(Index: integer);
+procedure TLyseeSTMTList.Delete(Index: integer);
 var
-  S: TLiSTMT;
+  S: TLyseeSTMT;
 begin
   S := GetItem(Index);
   FItems.Delete(Index);
@@ -9364,14 +9395,14 @@ begin
   S.Free;
 end;
 
-destructor TLiSTMTList.Destroy;
+destructor TLyseeSTMTList.Destroy;
 begin
   Clear;
   FreeAndNil(FItems);
   inherited;
 end;
 
-function TLiSTMTList.Execute(Param: TLiParam): boolean;
+function TLyseeSTMTList.Execute(Param: TLyseeParam): boolean;
 var
   I: integer;
 begin
@@ -9384,55 +9415,55 @@ begin
   Result := true;
 end;
 
-function TLiSTMTList.GetCount: integer;
+function TLyseeSTMTList.GetCount: integer;
 begin
   if FItems <> nil then
     Result := FItems.Count else
     Result := 0;
 end;
 
-function TLiSTMTList.GetItem(Index: integer): TLiSTMT;
+function TLyseeSTMTList.GetItem(Index: integer): TLyseeSTMT;
 begin
-  Result := TLiSTMT(FItems[Index]);
+  Result := TLyseeSTMT(FItems[Index]);
 end;
 
-{ TLiVarb }
+{ TLyseeVarb }
 
-constructor TLiVarb.Create(const AName: string; AType: TLiType);
+constructor TLyseeVarb.Create(const AName: string; AType: TLyseeType);
 begin
   FName := AName;
   FType := AType;
 end;
 
-destructor TLiVarb.Destroy;
+destructor TLyseeVarb.Destroy;
 begin
   FName := '';
   inherited;
 end;
 
-function TLiVarb.Prototype: string;
+function TLyseeVarb.Prototype: string;
 begin
   Result := FType.Prototype(FName);
 end;
 
-{ TLiVarbList }
+{ TLyseeVarbList }
 
-function TLiVarbList.GetCount: integer;
+function TLyseeVarbList.GetCount: integer;
 begin
   Result := Length(FVarbs);
 end;
 
-function TLiVarbList.GetParamCount: integer;
+function TLyseeVarbList.GetParamCount: integer;
 begin
   Result := GetCount - FLocalCount;
 end;
 
-function TLiVarbList.GetVarb(Index: integer): TLiVarb;
+function TLyseeVarbList.GetVarb(Index: integer): TLyseeVarb;
 begin
   Result := FVarbs[Index];
 end;
 
-function TLiVarbList.IndexOf(const AVarb: TLiVarb): integer;
+function TLyseeVarbList.IndexOf(const AVarb: TLyseeVarb): integer;
 var
   I: integer;
 begin
@@ -9445,29 +9476,29 @@ begin
   Result := -1;
 end;
 
-function TLiVarbList.DoAdd(const AName: string; AType: TLiType): TLiVarb;
+function TLyseeVarbList.DoAdd(const AName: string; AType: TLyseeType): TLyseeVarb;
 var
   I: integer;
 begin
-  Result := TLiVarb.Create(AName, AType);
+  Result := TLyseeVarb.Create(AName, AType);
   I := Length(FVarbs);
   SetLength(FVarbs, I + 1);
   FVarbs[I] := Result;
 end;
 
-constructor TLiVarbList.Create;
+constructor TLyseeVarbList.Create;
 begin
   SetLength(FVarbs, 0);
   FLocalCount := 0;
 end;
 
-destructor TLiVarbList.Destroy;
+destructor TLyseeVarbList.Destroy;
 begin
   Clear;
   inherited Destroy;
 end;
 
-procedure TLiVarbList.Clear;
+procedure TLyseeVarbList.Clear;
 var
   I: integer;
 begin
@@ -9480,14 +9511,14 @@ begin
   SetLength(FVarbs, 0);
 end;
 
-function TLiVarbList.Add(const AName: string; AType: TLiType): TLiVarb;
+function TLyseeVarbList.Add(const AName: string; AType: TLyseeType): TLyseeVarb;
 begin
   Result := Find(AName);
   if Result = nil then
     Result := DoAdd(AName, AType);
 end;
 
-function TLiVarbList.AddLocal(const AName: string; AType: TLiType): TLiVarb;
+function TLyseeVarbList.AddLocal(const AName: string; AType: TLyseeType): TLyseeVarb;
 begin
   Result := Find(AName);
   if Result = nil then
@@ -9497,7 +9528,7 @@ begin
   end;
 end;
 
-procedure TLiVarbList.Assign(Source: TLiVarbList);
+procedure TLyseeVarbList.Assign(Source: TLyseeVarbList);
 var
   I: integer;
 begin
@@ -9507,7 +9538,7 @@ begin
   FLocalCount := Source.FLocalCount;
 end;
 
-function TLiVarbList.IndexOf(const AName: string): integer;
+function TLyseeVarbList.IndexOf(const AName: string): integer;
 var
   I: integer;
 begin
@@ -9520,7 +9551,7 @@ begin
   Result := -1;
 end;
 
-function TLiVarbList.Find(const AName: string): TLiVarb;
+function TLyseeVarbList.Find(const AName: string): TLyseeVarb;
 var
   I: integer;
 begin
@@ -9530,9 +9561,9 @@ begin
     Result := nil;
 end;
 
-{ TLiFunc }
+{ TLyseeFunc }
 
-constructor TLiFunc.Create(const AName: string; M: TLiModule; Proc: TLiLyseeProc);
+constructor TLyseeFunc.Create(const AName: string; M: TLyseeModule; Proc: TLyseeProc);
 begin
   FName := AName;
   if FName <> '' then
@@ -9541,7 +9572,7 @@ begin
     M.FFuncList.FItems.Add(Self);
   end;
   FModule := M;
-  FParams := TLiVarbList.Create;
+  FParams := TLyseeVarbList.Create;
   FResultType := my_variant;
   FProc := Proc;
   FMinArgs := -1;
@@ -9551,27 +9582,27 @@ begin
         Context.FRollbacks.Add(Self);
 end;
 
-constructor TLiFunc.CreateMethod(const AName: string; P: TLiType; Proc: TLiLyseeProc);
+constructor TLyseeFunc.CreateMethod(const AName: string; P: TLyseeType; Proc: TLyseeProc);
 begin
   FName := AName;
   FParent := P;
   FParent.FMethods.FItems.Add(Self);
   IncRefcount;
   FModule := FParent.FModule;
-  FParams := TLiVarbList.Create;
+  FParams := TLyseeVarbList.Create;
   FResultType := my_variant;
   FProc := Proc;
   FMinArgs := -1;
 end;
 
-procedure TLiFunc.Decompile(Level: integer; Lines: TStrings);
+procedure TLyseeFunc.Decompile(Level: integer; Lines: TStrings);
 begin
   Lines.Add(Margin(Level) + Prototype);
   if (FSTMTs <> nil) and not IsConst then
     FSTMTs.Decompile(Level + 1, Lines);
 end;
 
-destructor TLiFunc.Destroy;
+destructor TLyseeFunc.Destroy;
 begin
   if FModule <> nil then
     FModule.FFuncList.FItems.Remove(Self);
@@ -9601,9 +9632,9 @@ begin
   inherited;
 end;
 
-function TLiFunc.Executing: boolean;
+function TLyseeFunc.Executing: boolean;
 var
-  P: TLiParam;
+  P: TLyseeParam;
 begin
   if FModule.FContext <> nil then
   begin
@@ -9621,16 +9652,16 @@ begin
   Result := false;
 end;
 
-function TLiFunc.AddCode(const Code: string): boolean;
+function TLyseeFunc.AddCode(const Code: string): boolean;
 var
-  P: TLiParser;
+  P: TLyseeParser;
 begin
   Result := ChangeAble;
   if Result and (Code <> '') then
   begin
-    P := TLiParser.Create(FModule);
+    P := TLyseeParser.Create(FModule);
     try
-      P.FTokenizer := TLiTokenizer.Create(Code);
+      P.FTokenizer := TLyseeTokenizer.Create(Code);
       P.SymGetNext;
       while P.FLast.FSym <> syEOF do
       begin
@@ -9645,31 +9676,31 @@ begin
   end;
 end;
 
-function TLiFunc.AsString: string;
+function TLyseeFunc.AsString: string;
 begin
   Result := Prototype;
 end;
 
-function TLiFunc.ChangeAble: boolean;
+function TLyseeFunc.ChangeAble: boolean;
 begin
   Result := (FName = '') and not Assigned(FProc) and not Executing;
 end;
 
-function TLiFunc.Context: TLiContext;
+function TLyseeFunc.Context: TLysee;
 begin
   if FModule <> nil then
     Result := FModule.FContext else
     Result := nil;
 end;
 
-function TLiFunc.GetFullName: string;
+function TLyseeFunc.GetFullName: string;
 begin
   if FParent <> nil then
     Result := FParent.FName + '.' + Name else
     Result := FModule.FName + '.' + Name;
 end;
 
-function TLiFunc.GetMinArgs: integer;
+function TLyseeFunc.GetMinArgs: integer;
 var
   I: integer;
 begin
@@ -9686,17 +9717,17 @@ begin
   Result := FMinArgs;
 end;
 
-function TLiFunc.GetSTMTs: TLiSTMTList;
+function TLyseeFunc.GetSTMTs: TLyseeSTMTList;
 begin
   if FSTMTs = nil then
-    FSTMTs := TLiSTMTList.Create;
+    FSTMTs := TLyseeSTMTList.Create;
   Result := FSTMTs;
 end;
 
-function TLiFunc.Prototype: string;
+function TLyseeFunc.Prototype: string;
 var
   X: integer;
-  P: TLiVarb;
+  P: TLyseeVarb;
   N: string;
   L: TStrings;
 begin
@@ -9736,7 +9767,7 @@ begin
   end;
 end;
 
-function TLiFunc.SetCode(const Code: string): boolean;
+function TLyseeFunc.SetCode(const Code: string): boolean;
 begin
   Result := ChangeAble;
   if Result then
@@ -9746,7 +9777,7 @@ begin
   end;
 end;
 
-function TLiFunc.FindBy(const ID: string; rec: PLiFind; Range: TLiFinds): boolean;
+function TLyseeFunc.FindBy(const ID: string; rec: PLyseeFind; Range: TLyseeFinds): boolean;
 var
   I, M: string;
 begin
@@ -9763,40 +9794,40 @@ begin
   end;
 end;
 
-function TLiFunc.IsConst: boolean;
+function TLyseeFunc.IsConst: boolean;
 begin
   Result := (FSTMTs <> nil) and (FSTMTs.Count = 1) and (FSTMTs[0].FStyle = ssConst);
 end;
 
-function TLiFunc.IsConstructor: boolean;
+function TLyseeFunc.IsConstructor: boolean;
 begin
   Result := (Self <> nil) and (FParent <> nil) and (FParent.FConstructer = Self);
 end;
 
-function TLiFunc.IsFunction: boolean;
+function TLyseeFunc.IsFunction: boolean;
 begin
   Result := (FResultType <> my_nil);
 end;
 
-function TLiFunc.IsMainFunc: boolean;
+function TLyseeFunc.IsMainFunc: boolean;
 begin
   Result := (FModule.FContext <> nil) and
             (FModule.FContext.FMainFunc = Self);
 end;
 
-function TLiFunc.IsMethod: boolean;
+function TLyseeFunc.IsMethod: boolean;
 begin
   Result := (Self <> nil) and (FParent <> nil);
 end;
 
-function TLiFunc.IsProcedure: boolean;
+function TLyseeFunc.IsProcedure: boolean;
 begin
   Result := (FResultType = my_nil);
 end;
 
-function TLiFunc.MakeMethod: TLiFunc;
+function TLyseeFunc.MakeMethod: TLyseeFunc;
 var
-  P: TLiType;
+  P: TLyseeType;
 begin
   Result := nil;
   if (Self <> nil) and (FParent = nil) and Assigned(FProc) and (FParams.Count > 0) then
@@ -9804,7 +9835,7 @@ begin
     P := FParams[0].FType;
     if (P <> my_nil) and (P <> my_variant) and (P.FindMethod(FName) = nil) then
     begin
-      Result := TLiFunc.CreateMethod(FName, P, FProc);
+      Result := TLyseeFunc.CreateMethod(FName, P, FProc);
       Result.FResultType := FResultType;
       Result.FParams.Assign(FParams);
       Result.FHasVarArg := FHasVarArg;
@@ -9813,9 +9844,9 @@ begin
   end;
 end;
 
-function TLiFunc.FindInside(const ID: string; rec: PLiFind): boolean;
+function TLyseeFunc.FindInside(const ID: string; rec: PLyseeFind): boolean;
 var
-  findrec: RLiFind;
+  findrec: RLyseeFind;
 begin
   if rec = nil then rec := @findrec;
   if MatchID(ID, Name) then
@@ -9833,9 +9864,9 @@ begin
   Result := (rec^.f_find <> fiNone);
 end;
 
-function TLiFunc.FindSave(const ID: string; Param: TLiParam; Outv: TLiValue): TLiFind;
+function TLyseeFunc.FindSave(const ID: string; Param: TLyseeParam; Outv: TLyseeValue): TLyseeFind;
 var
-  R: RLiFind;
+  R: RLyseeFind;
 begin
   if (ID <> '') and FindBy(ID, @R) then
   begin
@@ -9847,21 +9878,21 @@ begin
   else Result := fiNone;
 end;
 
-{ TLiFuncList }
+{ TLyseeFuncList }
 
-constructor TLiFuncList.Create;
+constructor TLyseeFuncList.Create;
 begin
   FItems := TList.Create;
 end;
 
-destructor TLiFuncList.Destroy;
+destructor TLyseeFuncList.Destroy;
 begin
   Clear;
   FreeAndNil(FItems);
   inherited;
 end;
 
-function TLiFuncList.Get(const Name: string): TLiFunc;
+function TLyseeFuncList.Get(const Name: string): TLyseeFunc;
 var
   I: integer;
 begin
@@ -9873,19 +9904,19 @@ begin
   Result := nil;
 end;
 
-function TLiFuncList.GetCount: integer;
+function TLyseeFuncList.GetCount: integer;
 begin
   if FItems <> nil then
     Result := FItems.Count else
     Result := 0;
 end;
 
-function TLiFuncList.GetItem(Index: integer): TLiFunc;
+function TLyseeFuncList.GetItem(Index: integer): TLyseeFunc;
 begin
-  Result := TLiFunc(FItems[Index]);
+  Result := TLyseeFunc(FItems[Index]);
 end;
 
-procedure TLiFuncList.Clear;
+procedure TLyseeFuncList.Clear;
 var
   I: integer;
 begin
@@ -9893,9 +9924,9 @@ begin
     Delete(I);
 end;
 
-procedure TLiFuncList.Delete(Index: integer);
+procedure TLyseeFuncList.Delete(Index: integer);
 var
-  F: TLiFunc;
+  F: TLyseeFunc;
 begin
   F := GetItem(Index);
   FItems.Delete(Index);
@@ -9904,18 +9935,18 @@ begin
   F.Free
 end;
 
-{ TLiModule }
+{ TLyseeModule }
 
-function TLiModule.AddEnumType(const AName: string;
-  const ItemNames: array of string): TLiEnumType;
+function TLyseeModule.AddEnumType(const AName: string;
+  const ItemNames: array of string): TLyseeEnumType;
 begin
-  Result := TLiEnumType.Create(AName, Self, nil);
-  Result.Add(ItemNames);
+  Result := TLyseeEnumType.Create(AName, Self, nil);
+  Result.AddItems(ItemNames);
 end;
 
-function TLiModule.AddFunc(const AName: string; T: TLiType;
-  const ParamNames: array of string; const ParamTypes: array of TLiType;
-  const Proc: TLiLyseeProc; const Data: pointer): TLiFunc;
+function TLyseeModule.AddFunc(const AName: string; T: TLyseeType;
+  const ParamNames: array of string; const ParamTypes: array of TLyseeType;
+  const Proc: TLyseeProc; const Data: pointer): TLyseeFunc;
 var
   I: integer;
   E: boolean;
@@ -9925,7 +9956,7 @@ begin
   if (T <> nil) and (AName <> '') and Assigned(Proc) then
     if not Find(AName) and ParamOK(ParamNames, ParamTypes, false, E) then
     begin
-      Result := TLiFunc.Create(AName, Self, Proc);
+      Result := TLyseeFunc.Create(AName, Self, Proc);
       Result.FResultType := T;
       Result.FHasVarArg := E;
       Result.FData := Data;
@@ -9934,27 +9965,26 @@ begin
     end;
 end;
 
-function TLiModule.AddFunc(const AName: string;
-  const ParamNames: array of string; const ParamTypes: array of TLiType;
-  const Proc: TLiLyseeProc; const Data: pointer): TLiFunc;
+function TLyseeModule.AddFunc(const AName: string;
+  const ParamNames: array of string; const ParamTypes: array of TLyseeType;
+  const Proc: TLyseeProc; const Data: pointer): TLyseeFunc;
 begin
   Result := AddFunc(AName, my_nil, ParamNames, ParamTypes, Proc, Data);
 end;
 
-function TLiModule.AsString: string;
+function TLyseeModule.AsString: string;
 begin
   Result := FName;
 end;
 
-constructor TLiModule.Create(const AName: string);
+constructor TLyseeModule.Create(const AName: string);
 begin
   inherited;
   InitModule;
   my_modules.Add(Self);
-  FNeedSetup := true;
 end;
 
-constructor TLiModule.CreateEx(const AName: string; AContext: TLiContext);
+constructor TLyseeModule.CreateEx(const AName: string; AContext: TLysee);
 begin
   inherited Create(AName);
   InitModule;
@@ -9962,7 +9992,7 @@ begin
   if FContext <> nil then
   begin
     FContext.FModules.Add(Self);
-    FModules := TLiModuleList.Create(FContext);
+    FModules := TLyseeModuleList.Create(FContext);
     FModules.FImporter := Self;
     FImporters := TList.Create;
     if FContext.FRollbacks <> nil then
@@ -9970,23 +10000,22 @@ begin
     Use(my_system);
   end
   else my_modules.Add(Self);
-  FNeedSetup := true;
 end;
 
-procedure TLiModule.InitModule;
+procedure TLyseeModule.InitModule;
 begin
   IncRefcount;
   FFileName := my_kernel;
   FTypeList := TList.Create;
-  FFuncList := TLiFuncList.Create;
-  FConsts := TLiHash.Create;
+  FFuncList := TLyseeFuncList.Create;
+  FConsts := TLyseeHash.Create;
   FConsts.CaseSensitive := false;
 end;
 
-destructor TLiModule.Destroy;
+destructor TLyseeModule.Destroy;
 var
   A: integer;
-  P: TLiModule;
+  P: TLyseeModule;
 begin
   if FContext <> nil then
   begin
@@ -10012,15 +10041,15 @@ begin
   inherited;
 end;
 
-procedure TLiModule.DeleteFunctions;
+procedure TLyseeModule.DeleteFunctions;
 begin
   FFuncList.Clear;
 end;
 
-procedure TLiModule.DeleteTypes;
+procedure TLyseeModule.DeleteTypes;
 var
   I: integer;
-  T: TLiType;
+  T: TLyseeType;
 begin
   for I := TypeCount - 1 downto 0 do
   begin
@@ -10030,12 +10059,12 @@ begin
   end;
 end;
 
-function TLiModule.GetType(Index: integer): TLiType;
+function TLyseeModule.GetType(Index: integer): TLyseeType;
 begin
-  Result := TLiType(FTypeList[Index]);
+  Result := TLyseeType(FTypeList[Index]);
 end;
 
-function TLiModule.FindModule(const ID: string; FindPossible: boolean): TLiModule;
+function TLyseeModule.FindModule(const ID: string; FindPossible: boolean): TLyseeModule;
 begin
   if FModules <> nil then
     Result := FModules.Find(ID) else
@@ -10053,25 +10082,25 @@ begin
       Result := my_system;
 end;
 
-function TLiModule.FindSave(const AName: string; Value: TLiValue): boolean;
+function TLyseeModule.FindSave(const AName: string; Value: TLyseeValue): boolean;
 var
-  srec: RLiFind;
+  srec: RLyseeFind;
 begin
   Result := (Self <> nil) and Find(AName, @srec);
   if Result then
     Value.SetFind(@srec);
 end;
 
-function TLiModule.FindSaveBy(const AName: string; Value: TLiValue): boolean;
+function TLyseeModule.FindSaveBy(const AName: string; Value: TLyseeValue): boolean;
 var
-  srec: RLiFind;
+  srec: RLyseeFind;
 begin
   Result := (Self <> nil) and FindBy(AName, '', @srec);
   if Result then
     value.SetFind(@srec);
 end;
 
-procedure TLiModule.Use(M: TLiModule);
+procedure TLyseeModule.Use(M: TLyseeModule);
 begin
   if (M <> nil) and (M <> Self) and (M <> my_system) then
     if (FModules <> nil) and not FModules.Has(M) then
@@ -10080,15 +10109,15 @@ begin
       if M.FImporters <> nil then
         M.FImporters.Add(Self);
     end;
-  if M.FNeedSetup then M.Setup;
+  M.Setup;
 end;
 
-function TLiModule.IsMainModule: boolean;
+function TLyseeModule.IsMainModule: boolean;
 begin
   Result := (FContext <> nil) and (FContext.FMainModule = Self);
 end;
 
-function TLiModule.EnsureName(const AName: string): string;
+function TLyseeModule.EnsureName(const AName: string): string;
 begin
   if AName = '' then
   begin
@@ -10098,12 +10127,12 @@ begin
   else Result := AName;
 end;
 
-function TLiModule.FindFunc(const ID: string): TLiFunc;
+function TLyseeModule.FindFunc(const ID: string): TLyseeFunc;
 begin
-  Result := TLiFunc(FFuncList.Get(ID));
+  Result := TLyseeFunc(FFuncList.Get(ID));
 end;
 
-function TLiModule.FindFuncBy(const ID: string): TLiFunc;
+function TLyseeModule.FindFuncBy(const ID: string): TLyseeFunc;
 var
   X: integer;
 begin
@@ -10119,22 +10148,22 @@ begin
   end;
 end;
 
-function TLiModule.FindType(const ID: string): TLiType;
+function TLyseeModule.FindType(const ID: string): TLyseeType;
 var
   X: integer;
 begin
   for X := 0 to FTypeList.Count - 1 do
   begin
-    Result := TLiType(FTypeList[X]);
+    Result := TLyseeType(FTypeList[X]);
     if MatchID(ID, Result.FName) then Exit;
   end;
   Result := nil;
 end;
 
-function TLiModule.FindTypeBy(const ID, AModule: string): TLiType;
+function TLyseeModule.FindTypeBy(const ID, AModule: string): TLyseeType;
 var
   X: integer;
-  M: TLiModule;
+  M: TLyseeModule;
 begin
   Result := nil;
   if AModule <> '' then
@@ -10163,21 +10192,16 @@ begin
   end;
 end;
 
-procedure TLiModule.Setup;
-var
-  I: integer;
-  T: TLiType;
+procedure TLyseeModule.Setup;
 begin
-  FNeedSetup := false;
-  for I := 0 to FTypeList.Count - 1 do
+  if Assigned(FOnSetup) then
   begin
-    T := GetType(I);
-    if T.IsObject and (T.MethodCount = 0) then
-      T.Setup;
+    FOnSetup(Self);
+    FOnSetup := nil;
   end;
 end;
 
-function TLiModule.SetupType(const T: TLiType): boolean;
+function TLyseeModule.SetupType(const T: TLyseeType): boolean;
 begin
   Result := (T <> nil) and IsID(T.FName) and not Find(T.FName);
   if Result then
@@ -10188,9 +10212,9 @@ begin
   else T.Free;
 end;
 
-function TLiModule.Find(const ID: string; rec: PLiFind): boolean;
+function TLyseeModule.Find(const ID: string; rec: PLyseeFind): boolean;
 var
-  FR: RLiFind;
+  FR: RLyseeFind;
 begin
   if rec = nil then rec := @FR;
   rec^.f_find := fiNone;
@@ -10215,10 +10239,10 @@ begin
   Result := (rec^.f_find <> fiNone);
 end;
 
-function TLiModule.FindBy(const ID, AModule: string; rec: PLiFind): boolean;
+function TLyseeModule.FindBy(const ID, AModule: string; rec: PLyseeFind): boolean;
 var
   X: integer;
-  M: TLiModule;
+  M: TLyseeModule;
 begin
   if AModule <> '' then
   begin
@@ -10240,12 +10264,12 @@ begin
   end;
 end;
 
-function TLiModule.TypeCount: integer;
+function TLyseeModule.TypeCount: integer;
 begin
   Result := FTypeList.Count;
 end;
 
-function TLiModule.UseModule(const AName: string): TLiModule;
+function TLyseeModule.UseModule(const AName: string): TLyseeModule;
 var
   F, S: string;
 begin
@@ -10256,10 +10280,10 @@ begin
     if F <> '' then
     begin
       S := TrimRight(FileCode(F));
-      Result := TLiModule.CreateEx(AName, FContext);
+      Result := TLyseeModule.CreateEx(AName, FContext);
       try
         Result.FFileName := F;
-        TLiParser.Create(Result).ParseAndFree(S, true);
+        TLyseeParser.Create(Result).ParseAndFree(S, true);
       except
         FreeAndNil(Result);
         raise;
@@ -10269,28 +10293,28 @@ begin
   Use(Result);
 end;
 
-function TLiModule.AddFunc(const AName: string; T: TLiType;
-  const Proc: TLiLyseeProc; const Data: pointer): TLiFunc;
+function TLyseeModule.AddFunc(const AName: string; T: TLyseeType;
+  const Proc: TLyseeProc; const Data: pointer): TLyseeFunc;
 begin
   Result := AddFunc(AName, T, [], [], Proc, Data);
 end;
 
-function TLiModule.AddFunc(const AName: string; const Proc: TLiLyseeProc;
-  const Data: pointer): TLiFunc;
+function TLyseeModule.AddFunc(const AName: string; const Proc: TLyseeProc;
+  const Data: pointer): TLyseeFunc;
 begin
   Result := AddFunc(AName, my_nil, [], [], Proc, Data);
 end;
 
-{ TLiModuleList }
+{ TLyseeModuleList }
 
-function TLiModuleList.Add(AModule: TLiModule): integer;
+function TLyseeModuleList.Add(AModule: TLyseeModule): integer;
 begin
   Result := IndexOf(AModule);
   if Result < 0 then
     Result := FModules.Add(AModule);
 end;
 
-procedure TLiModuleList.Clear;
+procedure TLyseeModuleList.Clear;
 var
   A: integer;
 begin
@@ -10300,7 +10324,7 @@ begin
     Delete(A);
 end;
 
-procedure TLiModuleList.ClearConsts;
+procedure TLyseeModuleList.ClearConsts;
 var
   I: integer;
 begin
@@ -10309,30 +10333,30 @@ begin
       GetModule(I).FConsts.Clear;
 end;
 
-constructor TLiModuleList.Create(AContext: TLiContext);
+constructor TLyseeModuleList.Create(AContext: TLysee);
 begin
   IncRefcount;
   FContext := AContext;
   FModules := TList.Create;
 end;
 
-procedure TLiModuleList.Delete(Index: integer);
+procedure TLyseeModuleList.Delete(Index: integer);
 var
-  M: TLiModule;
+  M: TLyseeModule;
 begin
   M := GetModule(Index);
   FModules.Delete(Index);
-  if FImporter = nil then M.Free; {<--TLiContext.FModules/my_modules}
+  if FImporter = nil then M.Free; {<--TLysee.FModules/my_modules}
 end;
 
-destructor TLiModuleList.Destroy;
+destructor TLyseeModuleList.Destroy;
 begin
   Clear;
   FreeAndNil(FModules);
   inherited;
 end;
 
-function TLiModuleList.Find(const Name: string): TLiModule;
+function TLyseeModuleList.Find(const Name: string): TLyseeModule;
 var
   X: integer;
 begin
@@ -10342,35 +10366,35 @@ begin
     Result := nil;
 end;
 
-function TLiModuleList.GetCount: integer;
+function TLyseeModuleList.GetCount: integer;
 begin
   Result := FModules.Count;
 end;
 
-function TLiModuleList.GetModule(Index: integer): TLiModule;
+function TLyseeModuleList.GetModule(Index: integer): TLyseeModule;
 begin
-  Result := TLiModule(FModules[Index]);
+  Result := TLyseeModule(FModules[Index]);
 end;
 
-function TLiModuleList.Has(const Name: string): boolean;
+function TLyseeModuleList.Has(const Name: string): boolean;
 begin
   Result := (IndexOf(Name) >= 0);
 end;
 
-function TLiModuleList.Has(AModule: TLiModule): boolean;
+function TLyseeModuleList.Has(AModule: TLyseeModule): boolean;
 begin
   Result := (IndexOf(AModule) >= 0);
 end;
 
-function TLiModuleList.IndexOf(const Name: string): integer;
+function TLyseeModuleList.IndexOf(const Name: string): integer;
 var
   X: integer;
-  M: TLiModule;
+  M: TLyseeModule;
 begin
   if Name <> '' then
     for X := 0 to FModules.Count - 1 do
     begin
-      M := TLiModule(FModules[X]);
+      M := TLyseeModule(FModules[X]);
       if MatchID(M.Name, Name) then
       begin
         Result := X;
@@ -10380,7 +10404,7 @@ begin
   Result := -1;
 end;
 
-procedure TLiModuleList.Setup;
+procedure TLyseeModuleList.Setup;
 var
   I: integer;
 begin
@@ -10388,12 +10412,12 @@ begin
     GetModule(I).Setup;
 end;
 
-function TLiModuleList.IndexOf(AModule: TLiModule): integer;
+function TLyseeModuleList.IndexOf(AModule: TLyseeModule): integer;
 begin
   Result := FModules.IndexOf(AModule);
 end;
 
-procedure TLiModuleList.DeleteFunctions;
+procedure TLyseeModuleList.DeleteFunctions;
 var
   index: integer;
 begin
@@ -10402,53 +10426,53 @@ begin
       GetModule(index).DeleteFunctions;
 end;
 
-function TLiModuleList.ToList: TLiList;
+function TLyseeModuleList.ToList: TLyseeList;
 var
   index: integer;
 begin
-  Result := TLiList.Create;
+  Result := TLyseeList.Create;
   for index := 0 to GetCount - 1 do
     Result.Add.SetAsModule(GetModule(index));
 end;
 
-{ TLiString }
+{ TLyseeString }
 
-function TLiString.AsString: string;
+function TLyseeString.AsString: string;
 begin
   Result := FValue;
 end;
 
-constructor TLiString.Create(const S: string);
+constructor TLyseeString.Create(const S: string);
 begin
   FValue := S;
 end;
 
-constructor TLiString.CreateIncRefcount(const S: string);
+constructor TLyseeString.CreateIncRefcount(const S: string);
 begin
   FValue := S;
   IncRefcount;
 end;
 
-function TLiString.Length: integer;
+function TLyseeString.Length: integer;
 begin
   if Self <> nil then
     Result := System.Length(FValue) else
     Result := 0;
 end;
 
-{ TLiGarbage }
+{ TLyseeGarbage }
 
-procedure TLiGarbage.Clear;
+procedure TLyseeGarbage.Clear;
 begin
 
 end;
 
-constructor TLiGarbage.Create;
+constructor TLyseeGarbage.Create;
 begin
   if my_gcman <> nil then my_gcman.GcAdd(Self);
 end;
 
-destructor TLiGarbage.Destroy;
+destructor TLyseeGarbage.Destroy;
 begin
   if my_gcman <> nil then
   begin
@@ -10458,24 +10482,24 @@ begin
   inherited;
 end;
 
-procedure TLiGarbage.MarkForSurvive;
+procedure TLyseeGarbage.MarkForSurvive;
 begin
   { do nothing }
 end;
 
-{ TLiGarbageCollect }
+{ TLyseeCollect }
 
-function TLiGarbageCollect.Collect: integer;
+function TLyseeCollect.Collect: integer;
 
   procedure change_ref(Increase: boolean);
   var
     I: integer;
-    G: TLiGarbage;
+    G: TLyseeGarbage;
   begin
     for I := 0 to FDead.Count - 1 do
       if I < FDead.Count then
       begin
-        G := TLiGarbage(FDead[I]);
+        G := TLyseeGarbage(FDead[I]);
         if Increase then
           G.IncRefcount else
           G.DecRefcount;
@@ -10484,7 +10508,7 @@ function TLiGarbageCollect.Collect: integer;
 
 var
   I: integer;
-  G: TLiGarbage;
+  G: TLyseeGarbage;
 begin
   FDead.Clear;
 
@@ -10513,7 +10537,7 @@ begin
   try
     for I := FDead.Count - 1 downto 0 do
       if I < FDead.Count then
-        TLiGarbage(FDead[I]).Clear;
+        TLyseeGarbage(FDead[I]).Clear;
   finally
     change_ref(false);
   end;
@@ -10522,34 +10546,34 @@ begin
   for I := FDead.Count - 1 downto 0 do
     if I < FDead.Count then
     begin
-      G := TLiGarbage(FDead[I]);
+      G := TLyseeGarbage(FDead[I]);
       FDead.Delete(I);
       G.Free;
     end;
 end;
 
-procedure TLiGarbageCollect.MarkSurvived;
+procedure TLyseeCollect.MarkSurvived;
 var
   I: integer;
 begin
   for I := 0 to FContexts.Count - 1 do
-    TLiContext(FContexts[I]).MarkSurvived;
+    TLysee(FContexts[I]).MarkSurvived;
 end;
 
-constructor TLiGarbageCollect.Create;
+constructor TLyseeCollect.Create;
 begin
   FContexts := TList.Create;
   FDead := TList.Create;
 end;
 
-destructor TLiGarbageCollect.Destroy;
+destructor TLyseeCollect.Destroy;
 begin
   FreeAndNil(FDead);
   FreeAndNil(FContexts);
   inherited;
 end;
 
-procedure TLiGarbageCollect.GcAdd(G: TLiGarbage);
+procedure TLyseeCollect.GcAdd(G: TLyseeGarbage);
 begin
   if not G.FInChain then
   begin
@@ -10562,7 +10586,7 @@ begin
   end;
 end;
 
-procedure TLiGarbageCollect.GcRemove(G: TLiGarbage);
+procedure TLyseeCollect.GcRemove(G: TLyseeGarbage);
 begin
   if G.FInChain then
   begin
@@ -10585,16 +10609,16 @@ begin
   end;
 end;
 
-{ TLiList }
+{ TLyseeList }
 
-destructor TLiList.Destroy;
+destructor TLyseeList.Destroy;
 begin
   Clear;
   FreeAndNil(FItems);
   inherited;
 end;
 
-procedure TLiList.PrepareFor(Func: TLiFunc);
+procedure TLyseeList.PrepareFor(Func: TLyseeFunc);
 var
   I, N: integer;
 begin
@@ -10602,11 +10626,11 @@ begin
   SetCount(Func.FParams.Count);
   for I := 0 to Func.FParams.Count - 1 do
     if I < N then
-      Func.FParams[I].FType._Convert(GetItem(I)) else
-      Func.FParams[N].FType._SetDefault(GetItem(N));
+      Func.FParams[I].FType.Convert(GetItem(I)) else
+      Func.FParams[N].FType.SetDefault(GetItem(N));
 end;
 
-procedure TLiList.Remove(Value: TLiValue);
+procedure TLyseeList.Remove(Value: TLyseeValue);
 var
   I: integer;
 begin
@@ -10614,31 +10638,40 @@ begin
   if I >= 0 then Delete(I);
 end;
 
-function TLiList.CopyRight(ItemCount: integer): TLiList;
+function TLyseeList.CopyRight(ItemCount: integer): TLyseeList;
 begin
   Result := Copy(GetCount - ItemCount, ItemCount);
 end;
 
-function TLiList.AddList: TLiList;
+function TLyseeList.AddList: TLyseeList;
 var
-  V: TLiValue;
+  V: TLyseeValue;
 begin
-  Result := TLiList.Create;
+  Result := TLyseeList.Create;
   Result.IncRefcount;
   V := Add;
-  V.FType := my_list;
+  V.FType := my_array;
   V.FValue.VObject := Result;
 end;
 
-procedure TLiList.AddStrings(List: TStrings);
+procedure TLyseeList.AddStrings(Strs: TStrings);
 var
   I: integer;
 begin
-  for I := 0 to List.Count - 1 do
-    Add.AsString := List[I];
+  for I := 0 to Strs.Count - 1 do
+    Add.AsString := Strs[I];
 end;
 
-function TLiList.AsString: string;
+procedure TLyseeList.Assign(AList: TLyseeList);
+var
+  I: integer;
+begin
+  Clear;
+  for I := 0 to AList.Count - 1 do
+    Add(AList.GetItem(I));
+end;
+
+function TLyseeList.AsString: string;
 var
   X, N: integer;
 begin
@@ -10665,7 +10698,7 @@ begin
   else Result := '[,,,]';
 end;
 
-procedure TLiList.Clear;
+procedure TLyseeList.Clear;
 var
   I: integer;
 begin
@@ -10674,11 +10707,17 @@ begin
   inherited;
 end;
 
-function TLiList.Copy(Index, ItemCount: integer): TLiList;
+function TLyseeList.Clone: TLyseeList;
+begin
+  Result := TLyseeList.Create;
+  Result.Assign(Self);
+end;
+
+function TLyseeList.Copy(Index, ItemCount: integer): TLyseeList;
 var
   I: integer;
 begin
-  Result := TLiList.Create;
+  Result := TLyseeList.Create;
   if Index < 0 then
   begin
     Inc(ItemCount, Index);
@@ -10692,44 +10731,45 @@ begin
   end;
 end;
 
-constructor TLiList.Create;
+constructor TLyseeList.Create;
 begin
   inherited;
   FItems := TList.Create;
+  FReadonly := false;
 end;
 
-procedure TLiList.Delete(Index: integer);
+procedure TLyseeList.Delete(Index: integer);
 var
-  V: TLiValue;
+  V: TLyseeValue;
 begin
-  V := TLiValue(FItems[Index]);
+  V := TLyseeValue(FItems[Index]);
   FItems.Delete(Index);
   V.Free;
 end;
 
-procedure TLiList.DeleteLast;
+procedure TLyseeList.DeleteLast;
 begin
   Delete(GetCount - 1);
 end;
 
-procedure TLiList.Exchange(Index1, Index2: integer);
+procedure TLyseeList.Exchange(Index1, Index2: integer);
 begin
   FItems.Exchange(Index1, Index2);
 end;
 
-function TLiList.First: TLiValue;
+function TLyseeList.First: TLyseeValue;
 begin
   Result := GetItem(0);
 end;
 
-function TLiList.GetCount: integer;
+function TLyseeList.GetCount: integer;
 begin
   if Self <> nil then
     Result := FItems.Count else
     Result := 0;
 end;
 
-procedure TLiList.GetFirstTwo(var V1, V2: TLiValue);
+procedure TLyseeList.GetFirstTwo(var V1, V2: TLyseeValue);
 var
   N: integer;
 begin
@@ -10740,12 +10780,12 @@ begin
   if N > 1 then V2 := GetItem(1);
 end;
 
-function TLiList.GetItem(Index: integer): TLiValue;
+function TLyseeList.GetItem(Index: integer): TLyseeValue;
 begin
-  Result := TLiValue(FItems[Index]);
+  Result := TLyseeValue(FItems[Index]);
 end;
 
-function TLiList.IndexOf(Value: TLiValue): integer;
+function TLyseeList.IndexOf(Value: TLyseeValue): integer;
 var
   I: integer;
 begin
@@ -10759,25 +10799,25 @@ begin
   Result := -1;
 end;
 
-function TLiList.Insert(Index: integer; Value: TLiValue): TLiValue;
+function TLyseeList.Insert(Index: integer; Value: TLyseeValue): TLyseeValue;
 begin
-  Result := TLiValue.Create;
+  Result := TLyseeValue.Create;
   FItems.Insert(Index, Result);
   if Value <> nil then
     Result.SetValue(Value);
 end;
 
-function TLiList.Last: TLiValue;
+function TLyseeList.Last: TLyseeValue;
 begin
   Result := GetItem(GetCount - 1);
 end;
 
-function TLiList.CopyLeft(ItemCount: integer): TLiList;
+function TLyseeList.CopyLeft(ItemCount: integer): TLyseeList;
 begin
   Result := Copy(0, ItemCount);
 end;
 
-procedure TLiList.MarkForSurvive;
+procedure TLyseeList.MarkForSurvive;
 var
   I: integer;
 begin
@@ -10789,20 +10829,20 @@ begin
   end;
 end;
 
-procedure TLiList.Move(CurIndex, NewIndex: integer);
+procedure TLyseeList.Move(CurIndex, NewIndex: integer);
 begin
   FItems.Move(CurIndex, NewIndex);
 end;
 
-function TLiList.Add(Value: TLiValue): TLiValue;
+function TLyseeList.Add(Value: TLyseeValue): TLyseeValue;
 begin
-  Result := TLiValue.Create;
+  Result := TLyseeValue.Create;
   FItems.Add(Result);
   if Value <> nil then
     Result.SetValue(Value);
 end;
 
-procedure TLiList.SetCount(NewCount: integer);
+procedure TLyseeList.SetCount(NewCount: integer);
 begin
   if NewCount < 1 then Clear else
   begin
@@ -10811,28 +10851,34 @@ begin
   end;
 end;
 
-procedure TLiList.Sort;
+procedure TLyseeList.Sort;
 begin
   FItems.Sort(@SortValueCompare);
 end;
 
-{ TLiHashItem }
+procedure TLyseeList.TestChange;
+begin
+  if FReadonly then
+    raise Exception.Create('array/list is readonly');
+end;
 
-function TLiHashItem.Format: string;
+{ TLyseeHashItem }
+
+function TLyseeHashItem.Format: string;
 begin
   Result := FormatString(FKey) + ':' + FormatValue(Self);
 end;
 
-{ TLiHash }
+{ TLyseeHash }
 
-function TLiHash.Add(const Name: string): TLiHashItem;
+function TLyseeHash.Add(const Name: string): TLyseeHashItem;
 var
   I: integer;
 begin
   Result := Get(Name);
   if Result = nil then
   begin
-    Result := TLiHashItem.Create;
+    Result := TLyseeHashItem.Create;
     Result.FKey := Name;
     I := HashIndex(Result.FKey);
     Result.FNext := FBuckets[I];
@@ -10842,9 +10888,9 @@ begin
   end;
 end;
 
-function TLiHash.AsString: string;
+function TLyseeHash.AsString: string;
 var
-  H: TLiHashItem;
+  H: TLyseeHashItem;
   L: TList;
   I: integer;
 begin
@@ -10856,11 +10902,11 @@ begin
       try
         if L.Count > 0 then
         begin
-          H := TLiHashItem(L.First);
+          H := TLyseeHashItem(L.First);
           Result := '[' + H.Format;
           for I := 1 to L.Count - 1 do
           begin
-            H := TLiHashItem(L[I]);
+            H := TLyseeHashItem(L[I]);
             Result := Result + ', ' + H.Format;
           end;
           Result := Result + ']';
@@ -10876,39 +10922,39 @@ begin
   else Result := '[:::]';
 end;
 
-function TLiHash.DefConst(const Name, Value: string): TLiHashItem;
+function TLyseeHash.DefConst(const Name, Value: string): TLyseeHashItem;
 begin
   Result := Add(Name);
   Result.AsString := Value;
 end;
 
-function TLiHash.DefConst(const Name: string; Value: int64): TLiHashItem;
+function TLyseeHash.DefConst(const Name: string; Value: int64): TLyseeHashItem;
 begin
   Result := Add(Name);
   Result.AsInteger := Value;
 end;
 
-function TLiHash.DefConst(const Name: string; Value: double): TLiHashItem;
+function TLyseeHash.DefConst(const Name: string; Value: double): TLyseeHashItem;
 begin
   Result := Add(Name);
   Result.AsFloat := Value;
 end;
 
-function TLiHash.DefConst(const Name: string; Value: boolean): TLiHashItem;
+function TLyseeHash.DefConst(const Name: string; Value: boolean): TLyseeHashItem;
 begin
   Result := Add(Name);
   Result.SetAsBoolean(Value);
 end;
 
-function TLiHash.BucketCount: integer;
+function TLyseeHash.BucketCount: integer;
 begin
   Result := Length(FBuckets);
 end;
 
-procedure TLiHash.Clear;
+procedure TLyseeHash.Clear;
 var
   I: integer;
-  H: TLiHashItem;
+  H: TLyseeHashItem;
 begin
   for I := 0 to BucketCount - 1 do
     while FBuckets[I] <> nil do
@@ -10921,32 +10967,32 @@ begin
   inherited;
 end;
 
-constructor TLiHash.Create;
+constructor TLyseeHash.Create;
 begin
   inherited;
   SetLength(FBuckets, 1);
   FBuckets[0] := nil;
 end;
 
-destructor TLiHash.Destroy;
+destructor TLyseeHash.Destroy;
 begin
   Clear;
   SetLength(FBuckets, 0);
   inherited;
 end;
 
-procedure TLiHash.FreeItem(H: TLiHashItem);
+procedure TLyseeHash.FreeItem(H: TLyseeHashItem);
 begin
   Dec(FCount);
   H.Free;
 end;
 
-function TLiHash.Has(const Name: string): boolean;
+function TLyseeHash.Has(const Name: string): boolean;
 begin
   Result := (Get(Name) <> nil);
 end;
 
-function TLiHash.HashIndex(const Name: string): integer;
+function TLyseeHash.HashIndex(const Name: string): integer;
 var
   N: integer;
 begin
@@ -10957,12 +11003,12 @@ begin
     Result := (basic.HashOf(LowerCase(Name)) mod N);
 end;
 
-function TLiHash.IsEmpty: boolean;
+function TLyseeHash.IsEmpty: boolean;
 begin
   Result := (FCount = 0);
 end;
 
-function TLiHash.Get(const Name: string): TLiHashItem;
+function TLyseeHash.Get(const Name: string): TLyseeHashItem;
 begin
   Result := FBuckets[HashIndex(Name)];
   while Result <> nil do
@@ -10972,9 +11018,9 @@ begin
   end;
 end;
 
-function TLiHash.GetValue(const Name: string; Value: TLiValue): boolean;
+function TLyseeHash.GetValue(const Name: string; Value: TLyseeValue): boolean;
 var
-  V: TLiValue;
+  V: TLyseeValue;
 begin
   V := Get(Name);
   Result := (V <> nil);
@@ -10982,7 +11028,7 @@ begin
     Value.SetValue(V);
 end;
 
-procedure TLiHash.ListKeys(List: TLiList);
+procedure TLyseeHash.ListKeys(List: TLyseeList);
 var
   I: integer;
   L: TList;
@@ -10992,14 +11038,14 @@ begin
     L := SetupItemList;
     try
       for I := 0 to L.Count - 1 do
-        List.Add.SetAsString(TLiHashItem(L[I]).FKey);
+        List.Add.SetAsString(TLyseeHashItem(L[I]).FKey);
     finally
       L.Free;
     end;
   end;
 end;
 
-procedure TLiHash.ListValues(List: TLiList);
+procedure TLyseeHash.ListValues(List: TLyseeList);
 var
   I: integer;
   L: TList;
@@ -11009,16 +11055,16 @@ begin
     L := SetupItemList;
     try
       for I := 0 to L.Count - 1 do
-        List.Add(TLiHashItem(L[I]));
+        List.Add(TLyseeHashItem(L[I]));
     finally
       L.Free;
     end;
   end;
 end;
 
-procedure TLiHash.MarkForSurvive;
+procedure TLyseeHash.MarkForSurvive;
 var
-  H: TLiHashItem;
+  H: TLyseeHashItem;
   I: integer;
 begin
   if (Self <> nil) and not FSurvived then
@@ -11036,17 +11082,17 @@ begin
   end;
 end;
 
-function TLiHash.MatchName(const N1, N2: string): boolean;
+function TLyseeHash.MatchName(const N1, N2: string): boolean;
 begin
   if FCaseSensitive then
     Result := (N1 = N2) else
     Result := SysUtils.SameText(N1, N2);
 end;
 
-function TLiHash.Remove(const Name: string): boolean;
+function TLyseeHash.Remove(const Name: string): boolean;
 var
   X: cardinal;
-  H, T: TLiHashItem;
+  H, T: TLyseeHashItem;
 begin
   Result := false;
   X := HashIndex(Name);
@@ -11072,11 +11118,11 @@ begin
   end;
 end;
 
-procedure TLiHash.Resize(NewSize: integer);
+procedure TLyseeHash.Resize(NewSize: integer);
 var
   L: TList;
   I, X: integer;
-  H: TLiHashItem;
+  H: TLyseeHashItem;
 begin
   if NewSize > 512 then NewSize := 512;
   X := BucketCount;
@@ -11086,10 +11132,10 @@ begin
     try
       while X < NewSize do X := X shl 1;
       SetLength(FBuckets, X);
-      FillChar(FBuckets[0], sizeof(TLiHashItem) * X, 0);
+      FillChar(FBuckets[0], sizeof(TLyseeHashItem) * X, 0);
       for I := 0 to L.Count - 1 do
       begin
-        H := TLiHashItem(L[I]);
+        H := TLyseeHashItem(L[I]);
         X := HashIndex(H.FKey);
         H.FNext := FBuckets[X];
         FBuckets[X] := H;
@@ -11100,10 +11146,10 @@ begin
   end;
 end;
 
-function TLiHash.SetupItemList: TList;
+function TLyseeHash.SetupItemList: TList;
 var
   I: integer;
-  H: TLiHashItem;
+  H: TLyseeHashItem;
 begin
   Result := TList.Create;
   for I := 0 to BucketCount - 1 do
@@ -11117,28 +11163,28 @@ begin
   end;
 end;
 
-{ TLiGenerate }
+{ TLyseeGenerate }
 
-function TLiGenerate.GetNext: boolean;
+function TLyseeGenerate.GetNext: boolean;
 begin
   Result := false;
 end;
 
-function TLiGenerate.HasNext: boolean;
+function TLyseeGenerate.HasNext: boolean;
 begin
   Result := false;
 end;
 
-{ TLiGenerate_string }
+{ TLyseeStringGenerate }
 
-constructor TLiGenerate_string.CreateIn(const S: string);
+constructor TLyseeStringGenerate.CreateIn(const S: string);
 begin
   inherited Create;
   FS := S;
   FIndex := 0;
 end;
 
-function TLiGenerate_string.GetNext: boolean;
+function TLyseeStringGenerate.GetNext: boolean;
 begin
   Result := HasNext;
   if Result then
@@ -11149,21 +11195,21 @@ begin
   else SetNil;
 end;
 
-function TLiGenerate_string.HasNext: boolean;
+function TLyseeStringGenerate.HasNext: boolean;
 begin
   Result := (FIndex < Length(FS));
 end;
 
-{ TLiGenerate_list }
+{ TLyseeListGenerate }
 
-constructor TLiGenerate_list.CreateIn(const AList: TLiList);
+constructor TLyseeListGenerate.CreateIn(const AList: TLyseeList);
 begin
   inherited Create;
   FL := AList;
   FIndex := -1;
 end;
 
-function TLiGenerate_list.GetNext: boolean;
+function TLyseeListGenerate.GetNext: boolean;
 begin
   Result := HasNext;
   if Result then
@@ -11174,14 +11220,14 @@ begin
   else SetNil;
 end;
 
-function TLiGenerate_list.HasNext: boolean;
+function TLyseeListGenerate.HasNext: boolean;
 begin
   Result := (FL <> nil) and (FIndex < FL.Count - 1);
 end;
 
-{ TLiGenerate_int64 }
+{ TLyseeIntGenerate }
 
-constructor TLiGenerate_int64.CreateIn(V1, V2: int64; Upto: boolean);
+constructor TLyseeIntGenerate.CreateIn(V1, V2: int64; Upto: boolean);
 begin
   inherited Create;
   FV := V1;
@@ -11191,12 +11237,12 @@ begin
     FCount := FV - V2 + 1;
 end;
 
-constructor TLiGenerate_int64.CreateIn(Range: int64);
+constructor TLyseeIntGenerate.CreateIn(Range: int64);
 begin
   CreateIn(0, Range - 1, true);
 end;
 
-function TLiGenerate_int64.GetNext: boolean;
+function TLyseeIntGenerate.GetNext: boolean;
 begin
   Result := HasNext;
   if Result then
@@ -11208,14 +11254,14 @@ begin
   else SetNil;
 end;
 
-function TLiGenerate_int64.HasNext: boolean;
+function TLyseeIntGenerate.HasNext: boolean;
 begin
   Result := (FCount > 0);
 end;
 
-{ TLiGenerate_char }
+{ TLyseeCharGenerate }
 
-constructor TLiGenerate_char.CreateIn(V1, V2: char; Upto: boolean);
+constructor TLyseeCharGenerate.CreateIn(V1, V2: char; Upto: boolean);
 begin
   inherited Create;
   FV := V1;
@@ -11225,7 +11271,7 @@ begin
     FCount := Ord(FV) - Ord(V2) + 1;
 end;
 
-function TLiGenerate_char.GetNext: boolean;
+function TLyseeCharGenerate.GetNext: boolean;
 begin
   Result := HasNext;
   if Result then
@@ -11237,14 +11283,14 @@ begin
   else SetNil;
 end;
 
-function TLiGenerate_char.HasNext: boolean;
+function TLyseeCharGenerate.HasNext: boolean;
 begin
   Result := (FCount > 0);
 end;
 
-{ TLiGenerate_boolean }
+{ TLyseeBoolGenerate }
 
-constructor TLiGenerate_boolean.CreateIn(V1, V2, Upto: boolean);
+constructor TLyseeBoolGenerate.CreateIn(V1, V2, Upto: boolean);
 begin
   inherited Create;
   FV := V1;
@@ -11254,7 +11300,7 @@ begin
     FCount := Ord(FV) - Ord(V2) + 1;
 end;
 
-function TLiGenerate_boolean.GetNext: boolean;
+function TLyseeBoolGenerate.GetNext: boolean;
 begin
   Result := HasNext;
   if Result then
@@ -11266,39 +11312,14 @@ begin
   else SetNil;
 end;
 
-function TLiGenerate_boolean.HasNext: boolean;
+function TLyseeBoolGenerate.HasNext: boolean;
 begin
   Result := (FCount > 0);
 end;
 
-{ TLiGenerate_strlist }
+{ TLyseeEnumGenerate }
 
-constructor TLiGenerate_strlist.CreateIn(const List: TStrings);
-begin
-  inherited Create;
-  FL := List;
-  FIndex := -1;
-end;
-
-function TLiGenerate_strlist.GetNext: boolean;
-begin
-  Result := HasNext;
-  if Result then
-  begin
-    Inc(FIndex);
-    SetAsString(FL[FIndex]);
-  end
-  else SetNil;
-end;
-
-function TLiGenerate_strlist.HasNext: boolean;
-begin
-  Result := (FL <> nil) and (FIndex < FL.Count - 1);
-end;
-
-{ TLiGenerate_enum }
-
-constructor TLiGenerate_enum.CreateIn(V1, V2: TLiEnumItem; Upto: boolean);
+constructor TLyseeEnumGenerate.CreateIn(V1, V2: TLyseeEnumItem; Upto: boolean);
 begin
   inherited Create;
   FV := V1;
@@ -11309,7 +11330,7 @@ begin
     FCount := FV.FValue - V2.FValue + 1;
 end;
 
-function TLiGenerate_enum.GetNext: boolean;
+function TLyseeEnumGenerate.GetNext: boolean;
 begin
   Result := HasNext;
   if Result then
@@ -11323,7 +11344,7 @@ begin
   else SetNil;
 end;
 
-function TLiGenerate_enum.HasNext: boolean;
+function TLyseeEnumGenerate.HasNext: boolean;
 begin
   Result := (FV <> nil) and (FCount > 0);
 end;
@@ -11348,73 +11369,73 @@ begin
   {$ENDIF}
 
   my_spinlock := Syncobjs.TCriticalSection.Create;
-  my_gcman := TLiGarbageCollect.Create;
-  my_modules := TLiModuleList.Create(nil);
-  my_system := TLiModule.Create(LSE_SYSTE);
+  my_gcman := TLyseeCollect.Create;
+  my_modules := TLyseeModuleList.Create(nil);
+  my_system := TLyseeModule.Create(LSE_SYSTE);
 
   //-- types -----------------------------------------------------------------
 
-  my_variant := TLiType_variant.Create(TID_NAMES[TID_VARIANT], my_system, nil);
+  my_variant := TLyseeVariantType.Create(TID_NAMES[TID_VARIANT], my_system, nil);
   my_variant.FStyle := tsVariant;
   my_variant.FTID := TID_VARIANT;
   my_types[TID_VARIANT] := my_variant;
 
-  my_nil := TLiType_nil.Create(TID_NAMES[TID_NIL], my_system, nil);
+  my_nil := TLyseeNilType.Create(TID_NAMES[TID_NIL], my_system, nil);
   my_nil.FStyle := tsNil;
   my_nil.FTID := TID_NIL;
   my_types[TID_NIL] := my_nil;
 
-  my_char := TLiType_char.Create(TID_NAMES[TID_CHAR], my_system, nil);
+  my_char := TLyseeCharType.Create(TID_NAMES[TID_CHAR], my_system, nil);
   my_char.FStyle := tsBasic;
   my_char.FTID := TID_CHAR;
   my_types[TID_CHAR] := my_char;
 
-  my_int := TLiType_integer.Create(TID_NAMES[TID_INTEGER], my_system, nil);
+  my_int := TLyseeIntegerType.Create(TID_NAMES[TID_INTEGER], my_system, nil);
   my_int.FStyle := tsBasic;
   my_int.FTID := TID_INTEGER;
   my_types[TID_INTEGER] := my_int;
 
-  my_float := TLiType_float.Create(TID_NAMES[TID_FLOAT], my_system, nil);
+  my_float := TLyseeFloatType.Create(TID_NAMES[TID_FLOAT], my_system, nil);
   my_float.FStyle := tsBasic;
   my_float.FTID := TID_FLOAT;
   my_types[TID_FLOAT] := my_float;
 
-  my_curr := TLiType_currency.Create(TID_NAMES[TID_CURRENCY], my_system, nil);
+  my_curr := TLyseeCurrencyType.Create(TID_NAMES[TID_CURRENCY], my_system, nil);
   my_curr.FStyle := tsBasic;
   my_curr.FTID := TID_CURRENCY;
   my_types[TID_CURRENCY] := my_curr;
 
-  my_time := TLiType_time.Create(TID_NAMES[TID_time], my_system, nil);
+  my_time := TLyseeTimeType.Create(TID_NAMES[TID_time], my_system, nil);
   my_time.FStyle := tsBasic;
   my_time.FTID := TID_TIME;
   my_types[TID_time] := my_time;
 
-  my_bool := TLiType_boolean.Create(TID_NAMES[TID_BOOLEAN], my_system, nil);
+  my_bool := TLyseeBoolType.Create(TID_NAMES[TID_BOOLEAN], my_system, nil);
   my_bool.FStyle := tsBasic;
   my_bool.FTID := TID_BOOLEAN;
   my_types[TID_BOOLEAN] := my_bool;
 
-  my_list := TLiType_list.Create(TID_NAMES[TID_LIST], AddModule('Classes'), nil);
-  my_list.FTID := TID_LIST;
-  my_types[TID_LIST] := my_list;
+  my_array := TLyseeArrayType.Create(TID_NAMES[TID_ARRAY], my_system, nil);
+  my_array.FTID := TID_ARRAY;
+  my_types[TID_ARRAY] := my_array;
 
-  my_hash := TLiType_hash.Create(TID_NAMES[TID_HASHLIST], my_system, nil);
+  my_hash := TLyseeHashType.Create(TID_NAMES[TID_HASHLIST], my_system, nil);
   my_hash.FTID := TID_HASHLIST;
   my_types[TID_HASHLIST] := my_hash;
 
-  my_string := TLiType_string.Create(TID_NAMES[TID_STRING], my_system, nil);
+  my_string := TLyseeStringType.Create(TID_NAMES[TID_STRING], my_system, nil);
   my_string.FTID := TID_STRING;
   my_types[TID_STRING] := my_string;
 
-  my_type := TLiType_type.Create(TID_NAMES[TID_TYPE], my_system, nil);
+  my_type := TLyseeTypeType.Create(TID_NAMES[TID_TYPE], my_system, nil);
   my_type.FTID := TID_TYPE;
   my_types[TID_TYPE] := my_type;
 
-  my_module := TLiType_module.Create(TID_NAMES[TID_MODULE], my_system, nil);
+  my_module := TLyseeModuleType.Create(TID_NAMES[TID_MODULE], my_system, nil);
   my_module.FTID := TID_MODULE;
   my_types[TID_MODULE] := my_module;
 
-  my_func := TLiType_func.Create(TID_NAMES[TID_FUNCTION], my_system, nil);
+  my_func := TLyseeFuncType.Create(TID_NAMES[TID_FUNCTION], my_system, nil);
   my_func.FTID := TID_FUNCTION;
   my_types[TID_FUNCTION] := my_func;
 
@@ -11434,7 +11455,6 @@ begin
 
   my_variant.AddOperate(opAdd, my_string, {$IFDEF FPC}@{$ENDIF}string_add_string);
   my_variant.AddOperate(opAdd, my_char, {$IFDEF FPC}@{$ENDIF}string_add_string);
-  my_variant.AddOperate(opIn, my_list, {$IFDEF FPC}@{$ENDIF}variant_in_list);
   my_variant.AddOperate(opIs, my_type, {$IFDEF FPC}@{$ENDIF}variant_is_type);
   my_variant.AddOperate(opAs, my_type, {$IFDEF FPC}@{$ENDIF}variant_as_type);
   my_variant.AddOperate(opShi, my_variant, {$IFDEF FPC}@{$ENDIF}variant_shi_variant);
@@ -11510,12 +11530,6 @@ begin
 
   my_bool.AddOperate(opNot, my_bool, {$IFDEF FPC}@{$ENDIF}bool_not_bool);
   my_bool.AddOperate(opXor, my_bool, {$IFDEF FPC}@{$ENDIF}bool_xor_bool);
-
-  my_list.AddOperate(opAdd, my_list, {$IFDEF FPC}@{$ENDIF}list_add_list);
-  my_list.AddOperate(opDec, my_list, {$IFDEF FPC}@{$ENDIF}list_dec_list);
-  my_list.AddOperate(opMul, my_list, {$IFDEF FPC}@{$ENDIF}list_mul_list);
-  my_list.AddOperate(opShi, my_variant, {$IFDEF FPC}@{$ENDIF}list_shi_variant);
-  my_list.AddOperate(opFill, my_variant, {$IFDEF FPC}@{$ENDIF}list_fill_variant);
 
   //-- compare --------------------------------------------------------------
 

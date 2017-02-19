@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2016-2016, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2016/12/18                                                      }
-{    MODIFIED: 2017/01/07                                                      }
+{    MODIFIED: 2017/02/19                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -17,13 +17,13 @@ unit lysee_classes;
 interface
 
 uses
-  SysUtils, Classes, Basic, lysee;
+  SysUtils, Classes, basic, lysee;
 
 type
 
-  { TLiStringList }
+  { TLyseeStringList }
 
-  TLiStringList = class(TLiGarbage)
+  TLyseeStringList = class(TLyseeGarbage)
   private
     FStringList: TStringList;
     function GetValue(const Name: string): string;
@@ -39,7 +39,7 @@ type
     procedure EndUpdate;
     procedure LoadFromFile(const FileName: string);
     procedure SaveToFile(const FileName: string);
-    procedure Assign(Source: TLiStringList);
+    procedure Assign(Source: TLyseeStringList);
     procedure Clear;override;
     procedure ClearObjects;
     procedure Delete(Index: integer);
@@ -54,137 +54,171 @@ type
     procedure TrimAll;
     procedure TrimLeft;
     procedure TrimRight;
-    procedure Insert(Index: Integer; const S: string; V: TLiValue);
-    function Add(const S: string; V: TLiValue): integer;
-    procedure AddHashed(Hashed: TLiHash);
-    procedure AddList(List: TLiList);
+    procedure Insert(Index: Integer; const S: string; V: TLyseeValue);
+    function Add(const S: string; V: TLyseeValue): integer;
+    procedure AddHashed(Hashed: TLyseeHash);
+    procedure AddList(List: TLyseeList);
     function MatchStrs(const S1, S2: string): boolean;
     function IndexOfValue(const S: string): integer;
-    function Copy(Index, ItemCount: integer): TLiStringList;
-    function CopyLeft(ItemCount: integer): TLiStringList;
-    function CopyRight(ItemCount: integer): TLiStringList;
-    function SelectMatched(const Patten: string): TLiStringList;
+    function Copy(Index, ItemCount: integer): TLyseeStringList;
+    function CopyLeft(ItemCount: integer): TLyseeStringList;
+    function CopyRight(ItemCount: integer): TLyseeStringList;
+    function SelectMatched(const Patten: string): TLyseeStringList;
     procedure Rename(const Name, NewName: string);
     procedure Reverse;
     function AsString: string;override;
+    function AsLyseeList: TLyseeList;
+    function AsLyseeHash: TLyseeHash;
     function IsEmpty: boolean;
     property Count: integer read GetCount write SetCount;
     property Values[const Name: string]: string read GetValue write SetValue;
     property StringList: TStringList read FStringList;
   end;
 
-  { TLiStringListType }
+  { TLyseeStringListGenerate }
 
-  TLiStringListType = class(TLiType)
+  TLyseeStringListGenerate = class(TLyseeGenerate)
+  private
+    FL: TStrings;
+    FIndex: integer;
+  public
+    constructor CreateIn(const List: TStrings);
+    function GetNext: boolean;override;
+    function HasNext: boolean;override;
+  end;
+
+  { TLyseeStringListType }
+
+  TLyseeStringListType = class(TLyseeType)
   protected
-    procedure MyCreate(const Param: TLiParam);
-    procedure MyIsEmpty(const Param: TLiParam);
-    procedure MyLoadFromFile(const Param: TLiParam);
-    procedure MySaveToFile(const Param: TLiParam);
-    procedure MyBeginUpdate(const Param: TLiParam);
-    procedure MyEndUpdate(const Param: TLiParam);
-    procedure MyAssign(const Param: TLiParam);
-    procedure MyClear(const Param: TLiParam);
-    procedure MyClearObjects(const Param: TLiParam);
-    procedure MyDelete(const Param: TLiParam);
-    procedure MyDeleteLast(const Param: TLiParam);
-    procedure MyDeleteEmptyLines(const Param: TLiParam);
-    procedure MyRemove(const Param: TLiParam);
-    procedure MyRemoveByName(const Param: TLiParam);
-    procedure MyAdd(const Param: TLiParam);
-    procedure MyAddObject(const Param: TLiParam);
-    procedure MyInsert(const Param: TLiParam);
-    procedure MyInsertObject(const Param: TLiParam);
-    procedure MyExchange(const Param: TLiParam);
-    procedure MyMove(const Param: TLiParam);
-    procedure MySort(const Param: TLiParam);
-    procedure MyUnique(const Param: TLiParam);
-    procedure MyPack(const Param: TLiParam);
-    procedure MyIndexOf(const Param: TLiParam);
-    procedure MyIndexOfObject(const Param: TLiParam);
-    procedure MyIndexOfName(const Param: TLiParam);
-    procedure MyIndexOfValue(const Param: TLiParam);
-    procedure MyRename(const Param: TLiParam);
-    procedure MyEquals(const Param: TLiParam);
-    procedure MyTrim(const Param: TLiParam);
-    procedure MyTrimAll(const Param: TLiParam);
-    procedure MyTrimLeft(const Param: TLiParam);
-    procedure MyTrimRight(const Param: TLiParam);
-    procedure MyCopy(const Param: TLiParam);
-    procedure MyLeft(const Param: TLiParam);
-    procedure MyRight(const Param: TLiParam);
-    procedure MySelectMatchedLines(const Param: TLiParam);
-    procedure MyDeleteMatchedLines(const Param: TLiParam);
-    procedure MyReverse(const Param: TLiParam);
-    procedure MyGetCount(const Param: TLiParam);
-    procedure MySetCount(const Param: TLiParam);
-    procedure MyGet(const Param: TLiParam);
-    procedure MySet(const Param: TLiParam);
-    procedure MyNames(const Param: TLiParam);
-    procedure MyGetName(const Param: TLiParam);
-    procedure MyGetValue(const Param: TLiParam);
-    procedure MySetValue(const Param: TLiParam);
-    procedure MyGetObject(const Param: TLiParam);
-    procedure MySetObject(const Param: TLiParam);
-    procedure MyValueFromIndex(const Param: TLiParam);
-    procedure MyGetText(const Param: TLiParam);
-    procedure MySetText(const Param: TLiParam);
-    procedure MyGetCommaText(const Param: TLiParam);
-    procedure MySetCommaText(const Param: TLiParam);
-    procedure MyGetDelimiter(const Param: TLiParam);
-    procedure MySetDelimiter(const Param: TLiParam);
-    procedure MyGetDelimitedText(const Param: TLiParam);
-    procedure MySetDelimitedText(const Param: TLiParam);
-    procedure MyGetLineBreak(const Param: TLiParam);
-    procedure MySetLineBreak(const Param: TLiParam);
-    procedure MyGetNameValueSeparator(const Param: TLiParam);
-    procedure MySetNameValueSeparator(const Param: TLiParam);
-    procedure MyGetQuoteChar(const Param: TLiParam);
-    procedure MySetQuoteChar(const Param: TLiParam);
-    procedure MyGetStrictDelimiter(const Param: TLiParam);
-    procedure MySetStrictDelimiter(const Param: TLiParam);
-    procedure MyGetWriteBOM(const Param: TLiParam);
-    procedure MySetWriteBOM(const Param: TLiParam);
-    procedure MyGetSorted(const Param: TLiParam);
-    procedure MySetSorted(const Param: TLiParam);
-    procedure MyGetCaseSensitive(const Param: TLiParam);
-    procedure MySetCaseSensitive(const Param: TLiParam);
-    procedure MyGetFirst(const Param: TLiParam);
-    procedure MySetFirst(const Param: TLiParam);
-    procedure MyGetLast(const Param: TLiParam);
-    procedure MySetLast(const Param: TLiParam);
+    procedure MyCreate(const Param: TLyseeParam);
+    procedure MyIsEmpty(const Param: TLyseeParam);
+    procedure MyLoadFromFile(const Param: TLyseeParam);
+    procedure MySaveToFile(const Param: TLyseeParam);
+    procedure MyBeginUpdate(const Param: TLyseeParam);
+    procedure MyEndUpdate(const Param: TLyseeParam);
+    procedure MyAssign(const Param: TLyseeParam);
+    procedure MyClear(const Param: TLyseeParam);
+    procedure MyClearObjects(const Param: TLyseeParam);
+    procedure MyDelete(const Param: TLyseeParam);
+    procedure MyDeleteLast(const Param: TLyseeParam);
+    procedure MyDeleteEmptyLines(const Param: TLyseeParam);
+    procedure MyRemove(const Param: TLyseeParam);
+    procedure MyRemoveByName(const Param: TLyseeParam);
+    procedure MyAdd(const Param: TLyseeParam);
+    procedure MyAddObject(const Param: TLyseeParam);
+    procedure MyInsert(const Param: TLyseeParam);
+    procedure MyInsertObject(const Param: TLyseeParam);
+    procedure MyExchange(const Param: TLyseeParam);
+    procedure MyMove(const Param: TLyseeParam);
+    procedure MySort(const Param: TLyseeParam);
+    procedure MyUnique(const Param: TLyseeParam);
+    procedure MyPack(const Param: TLyseeParam);
+    procedure MyIndexOf(const Param: TLyseeParam);
+    procedure MyIndexOfObject(const Param: TLyseeParam);
+    procedure MyIndexOfName(const Param: TLyseeParam);
+    procedure MyIndexOfValue(const Param: TLyseeParam);
+    procedure MyRename(const Param: TLyseeParam);
+    procedure MyEquals(const Param: TLyseeParam);
+    procedure MyTrim(const Param: TLyseeParam);
+    procedure MyTrimAll(const Param: TLyseeParam);
+    procedure MyTrimLeft(const Param: TLyseeParam);
+    procedure MyTrimRight(const Param: TLyseeParam);
+    procedure MyCopy(const Param: TLyseeParam);
+    procedure MyLeft(const Param: TLyseeParam);
+    procedure MyRight(const Param: TLyseeParam);
+    procedure MySelectMatchedLines(const Param: TLyseeParam);
+    procedure MyDeleteMatchedLines(const Param: TLyseeParam);
+    procedure MyReverse(const Param: TLyseeParam);
+    procedure MyGetCount(const Param: TLyseeParam);
+    procedure MySetCount(const Param: TLyseeParam);
+    procedure MyGet(const Param: TLyseeParam);
+    procedure MySet(const Param: TLyseeParam);
+    procedure MyNames(const Param: TLyseeParam);
+    procedure MyGetName(const Param: TLyseeParam);
+    procedure MyGetValue(const Param: TLyseeParam);
+    procedure MySetValue(const Param: TLyseeParam);
+    procedure MyGetObject(const Param: TLyseeParam);
+    procedure MySetObject(const Param: TLyseeParam);
+    procedure MyValueFromIndex(const Param: TLyseeParam);
+    procedure MyGetText(const Param: TLyseeParam);
+    procedure MySetText(const Param: TLyseeParam);
+    procedure MyGetCommaText(const Param: TLyseeParam);
+    procedure MySetCommaText(const Param: TLyseeParam);
+    procedure MyGetDelimiter(const Param: TLyseeParam);
+    procedure MySetDelimiter(const Param: TLyseeParam);
+    procedure MyGetDelimitedText(const Param: TLyseeParam);
+    procedure MySetDelimitedText(const Param: TLyseeParam);
+    procedure MyGetLineBreak(const Param: TLyseeParam);
+    procedure MySetLineBreak(const Param: TLyseeParam);
+    procedure MyGetNameValueSeparator(const Param: TLyseeParam);
+    procedure MySetNameValueSeparator(const Param: TLyseeParam);
+    procedure MyGetQuoteChar(const Param: TLyseeParam);
+    procedure MySetQuoteChar(const Param: TLyseeParam);
+    procedure MyGetStrictDelimiter(const Param: TLyseeParam);
+    procedure MySetStrictDelimiter(const Param: TLyseeParam);
+    procedure MyGetWriteBOM(const Param: TLyseeParam);
+    procedure MySetWriteBOM(const Param: TLyseeParam);
+    procedure MyGetSorted(const Param: TLyseeParam);
+    procedure MySetSorted(const Param: TLyseeParam);
+    procedure MyGetCaseSensitive(const Param: TLyseeParam);
+    procedure MySetCaseSensitive(const Param: TLyseeParam);
+    procedure MyGetFirst(const Param: TLyseeParam);
+    procedure MySetFirst(const Param: TLyseeParam);
+    procedure MyGetLast(const Param: TLyseeParam);
+    procedure MySetLast(const Param: TLyseeParam);
     procedure Setup;override;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    function _Generate(Obj: pointer): TLiGenerate;override;
-    function _Length(Obj: pointer): int64;override;
-    function _Clear(Obj: pointer): boolean;override;
-    function _Add(Obj: pointer; Value: TLiValue): integer;override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
+    function Generate(Obj: pointer): TLyseeGenerate;override;
+    function GetLength(Obj: pointer): int64;override;
+    function Clear(Obj: pointer): boolean;override;
+    function Add(Obj: pointer; Value: TLyseeValue): integer;override;
+    function ConvertTo(Value: TLyseeValue; T: TLyseeType): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+  end;
+
+  { TLyseeListType }
+
+  TLyseeListType = class(TLyseeArrayType)
+  public
+    function ConvertTo(Value: TLyseeValue; T: TLyseeType): boolean;override;
+    procedure Convert(Value: TLyseeValue);override;
+  end;
+
+  { TLyseeClassesModule }
+
+  TLyseeClassesModule = class(TLyseeModule)
+  private
+    procedure DoSetup(Sender: TObject);
+  public
+    constructor Create(const AName: string);override;
   end;
 
 var
-  my_classes: TLiModule;
-  my_strlist: TLiStringListType;
+  my_classes: TLyseeClassesModule;
+  my_strlist: TLyseeStringListType;
+  my_list: TLyseeListType;
 
 implementation
 
 uses
-  Math, lysee_load;
+  Math;
 
-procedure strlist_shi_variant(V1, V2: TLiValue);
+procedure strlist_shi_variant(V1, V2: TLyseeValue);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if V1.GetSelf(L) then
     L.StringList.Add(V2.AsString);
 end;
 
-procedure strlist_fill_variant(V1, V2: TLiValue);
+procedure strlist_fill_variant(V1, V2: TLyseeValue);
 var
-  L: TLiStringList;
-  G: TLiGenerate;
+  L: TLyseeStringList;
+  G: TLyseeGenerate;
 begin
   if V1.GetSelf(L) then
   begin
@@ -199,68 +233,13 @@ begin
   end;
 end;
 
-procedure strlist_as_list(Value: TLiValue);
-var
-  A: TLiList;
-  L: TLiStringList;
-  I: integer;
-begin
-  A := TLiList.Create;
-  L := TLiStringList(Value.GetOA);
-  if L <> nil then
-    for I := 0 to L.StringList.Count - 1 do
-      A.Add.AsString := L.StringList[I];
-  Value.SetTOA(my_list, A);
-end;
+{ TLyseeStringList }
 
-procedure strlist_as_hashed(Value: TLiValue);
-var
-  H: TLiHash;
-  L: TLiStringList;
-  I: integer;
-begin
-  H := TLiHash.Create;
-  L := TLiStringList(Value.GetOA);
-  if L <> nil then
-    for I := 0 to L.StringList.Count - 1 do
-      H.Add(L.StringList[I]).SetValue(TLiValue(L.StringList.Objects[I]));
-  Value.AsHash := H;
-end;
-
-procedure string_as_strlist(Value: TLiValue);
-var
-  L: TLiStringList;
-begin
-  L := TLiStringList.Create;
-  L.StringList.Text := Value.AsString;
-  Value.SetTOA(my_strlist, L);
-end;
-
-procedure list_as_strlist(Value: TLiValue);
-var
-  L: TLiStringList;
-begin
-  L := TLiStringList.Create;
-  L.AddList(TLiList(Value.GetOA));
-  Value.SetTOA(my_strlist, L);
-end;
-
-procedure hashed_as_strlist(Value: TLiValue);
-var
-  L: TLiStringList;
-begin
-  L := TLiStringList.Create;
-  L.AddHashed(TLiHash(Value.GetOA));
-  Value.SetTOA(my_strlist, L);
-end;
-
-{ TLiStringList }
-
-procedure TLiStringList.AddHashed(Hashed: TLiHash);
+procedure TLyseeStringList.AddHashed(Hashed: TLyseeHash);
 var
   L: TList;
   I: integer;
-  V: TLiHashItem;
+  V: TLyseeHashItem;
 begin
   if Hashed <> nil then
   begin
@@ -269,7 +248,7 @@ begin
     try
       for I := 0 to L.Count - 1 do
       begin
-        V := TLiHashItem(L[I]);
+        V := TLyseeHashItem(L[I]);
         Add(V.Key, V);
       end;
     finally
@@ -279,7 +258,7 @@ begin
   end;
 end;
 
-procedure TLiStringList.AddList(List: TLiList);
+procedure TLyseeStringList.AddList(List: TLyseeList);
 var
   I: integer;
 begin
@@ -295,20 +274,38 @@ begin
   end;
 end;
 
-function TLiStringList.Add(const S: string; V: TLiValue): integer;
+function TLyseeStringList.Add(const S: string; V: TLyseeValue): integer;
 var
-  T: TLiValue;
+  T: TLyseeValue;
 begin
   if (V <> nil) and not V.IsNil then
   begin
-    T := TLiValue.Create;
+    T := TLyseeValue.Create;
     Result := FStringList.AddObject(S, T);
     T.SetValue(V);
   end
   else Result := FStringList.Add(S);
 end;
 
-procedure TLiStringList.Assign(Source: TLiStringList);
+function TLyseeStringList.AsLyseeHash: TLyseeHash;
+var
+  I: integer;
+begin
+  Result := TLyseeHash.Create;
+  for I := 0 to FStringList.Count - 1 do
+    Result.Add(FStringList[I]).SetValue(TLyseeValue(FStringList.Objects[I]));
+end;
+
+function TLyseeStringList.AsLyseeList: TLyseeList;
+var
+  I: integer;
+begin
+  Result := TLyseeList.Create;
+  for I := 0 to FStringList.Count - 1 do
+    Result.Add.AsString := FStringList[I];
+end;
+
+procedure TLyseeStringList.Assign(Source: TLyseeStringList);
 var
   I: integer;
 begin
@@ -320,24 +317,24 @@ begin
       if Source <> nil then
         for I := 0 to Source.FStringList.Count - 1 do
           Add(Source.FStringList[I],
-            TLiValue(Source.FStringList.Objects[I]));
+            TLyseeValue(Source.FStringList.Objects[I]));
     finally
       EndUpdate;
     end;
   end;
 end;
 
-function TLiStringList.AsString: string;
+function TLyseeStringList.AsString: string;
 begin
   Result := FStringList.Text;
 end;
 
-procedure TLiStringList.BeginUpdate;
+procedure TLyseeStringList.BeginUpdate;
 begin
   FStringList.BeginUpdate;
 end;
 
-procedure TLiStringList.Clear;
+procedure TLyseeStringList.Clear;
 var
   I: integer;
 begin
@@ -351,17 +348,17 @@ begin
   end;
 end;
 
-procedure TLiStringList.ClearObjects;
+procedure TLyseeStringList.ClearObjects;
 var
   I: integer;
-  V: TLiValue;
+  V: TLyseeValue;
 begin
   BeginUpdate;
   try
     for I := FStringList.Count - 1 downto 0 do
       if FStringList.Objects[I] <> nil then
       begin
-        V := TLiValue(FStringList.Objects[I]);
+        V := TLyseeValue(FStringList.Objects[I]);
         FStringList.Objects[I] := nil;
         V.Free;
       end;
@@ -370,11 +367,11 @@ begin
   end;
 end;
 
-function TLiStringList.Copy(Index, ItemCount: integer): TLiStringList;
+function TLyseeStringList.Copy(Index, ItemCount: integer): TLyseeStringList;
 var
   I: integer;
 begin
-  Result := TLiStringList.Create;
+  Result := TLyseeStringList.Create;
   if Index < 0 then
   begin
     Inc(ItemCount, Index);
@@ -383,27 +380,27 @@ begin
   ItemCount := Max(0, Min(FStringList.Count - Index, ItemCount));
   for I := 1 to ItemCount do
   begin
-    Result.Add(FStringList[Index], TLiValue(FStringList.Objects[Index]));
+    Result.Add(FStringList[Index], TLyseeValue(FStringList.Objects[Index]));
     Inc(Index);
   end;
 end;
 
-constructor TLiStringList.Create;
+constructor TLyseeStringList.Create;
 begin
   inherited;
   FStringList := TStringList.Create;
 end;
 
-procedure TLiStringList.Delete(Index: integer);
+procedure TLyseeStringList.Delete(Index: integer);
 var
-  V: TLiValue;
+  V: TLyseeValue;
 begin
-  V := TLiValue(FStringList.Objects[Index]);
+  V := TLyseeValue(FStringList.Objects[Index]);
   FStringList.Delete(Index);
   if V <> nil then V.Free;
 end;
 
-procedure TLiStringList.DeleteEmptyLines;
+procedure TLyseeStringList.DeleteEmptyLines;
 var
   I: integer;
 begin
@@ -417,34 +414,34 @@ begin
   end;
 end;
 
-procedure TLiStringList.DeleteLast;
+procedure TLyseeStringList.DeleteLast;
 begin
   Delete(FStringList.Count - 1);
 end;
 
-destructor TLiStringList.Destroy;
+destructor TLyseeStringList.Destroy;
 begin
   Clear;
   FreeAndNil(FStringList);
   inherited;
 end;
 
-procedure TLiStringList.EndUpdate;
+procedure TLyseeStringList.EndUpdate;
 begin
   FStringList.EndUpdate;
 end;
 
-function TLiStringList.GetCount: integer;
+function TLyseeStringList.GetCount: integer;
 begin
   Result := FStringList.Count;
 end;
 
-function TLiStringList.GetValue(const Name: string): string;
+function TLyseeStringList.GetValue(const Name: string): string;
 begin
   Result := FStringList.Values[Name];
 end;
 
-function TLiStringList.IndexOfValue(const S: string): integer;
+function TLyseeStringList.IndexOfValue(const S: string): integer;
 var
   I: integer;
 begin
@@ -457,25 +454,25 @@ begin
   Result := -1;
 end;
 
-procedure TLiStringList.Insert(Index: Integer; const S: string; V: TLiValue);
+procedure TLyseeStringList.Insert(Index: Integer; const S: string; V: TLyseeValue);
 var
-  T: TLiValue;
+  T: TLyseeValue;
 begin
   if (V <> nil) and not V.IsNil then
   begin
-    T := TLiValue.Create;
+    T := TLyseeValue.Create;
     FStringList.InsertObject(Index, S, T);
     T.SetValue(V);
   end
   else FStringList.Insert(Index, S);
 end;
 
-function TLiStringList.IsEmpty: boolean;
+function TLyseeStringList.IsEmpty: boolean;
 begin
   Result := (FStringList.Count = 0);
 end;
 
-procedure TLiStringList.LoadFromFile(const FileName: string);
+procedure TLyseeStringList.LoadFromFile(const FileName: string);
 begin
   BeginUpdate;
   try
@@ -486,15 +483,15 @@ begin
   end;
 end;
 
-function TLiStringList.CopyLeft(ItemCount: integer): TLiStringList;
+function TLyseeStringList.CopyLeft(ItemCount: integer): TLyseeStringList;
 begin
   Result := Copy(0, ItemCount);
 end;
 
-procedure TLiStringList.MarkForSurvive;
+procedure TLyseeStringList.MarkForSurvive;
 var
   I: integer;
-  V: TLiValue;
+  V: TLyseeValue;
 begin
   if (Self <> nil) and not Survived then
   begin
@@ -502,20 +499,20 @@ begin
     for I := 0 to FStringList.Count - 1 do
       if FStringList.Objects[I] <> nil then
       begin
-        V := TLiValue(FStringList.Objects[I]);
+        V := TLyseeValue(FStringList.Objects[I]);
         V.MarkForSurvive;
       end;
   end;
 end;
 
-function TLiStringList.MatchStrs(const S1, S2: string): boolean;
+function TLyseeStringList.MatchStrs(const S1, S2: string): boolean;
 begin
   if FStringList.CaseSensitive then
     Result := (SysUtils.CompareStr(S1, S2) = 0) else
     Result := SysUtils.SameText(S1, S2);
 end;
 
-procedure TLiStringList.Pack;
+procedure TLyseeStringList.Pack;
 begin
   BeginUpdate;
   try
@@ -526,7 +523,7 @@ begin
   end;
 end;
 
-procedure TLiStringList.Remove(const S: string);
+procedure TLyseeStringList.Remove(const S: string);
 var
   I: integer;
 begin
@@ -534,7 +531,7 @@ begin
   if I >= 0 then Delete(I);
 end;
 
-procedure TLiStringList.RemoveByName(const S: string);
+procedure TLyseeStringList.RemoveByName(const S: string);
 var
   I: integer;
 begin
@@ -542,7 +539,7 @@ begin
   if I >= 0 then Delete(I);
 end;
 
-procedure TLiStringList.Rename(const Name, NewName: string);
+procedure TLyseeStringList.Rename(const Name, NewName: string);
 var
   I, X: integer;
   V: string;
@@ -569,7 +566,7 @@ begin
   end;
 end;
 
-procedure TLiStringList.Reverse;
+procedure TLyseeStringList.Reverse;
 var
   L, R: integer;
 begin
@@ -584,12 +581,12 @@ begin
   end;
 end;
 
-function TLiStringList.CopyRight(ItemCount: integer): TLiStringList;
+function TLyseeStringList.CopyRight(ItemCount: integer): TLyseeStringList;
 begin
   Result := Copy(FStringList.Count - ItemCount, ItemCount);
 end;
 
-procedure TLiStringList.DeleteMatchedLines(const Patten: string);
+procedure TLyseeStringList.DeleteMatchedLines(const Patten: string);
 var
   I: integer;
 begin
@@ -603,22 +600,22 @@ begin
   end;
 end;
 
-procedure TLiStringList.SaveToFile(const FileName: string);
+procedure TLyseeStringList.SaveToFile(const FileName: string);
 begin
   FStringList.SaveToFile(FileName);
 end;
 
-function TLiStringList.SelectMatched(const Patten: string): TLiStringList;
+function TLyseeStringList.SelectMatched(const Patten: string): TLyseeStringList;
 var
   I: integer;
 begin
-  Result := TLiStringList.Create;
+  Result := TLyseeStringList.Create;
   for I := 0 to FStringList.Count - 1 do
     if MatchPatten(FStringList[I], Patten) then
-      Result.Add(FStringList[I], TLiValue(FStringList.Objects[I]));
+      Result.Add(FStringList[I], TLyseeValue(FStringList.Objects[I]));
 end;
 
-procedure TLiStringList.SetCount(Value: integer);
+procedure TLyseeStringList.SetCount(Value: integer);
 begin
   if Value < 1 then Clear else
   begin
@@ -627,14 +624,14 @@ begin
   end;
 end;
 
-procedure TLiStringList.SetValue(const Name, Value: string);
+procedure TLyseeStringList.SetValue(const Name, Value: string);
 begin
   if Value <> '' then
     FStringList.Values[Name] := Value else
     RemoveByName(Name);
 end;
 
-procedure TLiStringList.Trim;
+procedure TLyseeStringList.Trim;
 var
   I: integer;
 begin
@@ -647,7 +644,7 @@ begin
   end;
 end;
 
-procedure TLiStringList.TrimAll;
+procedure TLyseeStringList.TrimAll;
 var
   I: integer;
 begin
@@ -660,7 +657,7 @@ begin
   end;
 end;
 
-procedure TLiStringList.TrimLeft;
+procedure TLyseeStringList.TrimLeft;
 var
   I: integer;
 begin
@@ -673,7 +670,7 @@ begin
   end;
 end;
 
-procedure TLiStringList.TrimRight;
+procedure TLyseeStringList.TrimRight;
 var
   I: integer;
 begin
@@ -686,7 +683,7 @@ begin
   end;
 end;
 
-procedure TLiStringList.Unique;
+procedure TLyseeStringList.Unique;
 var
   I: integer;
   S: string;
@@ -710,295 +707,320 @@ begin
   end;
 end;
 
-{ TLiStringListType }
+{ TLyseeStringListGenerate }
 
-procedure TLiStringListType.MyAdd(const Param: TLiParam);
+constructor TLyseeStringListGenerate.CreateIn(const List: TStrings);
+begin
+  inherited Create;
+  FL := List;
+  FIndex := -1;
+end;
+
+function TLyseeStringListGenerate.GetNext: boolean;
+begin
+  Result := HasNext;
+  if Result then
+  begin
+    Inc(FIndex);
+    AsString := FL[FIndex];
+  end
+  else SetNil;
+end;
+
+function TLyseeStringListGenerate.HasNext: boolean;
+begin
+  Result := (FL <> nil) and (FIndex < FL.Count - 1);
+end;
+
+{ TLyseeStringListType }
+
+procedure TLyseeStringListType.MyAdd(const Param: TLyseeParam);
 var
-  L: TLiStringList;
-  A: TLiList;
+  L: TLyseeStringList;
+  A: TLyseeList;
   I: integer;
 begin
   if Param.GetSelf(L) then
   begin
     Param.Result.AsInteger := (L.Add(Param[1].AsString, nil));
-    A := Param[2].AsList;
+    A := Param[2].AsArray;
     if A <> nil then
       for I := 0 to A.Count - 1 do
         L.Add(A[I].AsString, nil);
   end;
 end;
 
-procedure TLiStringListType.MyAddObject(const Param: TLiParam);
+procedure TLyseeStringListType.MyAddObject(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsInteger := L.Add(Param[1].AsString, Param[2]);
 end;
 
-procedure TLiStringListType.MyAssign(const Param: TLiParam);
+procedure TLyseeStringListType.MyAssign(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
-    L.Assign(TLiStringList(Param[1].GetOA(Self)));
+    L.Assign(TLyseeStringList(Param[1].GetOA(Self)));
 end;
 
-procedure TLiStringListType.MyBeginUpdate(const Param: TLiParam);
+procedure TLyseeStringListType.MyBeginUpdate(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.BeginUpdate;
 end;
 
-procedure TLiStringListType.MyClear(const Param: TLiParam);
+procedure TLyseeStringListType.MyClear(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.Clear;
 end;
 
-procedure TLiStringListType.MyClearObjects(const Param: TLiParam);
+procedure TLyseeStringListType.MyClearObjects(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.ClearObjects;
 end;
 
-procedure TLiStringListType.MyCopy(const Param: TLiParam);
+procedure TLyseeStringListType.MyCopy(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.SetTOA(Self, L.Copy(Param[1].AsInteger, Param[2].AsInteger));
 end;
 
-procedure TLiStringListType.MyCreate(const Param: TLiParam);
+procedure TLyseeStringListType.MyCreate(const Param: TLyseeParam);
 begin
-  Param.Result.SetTOA(Self, TLiStringList.Create);
+  Param.Result.SetTOA(Self, TLyseeStringList.Create);
 end;
 
-procedure TLiStringListType.MyDelete(const Param: TLiParam);
+procedure TLyseeStringListType.MyDelete(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.Delete(Param[1].AsInteger);
 end;
 
-procedure TLiStringListType.MyDeleteEmptyLines(const Param: TLiParam);
+procedure TLyseeStringListType.MyDeleteEmptyLines(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.DeleteEmptyLines;
 end;
 
-procedure TLiStringListType.MyDeleteLast(const Param: TLiParam);
+procedure TLyseeStringListType.MyDeleteLast(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.DeleteLast;
 end;
 
-procedure TLiStringListType.MyDeleteMatchedLines(const Param: TLiParam);
+procedure TLyseeStringListType.MyDeleteMatchedLines(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.DeleteMatchedLines(Param[1].AsString);
 end;
 
-procedure TLiStringListType.MyEndUpdate(const Param: TLiParam);
+procedure TLyseeStringListType.MyEndUpdate(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.EndUpdate;
 end;
 
-procedure TLiStringListType.MyEquals(const Param: TLiParam);
+procedure TLyseeStringListType.MyEquals(const Param: TLyseeParam);
 var
-  L, S: TLiStringList;
+  L, S: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
   begin
-    S := TLiStringList(Param[1].GetOA(Self));
-    Param.Result.AsBoolean := ((S <> nil) and L.StringList.Equals(S.StringList));
+    S := TLyseeStringList(Param[1].GetOA(Self));
+    Param.Result.AsBoolean := (L = S) or ((S <> nil) and L.StringList.Equals(S.StringList));
   end
   else Param.Result.AsBoolean := (false);
 end;
 
-procedure TLiStringListType.MyExchange(const Param: TLiParam);
+procedure TLyseeStringListType.MyExchange(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList.Exchange(Param[1].AsInteger, Param[2].AsInteger);
 end;
 
-procedure TLiStringListType.MyGet(const Param: TLiParam);
+procedure TLyseeStringListType.MyGet(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsString := L.StringList[Param[1].AsInteger];
 end;
 
-procedure TLiStringListType.MyGetCommaText(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetCommaText(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsString := L.StringList.CommaText;
 end;
 
-procedure TLiStringListType.MyGetCount(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetCount(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsInteger := L.StringList.Count;
 end;
 
-procedure TLiStringListType.MyGetDelimitedText(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetDelimitedText(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsString := L.StringList.DelimitedText;
 end;
 
-procedure TLiStringListType.MyGetDelimiter(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetDelimiter(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsChar := L.StringList.Delimiter;
 end;
 
-procedure TLiStringListType.MyGetFirst(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetFirst(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsString := L.StringList[0];
 end;
 
-procedure TLiStringListType.MyGetLast(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetLast(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsString := L.StringList[L.StringList.Count - 1];
 end;
 
-procedure TLiStringListType.MyGetLineBreak(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetLineBreak(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsString := L.StringList.LineBreak;
 end;
 
-procedure TLiStringListType.MyGetName(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetName(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsString := L.StringList.Names[Param[1].AsInteger];
 end;
 
-procedure TLiStringListType.MyGetNameValueSeparator(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetNameValueSeparator(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsChar := L.StringList.NameValueSeparator;
 end;
 
-procedure TLiStringListType.MyGetObject(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetObject(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
-    Param.Result.SetValue(TLiValue(L.StringList.Objects[Param[1].AsInteger]));
+    Param.Result.SetValue(TLyseeValue(L.StringList.Objects[Param[1].AsInteger]));
 end;
 
-procedure TLiStringListType.MyGetQuoteChar(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetQuoteChar(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsChar := L.StringList.QuoteChar;
 end;
 
-procedure TLiStringListType.MyGetCaseSensitive(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetCaseSensitive(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsBoolean := L.StringList.CaseSensitive;
 end;
 
-procedure TLiStringListType.MyGetSorted(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetSorted(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsBoolean := L.StringList.Sorted;
 end;
 
-procedure TLiStringListType.MyGetStrictDelimiter(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetStrictDelimiter(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsBoolean := L.StringList.StrictDelimiter;
 end;
 
-procedure TLiStringListType.MyGetText(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetText(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsString := L.StringList.Text;
 end;
 
-procedure TLiStringListType.MyGetValue(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetValue(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsString := L.StringList.Values[Param[1].AsString];
 end;
 
-procedure TLiStringListType.MyGetWriteBOM(const Param: TLiParam);
+procedure TLyseeStringListType.MyGetWriteBOM(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsBoolean := {$IFDEF FPC}false{$ELSE}L.StringList.WriteBOM{$ENDIF};
 end;
 
-procedure TLiStringListType.MyIndexOf(const Param: TLiParam);
+procedure TLyseeStringListType.MyIndexOf(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsInteger := L.StringList.IndexOf(Param[1].AsString);
 end;
 
-procedure TLiStringListType.MyIndexOfName(const Param: TLiParam);
+procedure TLyseeStringListType.MyIndexOfName(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsInteger := L.StringList.IndexOfName(Param[1].AsString);
 end;
 
-procedure TLiStringListType.MyIndexOfObject(const Param: TLiParam);
+procedure TLyseeStringListType.MyIndexOfObject(const Param: TLyseeParam);
 var
-  L: TLiStringList;
-  V: TLiValue;
+  L: TLyseeStringList;
+  V: TLyseeValue;
   I: integer;
 begin
   if Param.GetSelf(L) then
@@ -1006,7 +1028,7 @@ begin
     V := Param[1];
     for I := 0 to L.StringList.Count - 1 do
       if L.StringList.Objects[I] <> nil then
-        if V.Same(TLiValue(L.StringList.Objects[I])) then
+        if V.Same(TLyseeValue(L.StringList.Objects[I])) then
         begin
           Param.Result.AsInteger := I;
           Exit;
@@ -1015,73 +1037,73 @@ begin
   end;
 end;
 
-procedure TLiStringListType.MyIndexOfValue(const Param: TLiParam);
+procedure TLyseeStringListType.MyIndexOfValue(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsInteger := L.IndexOfValue(Param[1].AsString);
 end;
 
-procedure TLiStringListType.MyInsert(const Param: TLiParam);
+procedure TLyseeStringListType.MyInsert(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.Insert(Param[1].AsInteger, Param[2].AsString, nil);
 end;
 
-procedure TLiStringListType.MyInsertObject(const Param: TLiParam);
+procedure TLyseeStringListType.MyInsertObject(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.Insert(Param[1].AsInteger, Param[2].AsString, Param[3]);
 end;
 
-procedure TLiStringListType.MyIsEmpty(const Param: TLiParam);
+procedure TLyseeStringListType.MyIsEmpty(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsBoolean := L.IsEmpty;
 end;
 
-procedure TLiStringListType.MyLeft(const Param: TLiParam);
+procedure TLyseeStringListType.MyLeft(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.SetTOA(Self, L.CopyLeft(Param[1].AsInteger));
 end;
 
-procedure TLiStringListType.MyLoadFromFile(const Param: TLiParam);
+procedure TLyseeStringListType.MyLoadFromFile(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.LoadFromFile(Param[1].GetFileName);
 end;
 
-procedure TLiStringListType.MyMove(const Param: TLiParam);
+procedure TLyseeStringListType.MyMove(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList.Move(Param[1].AsInteger, Param[2].AsInteger);
 end;
 
-procedure TLiStringListType.MyNames(const Param: TLiParam);
+procedure TLyseeStringListType.MyNames(const Param: TLyseeParam);
 var
-  L: TLiStringList;
-  N: TLiList;
+  L: TLyseeStringList;
+  N: TLyseeList;
   S: string;
   I: integer;
 begin
   if Param.GetSelf(L) then
   begin
-    N := TLiList.Create;
-    Param.Result.AsList := N;
+    N := TLyseeList.Create;
+    Param.Result.AsArray := N;
     for I := 0 to L.Count - 1 do
     begin
       S := L.StringList.Names[I];
@@ -1091,79 +1113,79 @@ begin
   end;
 end;
 
-procedure TLiStringListType.MyPack(const Param: TLiParam);
+procedure TLyseeStringListType.MyPack(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.Pack;
 end;
 
-procedure TLiStringListType.MyRemove(const Param: TLiParam);
+procedure TLyseeStringListType.MyRemove(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.Remove(Param[1].AsString);
 end;
 
-procedure TLiStringListType.MyRemoveByName(const Param: TLiParam);
+procedure TLyseeStringListType.MyRemoveByName(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.RemoveByName(Param[1].AsString);
 end;
 
-procedure TLiStringListType.MyRename(const Param: TLiParam);
+procedure TLyseeStringListType.MyRename(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.Rename(Param[1].AsString, Param[2].AsString);
 end;
 
-procedure TLiStringListType.MyReverse(const Param: TLiParam);
+procedure TLyseeStringListType.MyReverse(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.Reverse;
 end;
 
-procedure TLiStringListType.MyRight(const Param: TLiParam);
+procedure TLyseeStringListType.MyRight(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.SetTOA(Self, L.CopyRight(Param[1].AsInteger));
 end;
 
-procedure TLiStringListType.MySaveToFile(const Param: TLiParam);
+procedure TLyseeStringListType.MySaveToFile(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.SaveToFile(Param[1].GetFileName);
 end;
 
-procedure TLiStringListType.MySelectMatchedLines(const Param: TLiParam);
+procedure TLyseeStringListType.MySelectMatchedLines(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.SetTOA(Self, L.SelectMatched(Param[1].AsString));
 end;
 
-procedure TLiStringListType.MySet(const Param: TLiParam);
+procedure TLyseeStringListType.MySet(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList[Param[1].AsInteger] := Param[2].AsString;
 end;
 
-procedure TLiStringListType.MySetCommaText(const Param: TLiParam);
+procedure TLyseeStringListType.MySetCommaText(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
   begin
@@ -1172,17 +1194,17 @@ begin
   end;
 end;
 
-procedure TLiStringListType.MySetCount(const Param: TLiParam);
+procedure TLyseeStringListType.MySetCount(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.Count := Param[1].AsInteger;
 end;
 
-procedure TLiStringListType.MySetDelimitedText(const Param: TLiParam);
+procedure TLyseeStringListType.MySetDelimitedText(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
   begin
@@ -1191,100 +1213,100 @@ begin
   end;
 end;
 
-procedure TLiStringListType.MySetDelimiter(const Param: TLiParam);
+procedure TLyseeStringListType.MySetDelimiter(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList.Delimiter := Param[1].AsChar;
 end;
 
-procedure TLiStringListType.MySetFirst(const Param: TLiParam);
+procedure TLyseeStringListType.MySetFirst(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList[0] := Param[1].AsString;
 end;
 
-procedure TLiStringListType.MySetLast(const Param: TLiParam);
+procedure TLyseeStringListType.MySetLast(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList[L.StringList.Count - 1] := Param[1].AsString;
 end;
 
-procedure TLiStringListType.MySetLineBreak(const Param: TLiParam);
+procedure TLyseeStringListType.MySetLineBreak(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList.LineBreak := Param[1].AsString;
 end;
 
-procedure TLiStringListType.MySetNameValueSeparator(const Param: TLiParam);
+procedure TLyseeStringListType.MySetNameValueSeparator(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList.NameValueSeparator := Param[1].AsChar;
 end;
 
-procedure TLiStringListType.MySetObject(const Param: TLiParam);
+procedure TLyseeStringListType.MySetObject(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
   I: integer;
-  V: TLiValue;
+  V: TLyseeValue;
 begin
   if Param.GetSelf(L) then
   begin
     I := Param[1].AsInteger;
-    V := TLiValue(L.StringList.Objects[I]);
+    V := TLyseeValue(L.StringList.Objects[I]);
     if V = nil then
     begin
-      V := TLiValue.Create;
+      V := TLyseeValue.Create;
       L.StringList.Objects[I] := V;
     end;
     V.SetValue(Param[2]);
   end;
 end;
 
-procedure TLiStringListType.MySetQuoteChar(const Param: TLiParam);
+procedure TLyseeStringListType.MySetQuoteChar(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList.QuoteChar := Param[1].AsChar;
 end;
 
-procedure TLiStringListType.MySetCaseSensitive(const Param: TLiParam);
+procedure TLyseeStringListType.MySetCaseSensitive(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList.CaseSensitive := Param[1].AsBoolean;
 end;
 
-procedure TLiStringListType.MySetSorted(const Param: TLiParam);
+procedure TLyseeStringListType.MySetSorted(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList.Sorted := Param[1].AsBoolean;
 end;
 
-procedure TLiStringListType.MySetStrictDelimiter(const Param: TLiParam);
+procedure TLyseeStringListType.MySetStrictDelimiter(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList.StrictDelimiter := Param[1].AsBoolean;
 end;
 
-procedure TLiStringListType.MySetText(const Param: TLiParam);
+procedure TLyseeStringListType.MySetText(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
   begin
@@ -1293,17 +1315,17 @@ begin
   end;
 end;
 
-procedure TLiStringListType.MySetValue(const Param: TLiParam);
+procedure TLyseeStringListType.MySetValue(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.Values[Param[1].AsString] := Param[2].AsString;
 end;
 
-procedure TLiStringListType.MySetWriteBOM(const Param: TLiParam);
+procedure TLyseeStringListType.MySetWriteBOM(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     {$IFNDEF FPC}
@@ -1311,58 +1333,58 @@ begin
     {$ENDIF};
 end;
 
-procedure TLiStringListType.MySort(const Param: TLiParam);
+procedure TLyseeStringListType.MySort(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     L.StringList.Sort;
 end;
 
-procedure TLiStringListType.MyTrim(const Param: TLiParam);
+procedure TLyseeStringListType.MyTrim(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.Trim;
 end;
 
-procedure TLiStringListType.MyTrimAll(const Param: TLiParam);
+procedure TLyseeStringListType.MyTrimAll(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.TrimAll;
 end;
 
-procedure TLiStringListType.MyTrimLeft(const Param: TLiParam);
+procedure TLyseeStringListType.MyTrimLeft(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.TrimLeft;
 end;
 
-procedure TLiStringListType.MyTrimRight(const Param: TLiParam);
+procedure TLyseeStringListType.MyTrimRight(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.TrimRight;
 end;
 
-procedure TLiStringListType.MyUnique(const Param: TLiParam);
+procedure TLyseeStringListType.MyUnique(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then L.Unique;
 end;
 
-procedure TLiStringListType.MyValueFromIndex(const Param: TLiParam);
+procedure TLyseeStringListType.MyValueFromIndex(const Param: TLyseeParam);
 var
-  L: TLiStringList;
+  L: TLyseeStringList;
 begin
   if Param.GetSelf(L) then
     Param.Result.AsString := L.StringList.ValueFromIndex[Param[1].AsInteger];
 end;
 
-procedure TLiStringListType.Setup;
+procedure TLyseeStringListType.Setup;
 begin
   Method('Create', Self, {$IFDEF FPC}@{$ENDIF}MyCreate);
   Method('IsEmpty', my_bool, {$IFDEF FPC}@{$ENDIF}MyIsEmpty);
@@ -1382,7 +1404,7 @@ begin
   Method('Remove', ['S'], [my_string], {$IFDEF FPC}@{$ENDIF}MyRemove);
   Method('RemoveByName', ['Name'], [my_string],
          {$IFDEF FPC}@{$ENDIF}MyRemoveByName);
-  Method('Add', my_int, ['_S', '...'], [my_string, my_list],
+  Method('Add', my_int, ['_S', '...'], [my_string, my_array],
          {$IFDEF FPC}@{$ENDIF}MyAdd);
   Method('AddObject', my_int, ['S', 'Any'], [my_string, my_variant],
          {$IFDEF FPC}@{$ENDIF}MyAddObject);
@@ -1424,7 +1446,7 @@ begin
   Method('SelectMatchedLines', Self, ['Patten'], [my_string],
          {$IFDEF FPC}@{$ENDIF}MySelectMatchedLines);
   Method('Reverse', {$IFDEF FPC}@{$ENDIF}MyReverse);
-  Method('Names', my_list, {$IFDEF FPC}@{$ENDIF}MyNames);
+  Method('Names', my_array, {$IFDEF FPC}@{$ENDIF}MyNames);
   Define('Count', my_int,
          {$IFDEF FPC}@{$ENDIF}MyGetCount,
          {$IFDEF FPC}@{$ENDIF}MySetCount);
@@ -1483,66 +1505,196 @@ begin
 
   AddOperate(opShi, my_variant, {$IFDEF FPC}@{$ENDIF}strlist_shi_variant);
   AddOperate(opFill, my_variant, {$IFDEF FPC}@{$ENDIF}strlist_fill_variant);
-  AddConvert(my_string, {$IFDEF FPC}@{$ENDIF}string_as_strlist);
-  AddConvert(my_list, {$IFDEF FPC}@{$ENDIF}list_as_strlist);
-  AddConvert(my_hash, {$IFDEF FPC}@{$ENDIF}hashed_as_strlist);
-  my_list.AddConvert(Self, {$IFDEF FPC}@{$ENDIF}strlist_as_list);
-  my_hash.AddConvert(Self, {$IFDEF FPC}@{$ENDIF}strlist_as_hashed);
 
   inherited;
 end;
 
-function TLiStringListType._Add(Obj: pointer; Value: TLiValue): integer;
+function TLyseeStringListType.Add(Obj: pointer; Value: TLyseeValue): integer;
 begin
-  Result := TLiStringList(Obj).StringList.Add(Value.AsString);
+  Result := TLyseeStringList(Obj).StringList.Add(Value.AsString);
 end;
 
-function TLiStringListType._AsString(Obj: pointer): string;
+function TLyseeStringListType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiStringList(Obj).StringList.Text else
+    Result := TLyseeStringList(Obj).StringList.Text else
     Result := '';
 end;
 
-function TLiStringListType._Clear(Obj: pointer): boolean;
+function TLyseeStringListType.Clear(Obj: pointer): boolean;
 begin
   Result := (Obj <> nil);
   if Result then
-    TLiStringList(Obj).Clear;
+    TLyseeStringList(Obj).Clear;
 end;
 
-function TLiStringListType._DecRefcount(Obj: pointer): integer;
+procedure TLyseeStringListType.Convert(Value: TLyseeValue);
+var
+  T: TLyseeType;
+  S: TLyseeStringList;
+begin
+  T := Value.VType;
+  if T <> Self then
+    if (T = my_array) or (T = my_list) then // Array/TList => TStringList
+    begin
+      S := TLyseeStringList.Create;
+      S.AddList(TLyseeList(Value.GetOA));
+      Value.SetTOA(Self, S);
+    end
+    else
+    if T = my_string then // string => TStringList
+    begin
+      S := TLyseeStringList.Create;
+      S.StringList.Text := Value.AsString;
+      Value.SetTOA(Self, S);
+    end
+    else
+    if T = my_hash then // THash => TStringList
+    begin
+      S := TLyseeStringList.Create;
+      S.AddHashed(TLyseeHash(Value.GetOA));
+      Value.SetTOA(Self, S);
+    end
+    else inherited;
+end;
+
+function TLyseeStringListType.ConvertTo(Value: TLyseeValue; T: TLyseeType): boolean;
+var
+  S: TLyseeStringList;
+begin
+  if (T = my_array) or (T = my_list) then // TStringList => Array/TList
+  begin
+    S := TLyseeStringList(Value.GetOA);
+    if S <> nil then
+      Value.SetTOA(T, S.AsLyseeList) else
+      Value.SetTOA(T, nil);
+    Result := true;
+  end
+  else
+  if T = my_hash then  // TStringList => THashed
+  begin
+    S := TLyseeStringList(Value.GetOA);
+    if S <> nil then
+      Value.SetTOA(T, S.AsLyseeHash) else
+      Value.SetTOA(T, nil);
+    Result := true;
+  end
+  else
+  if T = my_string then // TStringList => string
+  begin
+    S := TLyseeStringList(Value.GetOA);
+    if S <> nil then
+      Value.AsString := S.AsString else
+      Value.AsString := '';
+    Result := true;
+  end
+  else Result := inherited;
+end;
+
+function TLyseeStringListType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiStringList(Obj).DecRefcount else
+    Result := TLyseeStringList(Obj).DecRefcount else
     Result := 0;
 end;
 
-function TLiStringListType._Generate(Obj: pointer): TLiGenerate;
+function TLyseeStringListType.Generate(Obj: pointer): TLyseeGenerate;
 begin
-  if (Obj <> nil) and (TLiStringList(Obj).StringList.Count > 0) then
-    Result := TLiGenerate_strlist.CreateIn(TLiStringList(Obj).StringList) else
+  if (Obj <> nil) and (TLyseeStringList(Obj).StringList.Count > 0) then
+    Result := TLyseeStringListGenerate.CreateIn(TLyseeStringList(Obj).StringList) else
     Result := nil;
 end;
 
-function TLiStringListType._IncRefcount(Obj: pointer): integer;
+function TLyseeStringListType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiStringList(Obj).IncRefcount else
+    Result := TLyseeStringList(Obj).IncRefcount else
     Result := 0;
 end;
 
-function TLiStringListType._Length(Obj: pointer): int64;
+function TLyseeStringListType.GetLength(Obj: pointer): int64;
 begin
   if Obj <> nil then
-    Result := TLiStringList(Obj).StringList.Count else
+    Result := TLyseeStringList(Obj).StringList.Count else
     Result := 0;
+end;
+
+{ TLyseeListType }
+
+procedure TLyseeListType.Convert(Value: TLyseeValue);
+var
+  T: TLyseeType;
+  S: TLyseeStringList;
+  L: TLyseeList;
+begin
+  T := Value.VType;
+  if T <> Self then
+    if T = my_array then // Array => TList
+    begin
+      L := TLyseeList(Value.GetOA);
+      Value.SetTOA(Self, L);
+    end
+    else
+    if T = my_strlist then // TStringList => TList
+    begin
+      S := TLyseeStringList(Value.GetOA);
+      if S <> nil then
+        Value.SetTOA(Self, S.AsLyseeList) else
+        Value.SetTOA(Self, nil);
+    end
+    else inherited;
+end;
+
+function TLyseeListType.ConvertTo(Value: TLyseeValue; T: TLyseeType): boolean;
+var
+  S: TLyseeStringList;
+  L: TLyseeList;
+begin
+  if T = my_array then // TList => Array
+  begin
+    Value.SetTOA(my_array, Value.GetOA);
+    Result := true;
+  end
+  else
+  if T = my_strlist then // TList => TStringList
+  begin
+    S := TLyseeStringList.Create;
+    S.AddList(TLyseeList(Value.GetOA));
+    Value.SetTOA(my_strlist, S);
+    Result := true;
+  end
+  else
+  if T = my_string then // TList => string
+  begin
+    L := TLyseeList(Value.GetOA);
+    if L <> nil then
+      Value.AsString := L.AsString else
+      Value.AsString := '';
+    Result := true;
+  end
+  else Result := inherited;
+end;
+
+{ TLyseeClassesModule }
+
+constructor TLyseeClassesModule.Create(const AName: string);
+begin
+  inherited;
+  OnSetup := {$IFDEF FPC}@{$ENDIF}DoSetup;
+end;
+
+procedure TLyseeClassesModule.DoSetup(Sender: TObject);
+begin
+  OnSetup := nil;
+  my_strlist := TLyseeStringListType.Create('TStringList', Self);
+  my_list := TLyseeListType.Create('TList', Self, my_array);
+  my_strlist.Setup;
+  my_list.Setup;
 end;
 
 initialization
 begin
-  my_classes := AddModule('Classes');
-  my_strlist := TLiStringListType.Create('TStringList', my_classes, nil);
+  my_classes := TLyseeClassesModule.Create('Classes');
 end;
 
 end.

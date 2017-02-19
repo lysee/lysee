@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2012, Li Yun Jie. All Rights Reserved.            }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2012/05/19                                                      }
-{    MODIFIED: 2017/01/07                                                      }
+{    MODIFIED: 2017/02/19                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -21,12 +21,12 @@ uses
 
 type
 
-  TLiDataBase = class;{forward}
-  TLiDataSet  = class;
+  TLyseeDataBase = class;{forward}
+  TLyseeDataSet  = class;
 
-  { TLiField }
+  { TLyseeField }
 
-  TLiField = class(TLiObject)
+  TLyseeField = class(TBasicObject)
   private
     FField: TField;
     function GetIndex: integer;
@@ -37,10 +37,10 @@ type
     function GetAsTime: TDateTime;
     function GetAsChar: char;
     function GetName: string;
-    function GetType: TLiType;
+    function GetType: TLyseeType;
   public
     constructor Create(AField: TField);
-    procedure SaveValueTo(Value: TLiValue);
+    procedure SaveValueTo(Value: TLyseeValue);
     function IsNull: boolean;
     function AsString: string;override;
     property AsChar: char read GetAsChar;
@@ -51,49 +51,49 @@ type
     property AsBoolean: boolean read GetAsBoolean;
     property Field: TField read FField;
     property FieldName: string read GetName;
-    property FieldType: TLiType read GetType;
+    property FieldType: TLyseeType read GetType;
     property FieldIndex: integer read GetIndex;
   end;
 
-  { TLiFieldType }
+  { TLyseeFieldType }
 
-  TLiFieldType = class(TLiType)
+  TLyseeFieldType = class(TLyseeType)
   protected
-    procedure MyName(const Param: TLiParam);
-    procedure MyType(const Param: TLiParam);
-    procedure MyIndex(const Param: TLiParam);
-    procedure MyValue(const Param: TLiParam);
-    procedure MyIsNull(const Param: TLiParam);
-    procedure MyAsString(const Param: TLiParam);
-    procedure MyAsChar(const Param: TLiParam);
-    procedure MyAsInteger(const Param: TLiParam);
-    procedure MyAsFloat(const Param: TLiParam);
-    procedure MyAsCurrency(const Param: TLiParam);
-    procedure MyAsBoolean(const Param: TLiParam);
-    procedure MyAsTime(const Param: TLiParam);
+    procedure MyName(const Param: TLyseeParam);
+    procedure MyType(const Param: TLyseeParam);
+    procedure MyIndex(const Param: TLyseeParam);
+    procedure MyValue(const Param: TLyseeParam);
+    procedure MyIsNull(const Param: TLyseeParam);
+    procedure MyAsString(const Param: TLyseeParam);
+    procedure MyAsChar(const Param: TLyseeParam);
+    procedure MyAsInteger(const Param: TLyseeParam);
+    procedure MyAsFloat(const Param: TLyseeParam);
+    procedure MyAsCurrency(const Param: TLyseeParam);
+    procedure MyAsBoolean(const Param: TLyseeParam);
+    procedure MyAsTime(const Param: TLyseeParam);
     procedure Setup;override;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    function _AsChar(Obj: pointer): char;override;
-    function _AsInteger(Obj: pointer): int64;override;
-    function _AsFloat(Obj: pointer): double;override;
-    function _AsCurrency(Obj: pointer): currency;override;
-    function _AsTime(Obj: pointer): TDateTime;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    procedure _Validate(Obj: pointer);override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
+    function AsChar(Obj: pointer): char;override;
+    function AsInteger(Obj: pointer): int64;override;
+    function AsFloat(Obj: pointer): double;override;
+    function AsCurrency(Obj: pointer): currency;override;
+    function AsTime(Obj: pointer): TDateTime;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    procedure Validate(Obj: pointer);override;
   end;
 
-  { TLiDataSet }
+  { TLyseeDataSet }
 
-  TLiDataSet = class(TLiObject)
+  TLyseeDataSet = class(TBasicObject)
   private
-    FDataBase: TLiDataBase;
+    FDataBase: TLyseeDataBase;
     FDataSet: TDataSet;
     FFields: TList;
     function GetFieldCount: integer;
-    function GetField(Index: integer): TLiField;
+    function GetField(Index: integer): TLyseeField;
     function GetActive: boolean;
     procedure SetActive(Value: boolean);
     function GetEof: boolean;
@@ -105,7 +105,7 @@ type
     procedure DeleteField(Index: integer);
     procedure OnClose(Sender: TObject);
   public
-    constructor Create(ADataSet: TDataSet; ADataBase: TLiDataBase);virtual;
+    constructor Create(ADataSet: TDataSet; ADataBase: TLyseeDataBase);virtual;
     destructor Destroy;override;
     procedure Close;
     procedure Open;
@@ -114,56 +114,56 @@ type
     procedure Prior;
     procedure Next;
     function IndexOf(const Name: string): integer;
-    function FindField(const Name: string): TLiField;
-    function FieldByName(const Name: string): TLiField;
+    function FindField(const Name: string): TLyseeField;
+    function FieldByName(const Name: string): TLyseeField;
     function AsString: string;override;
     property DataSet: TDataSet read FDataSet;
     property Active: boolean read GetActive write SetActive;
     property RecordCount: integer read GetRecordCount;
     property FieldCount: integer read GetFieldCount;
-    property Fields[Index: integer]: TLiField read GetField;default;
+    property Fields[Index: integer]: TLyseeField read GetField;default;
     property Bof: boolean read GetBof;
     property Eof: boolean read GetEof;
   end;
 
-  { TLiDataSetType }
+  { TLyseeDataSetType }
 
-  TLiDataSetType = class(TLiType)
+  TLyseeDataSetType = class(TLyseeType)
   protected
-    procedure MyOpen(const Param: TLiParam);
-    procedure MyClose(const Param: TLiParam);
-    procedure MyFirst(const Param: TLiParam);
-    procedure MyLast(const Param: TLiParam);
-    procedure MyPrior(const Param: TLiParam);
-    procedure MyNext(const Param: TLiParam);
-    procedure MyBof(const Param: TLiParam);
-    procedure MyEof(const Param: TLiParam);
-    procedure MyFindField(const Param: TLiParam);
-    procedure MyFieldByName(const Param: TLiParam);
-    procedure MyFieldCount(const Param: TLiParam);
-    procedure MyRecordCount(const Param: TLiParam);
-    procedure MyGetActive(const Param: TLiParam);
-    procedure MySetActive(const Param: TLiParam);
-    procedure MyGetField(const Param: TLiParam);
-    procedure MyGetValue(const Param: TLiParam);
+    procedure MyOpen(const Param: TLyseeParam);
+    procedure MyClose(const Param: TLyseeParam);
+    procedure MyFirst(const Param: TLyseeParam);
+    procedure MyLast(const Param: TLyseeParam);
+    procedure MyPrior(const Param: TLyseeParam);
+    procedure MyNext(const Param: TLyseeParam);
+    procedure MyBof(const Param: TLyseeParam);
+    procedure MyEof(const Param: TLyseeParam);
+    procedure MyFindField(const Param: TLyseeParam);
+    procedure MyFieldByName(const Param: TLyseeParam);
+    procedure MyFieldCount(const Param: TLyseeParam);
+    procedure MyRecordCount(const Param: TLyseeParam);
+    procedure MyGetActive(const Param: TLyseeParam);
+    procedure MySetActive(const Param: TLyseeParam);
+    procedure MyGetField(const Param: TLyseeParam);
+    procedure MyGetValue(const Param: TLyseeParam);
     procedure Setup;override;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    function _AsBoolean(Obj: pointer): boolean;override;
-    function _Length(Obj: pointer): int64;override;
-    procedure _Validate(Obj: pointer);override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
+    function AsBoolean(Obj: pointer): boolean;override;
+    function GetLength(Obj: pointer): int64;override;
+    procedure Validate(Obj: pointer);override;
   end;
 
-  { TLiDataBase }
+  { TLyseeDataBase }
 
-  TLiDataBase = class(TLiObject)
+  TLyseeDataBase = class(TBasicObject)
   private
     FConnection: TCustomConnection;
     FDataSets: TList;
     function GetDataSetCount: integer;
-    function GetDataSet(Index: integer): TLiDataSet;
+    function GetDataSet(Index: integer): TLyseeDataSet;
     function GetConnected: boolean;
     procedure SetConnected(Value: boolean);
     function GetLoginPrompt: boolean;
@@ -192,48 +192,56 @@ type
     property Connection: TCustomConnection read FConnection;
     property Connected: boolean read GetConnected write SetConnected;
     property DataSetCount: integer read GetDataSetCount;
-    property DataSets[Index: integer]: TLiDataSet read GetDataSet;default;
+    property DataSets[Index: integer]: TLyseeDataSet read GetDataSet;default;
     property LoginPrompt: boolean read GetLoginPrompt write SetLoginPrompt;
   end;
 
-  { TLiDataBaseType }
+  { TLyseeDataBaseType }
 
-  TLiDataBaseType = class(TLiType)
+  TLyseeDataBaseType = class(TLyseeType)
   protected
-    procedure MyOpen(const Param: TLiParam);
-    procedure MyClose(const Param: TLiParam);
-    procedure MyInTransaction(const Param: TLiParam);
-    procedure MyTransact(const Param: TLiParam);
-    procedure MyCommit(const Param: TLiParam);
-    procedure MyRollback(const Param: TLiParam);
-    procedure MyTableNames(const Param: TLiParam);
-    procedure MyUserTableNames(const Param: TLiParam);
-    procedure MySystemTableNames(const Param: TLiParam);
-    procedure MyTableFieldNames(const Param: TLiParam);
-    procedure MyProcedureNames(const Param: TLiParam);
-    procedure MyGetConnected(const Param: TLiParam);
-    procedure MySetConnected(const Param: TLiParam);
-    procedure MyGetLoginPrompt(const Param: TLiParam);
-    procedure MySetLoginPrompt(const Param: TLiParam);
+    procedure MyOpen(const Param: TLyseeParam);
+    procedure MyClose(const Param: TLyseeParam);
+    procedure MyInTransaction(const Param: TLyseeParam);
+    procedure MyTransact(const Param: TLyseeParam);
+    procedure MyCommit(const Param: TLyseeParam);
+    procedure MyRollback(const Param: TLyseeParam);
+    procedure MyTableNames(const Param: TLyseeParam);
+    procedure MyUserTableNames(const Param: TLyseeParam);
+    procedure MySystemTableNames(const Param: TLyseeParam);
+    procedure MyTableFieldNames(const Param: TLyseeParam);
+    procedure MyProcedureNames(const Param: TLyseeParam);
+    procedure MyGetConnected(const Param: TLyseeParam);
+    procedure MySetConnected(const Param: TLyseeParam);
+    procedure MyGetLoginPrompt(const Param: TLyseeParam);
+    procedure MySetLoginPrompt(const Param: TLyseeParam);
     procedure Setup;override;
   public
-    function _IncRefcount(Obj: pointer): integer;override;
-    function _DecRefcount(Obj: pointer): integer;override;
-    function _AsString(Obj: pointer): string;override;
-    procedure _Validate(Obj: pointer);override;
+    function IncRefcount(Obj: pointer): integer;override;
+    function DecRefcount(Obj: pointer): integer;override;
+    function AsString(Obj: pointer): string;override;
+    procedure Validate(Obj: pointer);override;
+  end;
+
+  { TLyseeDbModule }
+
+  TLyseeDbModule = class(TLyseeModule)
+  private
+    procedure DoSetup(Sender: TObject);
+  public
+    constructor Create(const AName: string);override;
   end;
 
 var
-
-  my_db: TLiModule;
-  my_field: TLiFieldType;
-  my_dataset: TLiDataSetType;
-  my_database: TLiDataBaseType;
+  my_db: TLyseeDbModule;
+  my_field: TLyseeFieldType;
+  my_dataset: TLyseeDataSetType;
+  my_database: TLyseeDataBaseType;
 
 function FieldTID(AType: TFieldType): integer;overload;
 function FieldTID(AField: TField): integer;overload;
-function FieldToType(AType: TFieldType): TLiType;overload;
-function FieldToType(AField: TField): TLiType;overload;
+function FieldToType(AType: TFieldType): TLyseeType;overload;
+function FieldToType(AField: TField): TLyseeType;overload;
 function FieldToStr(AField: TField): string;
 function FieldToChar(AField: TField): char;
 function FieldToInt(AField: TField): int64;
@@ -241,7 +249,7 @@ function FieldToBool(AField: TField): boolean;
 function FieldToFloat(AField: TField): double;
 function FieldToCurr(AField: TField): currency;
 function FieldToTime(AField: TField): TDateTime;
-procedure GetFieldValue(AField: TField; Value: TLiValue);
+procedure GetFieldValue(AField: TField; Value: TLyseeValue);
 
 implementation
 
@@ -286,7 +294,7 @@ begin
   Result := FieldTID(AField.DataType);
 end;
 
-function FieldToType(AType: TFieldType): TLiType;
+function FieldToType(AType: TFieldType): TLyseeType;
 begin
   Result := my_nil;
   case FieldTID(AType) of
@@ -299,7 +307,7 @@ begin
   end;
 end;
 
-function FieldToType(AField: TField): TLiType;
+function FieldToType(AField: TField): TLyseeType;
 begin
   Result := FieldToType(AField.DataType);
 end;
@@ -320,7 +328,7 @@ end;
 
 function FieldToChar(AField: TField): char;
 var
-  T: TLiType;
+  T: TLyseeType;
   S: string;
 begin
   Result := #0;
@@ -409,7 +417,7 @@ begin
   end;
 end;
 
-procedure GetFieldValue(AField: TField; Value: TLiValue);
+procedure GetFieldValue(AField: TField; Value: TLyseeValue);
 begin
   if AField.IsNull then Value.SetNil else
   case FieldTID(AField.DataType) of
@@ -423,172 +431,172 @@ begin
   end;
 end;
 
-{ TLiField }
+{ TLyseeField }
 
-constructor TLiField.Create(AField: TField);
+constructor TLyseeField.Create(AField: TField);
 begin
   FField := AField;
 end;
 
-function TLiField.GetAsBoolean: boolean;
+function TLyseeField.GetAsBoolean: boolean;
 begin
   Result := FieldToBool(FField);
 end;
 
-function TLiField.GetAsChar: char;
+function TLyseeField.GetAsChar: char;
 begin
   Result := FieldToChar(FField);
 end;
 
-function TLiField.GetAsCurrency: currency;
+function TLyseeField.GetAsCurrency: currency;
 begin
   Result := FieldToCurr(FField);
 end;
 
-function TLiField.GetAsFloat: double;
+function TLyseeField.GetAsFloat: double;
 begin
   Result := FieldToFloat(FField);
 end;
 
-function TLiField.GetAsInteger: int64;
+function TLyseeField.GetAsInteger: int64;
 begin
   Result := FieldToInt(FField);
 end;
 
-function TLiField.AsString: string;
+function TLyseeField.AsString: string;
 begin
   Result := FieldToStr(FField);
 end;
 
-function TLiField.GetAsTime: TDateTime;
+function TLyseeField.GetAsTime: TDateTime;
 begin
   Result := FieldToTime(FField);
 end;
 
-function TLiField.GetIndex: integer;
+function TLyseeField.GetIndex: integer;
 begin
   Result := FField.Index;
 end;
 
-function TLiField.GetName: string;
+function TLyseeField.GetName: string;
 begin
   Result := FField.FieldName;
 end;
 
-function TLiField.GetType: TLiType;
+function TLyseeField.GetType: TLyseeType;
 begin
   Result := FieldToType(FField);
 end;
 
-function TLiField.IsNull: boolean;
+function TLyseeField.IsNull: boolean;
 begin
   Result := FField.IsNull;
 end;
 
-procedure TLiField.SaveValueTo(Value: TLiValue);
+procedure TLyseeField.SaveValueTo(Value: TLyseeValue);
 begin
   GetFieldValue(FField, Value);
 end;
 
-{ TLiFieldType }
+{ TLyseeFieldType }
 
-procedure TLiFieldType.MyAsBoolean(const Param: TLiParam);
+procedure TLyseeFieldType.MyAsBoolean(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsBoolean := F.AsBoolean;
 end;
 
-procedure TLiFieldType.MyAsChar(const Param: TLiParam);
+procedure TLyseeFieldType.MyAsChar(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsChar := F.AsChar;
 end;
 
-procedure TLiFieldType.MyAsCurrency(const Param: TLiParam);
+procedure TLyseeFieldType.MyAsCurrency(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsCurrency := F.AsCurrency;
 end;
 
-procedure TLiFieldType.MyAsFloat(const Param: TLiParam);
+procedure TLyseeFieldType.MyAsFloat(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsFloat := F.AsFloat;
 end;
 
-procedure TLiFieldType.MyAsInteger(const Param: TLiParam);
+procedure TLyseeFieldType.MyAsInteger(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsInteger := F.AsInteger;
 end;
 
-procedure TLiFieldType.MyAsString(const Param: TLiParam);
+procedure TLyseeFieldType.MyAsString(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsString := F.AsString;
 end;
 
-procedure TLiFieldType.MyAsTime(const Param: TLiParam);
+procedure TLyseeFieldType.MyAsTime(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsTime := F.AsTime;
 end;
 
-procedure TLiFieldType.MyIndex(const Param: TLiParam);
+procedure TLyseeFieldType.MyIndex(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsInteger := F.FieldIndex;
 end;
 
-procedure TLiFieldType.MyIsNull(const Param: TLiParam);
+procedure TLyseeFieldType.MyIsNull(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsBoolean := F.IsNull;
 end;
 
-procedure TLiFieldType.MyName(const Param: TLiParam);
+procedure TLyseeFieldType.MyName(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsString := F.FieldName;
 end;
 
-procedure TLiFieldType.MyType(const Param: TLiParam);
+procedure TLyseeFieldType.MyType(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     Param.Result.AsType := F.FieldType;
 end;
 
-procedure TLiFieldType.MyValue(const Param: TLiParam);
+procedure TLyseeFieldType.MyValue(const Param: TLyseeParam);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   if Param.GetSelf(F) then
     GetFieldValue(F.FField, Param.Result);
 end;
 
-procedure TLiFieldType.Setup;
+procedure TLyseeFieldType.Setup;
 begin
   Method('Name', my_string, {$IFDEF FPC}@{$ENDIF}MyName);
   Method('Type', my_type, {$IFDEF FPC}@{$ENDIF}MyType);
@@ -605,66 +613,66 @@ begin
   inherited;
 end;
 
-function TLiFieldType._AsBoolean(Obj: pointer): boolean;
+function TLyseeFieldType.AsBoolean(Obj: pointer): boolean;
 begin
-  Result := (Obj <> nil) and TLiField(Obj).AsBoolean;
+  Result := (Obj <> nil) and TLyseeField(Obj).AsBoolean;
 end;
 
-function TLiFieldType._AsChar(Obj: pointer): char;
+function TLyseeFieldType.AsChar(Obj: pointer): char;
 begin
-  Result := TLiField(Obj).AsChar;
+  Result := TLyseeField(Obj).AsChar;
 end;
 
-function TLiFieldType._AsFloat(Obj: pointer): double;
+function TLyseeFieldType.AsFloat(Obj: pointer): double;
 begin
-  Result := TLiField(Obj).AsFloat;
+  Result := TLyseeField(Obj).AsFloat;
 end;
 
-function TLiFieldType._AsInteger(Obj: pointer): int64;
+function TLyseeFieldType.AsInteger(Obj: pointer): int64;
 begin
-  Result := TLiField(Obj).AsInteger;
+  Result := TLyseeField(Obj).AsInteger;
 end;
 
-function TLiFieldType._AsCurrency(Obj: pointer): currency;
+function TLyseeFieldType.AsCurrency(Obj: pointer): currency;
 begin
-  Result := TLiField(Obj).AsCurrency;
+  Result := TLyseeField(Obj).AsCurrency;
 end;
 
-function TLiFieldType._AsString(Obj: pointer): string;
+function TLyseeFieldType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiField(Obj).AsString else
+    Result := TLyseeField(Obj).AsString else
     Result := '';
 end;
 
-function TLiFieldType._AsTime(Obj: pointer): TDateTime;
+function TLyseeFieldType.AsTime(Obj: pointer): TDateTime;
 begin
-  Result := TLiField(Obj).AsTime;
+  Result := TLyseeField(Obj).AsTime;
 end;
 
-function TLiFieldType._DecRefcount(Obj: pointer): integer;
+function TLyseeFieldType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiField(Obj).DecRefcount else
+    Result := TLyseeField(Obj).DecRefcount else
     Result := 0;
 end;
 
-function TLiFieldType._IncRefcount(Obj: pointer): integer;
+function TLyseeFieldType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiField(Obj).IncRefcount else
+    Result := TLyseeField(Obj).IncRefcount else
     Result := 0;
 end;
 
-procedure TLiFieldType._Validate(Obj: pointer);
+procedure TLyseeFieldType.Validate(Obj: pointer);
 begin
   inherited;
-  Check(TLiField(Obj).FField <> nil, 'field has been released');
+  Check(TLyseeField(Obj).FField <> nil, 'field has been released');
 end;
 
-{ TLiDataSet }
+{ TLyseeDataSet }
 
-procedure TLiDataSet.ClearFields;
+procedure TLyseeDataSet.ClearFields;
 var
   I: integer;
 begin
@@ -672,13 +680,13 @@ begin
     DeleteField(I);
 end;
 
-procedure TLiDataSet.Close;
+procedure TLyseeDataSet.Close;
 begin
   ClearFields;
   FDataSet.Close;
 end;
 
-constructor TLiDataSet.Create(ADataSet: TDataSet; ADataBase: TLiDataBase);
+constructor TLyseeDataSet.Create(ADataSet: TDataSet; ADataBase: TLyseeDataBase);
 begin
   FDataBase := ADataBase;
   if FDataBase <> nil then
@@ -688,9 +696,9 @@ begin
   SetupFields;
 end;
 
-procedure TLiDataSet.DeleteField(Index: integer);
+procedure TLyseeDataSet.DeleteField(Index: integer);
 var
-  F: TLiField;
+  F: TLyseeField;
 begin
   F := GetField(Index);
   FFields.Delete(Index);
@@ -698,7 +706,7 @@ begin
   F.DecRefcount;
 end;
 
-destructor TLiDataSet.Destroy;
+destructor TLyseeDataSet.Destroy;
 begin
   if FDataBase <> nil then
     FDataBase.FDataSets.Remove(Self);
@@ -708,14 +716,14 @@ begin
   inherited;
 end;
 
-function TLiDataSet.FieldByName(const Name: string): TLiField;
+function TLyseeDataSet.FieldByName(const Name: string): TLyseeField;
 begin
   Result := FindField(Name);
   if Result = nil then
     Throw('field not found: %s', [Name]);
 end;
 
-function TLiDataSet.FindField(const Name: string): TLiField;
+function TLyseeDataSet.FindField(const Name: string): TLyseeField;
 var
   I: integer;
 begin
@@ -725,17 +733,17 @@ begin
     Result := nil;
 end;
 
-procedure TLiDataSet.First;
+procedure TLyseeDataSet.First;
 begin
   FDataSet.First;
 end;
 
-function TLiDataSet.GetActive: boolean;
+function TLyseeDataSet.GetActive: boolean;
 begin
   Result := FDataSet.Active;
 end;
 
-function TLiDataSet.AsString: string;
+function TLyseeDataSet.AsString: string;
 var
   I, N: integer;
 begin
@@ -753,32 +761,32 @@ begin
   end;
 end;
 
-function TLiDataSet.GetBof: boolean;
+function TLyseeDataSet.GetBof: boolean;
 begin
   Result := FDataSet.Bof;
 end;
 
-function TLiDataSet.GetEof: boolean;
+function TLyseeDataSet.GetEof: boolean;
 begin
   Result := FDataSet.Eof;
 end;
 
-function TLiDataSet.GetField(Index: integer): TLiField;
+function TLyseeDataSet.GetField(Index: integer): TLyseeField;
 begin
-  Result := TLiField(FFields[Index]);
+  Result := TLyseeField(FFields[Index]);
 end;
 
-function TLiDataSet.GetFieldCount: integer;
+function TLyseeDataSet.GetFieldCount: integer;
 begin
   Result := FFields.Count;
 end;
 
-function TLiDataSet.GetRecordCount: integer;
+function TLyseeDataSet.GetRecordCount: integer;
 begin
   Result := FDataSet.RecordCount;
 end;
 
-function TLiDataSet.IndexOf(const Name: string): integer;
+function TLyseeDataSet.IndexOf(const Name: string): integer;
 var
   I: integer;
 begin
@@ -791,22 +799,22 @@ begin
   Result := -1;
 end;
 
-procedure TLiDataSet.Last;
+procedure TLyseeDataSet.Last;
 begin
   FDataSet.Last;
 end;
 
-procedure TLiDataSet.Next;
+procedure TLyseeDataSet.Next;
 begin
   FDataSet.Next;
 end;
 
-procedure TLiDataSet.OnClose(Sender: TObject);
+procedure TLyseeDataSet.OnClose(Sender: TObject);
 begin
   ClearFields;
 end;
 
-procedure TLiDataSet.Open;
+procedure TLyseeDataSet.Open;
 begin
   if not Active then
   begin
@@ -816,37 +824,37 @@ begin
   end;
 end;
 
-procedure TLiDataSet.Prior;
+procedure TLyseeDataSet.Prior;
 begin
   FDataSet.Prior;
 end;
 
-procedure TLiDataSet.SetActive(Value: boolean);
+procedure TLyseeDataSet.SetActive(Value: boolean);
 begin
   if Value then Open else Close;
 end;
 
-procedure TLiDataSet.SetupFields;
+procedure TLyseeDataSet.SetupFields;
 var
   I: integer;
-  F: TLiField;
+  F: TLyseeField;
 begin
   ClearFields;
   if FDataSet.Active then
     for I := 0 to FDataSet.FieldCount - 1 do
     begin
-      F := TLiField.Create(FDataSet.Fields[I]);
+      F := TLyseeField.Create(FDataSet.Fields[I]);
       F.IncRefcount;
       FFields.Add(F);
     end;
 end;
 
-{ TLiDataSetType }
+{ TLyseeDataSetType }
 
-procedure TLiDataSetType.MyFieldByName(const Param: TLiParam);
+procedure TLyseeDataSetType.MyFieldByName(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
-  F: TLiField;
+  S: TLyseeDataSet;
+  F: TLyseeField;
 begin
   if Param.GetSelf(S) then
   begin
@@ -855,41 +863,41 @@ begin
   end;
 end;
 
-procedure TLiDataSetType.MyFieldCount(const Param: TLiParam);
+procedure TLyseeDataSetType.MyFieldCount(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then
     Param.Result.AsInteger := S.FieldCount;
 end;
 
-procedure TLiDataSetType.MyBof(const Param: TLiParam);
+procedure TLyseeDataSetType.MyBof(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then
     Param.Result.AsBoolean := S.Bof;
 end;
 
-procedure TLiDataSetType.MyClose(const Param: TLiParam);
+procedure TLyseeDataSetType.MyClose(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then S.Close;
 end;
 
-procedure TLiDataSetType.MyEof(const Param: TLiParam);
+procedure TLyseeDataSetType.MyEof(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then
     Param.Result.AsBoolean := S.Eof;
 end;
 
-procedure TLiDataSetType.MyFindField(const Param: TLiParam);
+procedure TLyseeDataSetType.MyFindField(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
-  F: TLiField;
+  S: TLyseeDataSet;
+  F: TLyseeField;
 begin
   if Param.GetSelf(S) then
   begin
@@ -898,26 +906,26 @@ begin
   end;
 end;
 
-procedure TLiDataSetType.MyFirst(const Param: TLiParam);
+procedure TLyseeDataSetType.MyFirst(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then S.First;
 end;
 
-procedure TLiDataSetType.MyGetActive(const Param: TLiParam);
+procedure TLyseeDataSetType.MyGetActive(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then
     Param.Result.AsBoolean := S.Active;
 end;
 
-procedure TLiDataSetType.MyGetField(const Param: TLiParam);
+procedure TLyseeDataSetType.MyGetField(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
-  X: TLiValue;
-  F: TLiField;
+  S: TLyseeDataSet;
+  X: TLyseeValue;
+  F: TLyseeField;
 begin
   if Param.GetSelf(S) then
   begin
@@ -933,11 +941,11 @@ begin
   end;
 end;
 
-procedure TLiDataSetType.MyGetValue(const Param: TLiParam);
+procedure TLyseeDataSetType.MyGetValue(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
-  X: TLiValue;
-  F: TLiField;
+  S: TLyseeDataSet;
+  X: TLyseeValue;
+  F: TLyseeField;
 begin
   if Param.GetSelf(S) then
   begin
@@ -953,51 +961,51 @@ begin
   end;
 end;
 
-procedure TLiDataSetType.MyLast(const Param: TLiParam);
+procedure TLyseeDataSetType.MyLast(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then S.Last;
 end;
 
-procedure TLiDataSetType.MyNext(const Param: TLiParam);
+procedure TLyseeDataSetType.MyNext(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then S.Next;
 end;
 
-procedure TLiDataSetType.MyOpen(const Param: TLiParam);
+procedure TLyseeDataSetType.MyOpen(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then S.Open;
 end;
 
-procedure TLiDataSetType.MyPrior(const Param: TLiParam);
+procedure TLyseeDataSetType.MyPrior(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then S.Prior;
 end;
 
-procedure TLiDataSetType.MyRecordCount(const Param: TLiParam);
+procedure TLyseeDataSetType.MyRecordCount(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then
     Param.Result.AsInteger := S.RecordCount;
 end;
 
-procedure TLiDataSetType.MySetActive(const Param: TLiParam);
+procedure TLyseeDataSetType.MySetActive(const Param: TLyseeParam);
 var
-  S: TLiDataSet;
+  S: TLyseeDataSet;
 begin
   if Param.GetSelf(S) then
     S.Active := Param[1].AsBoolean;
 end;
 
-procedure TLiDataSetType.Setup;
+procedure TLyseeDataSetType.Setup;
 begin
   Method('Open', {$IFDEF FPC}@{$ENDIF}MyOpen);
   Method('Close', {$IFDEF FPC}@{$ENDIF}MyClose);
@@ -1025,48 +1033,48 @@ begin
   inherited;
 end;
 
-function TLiDataSetType._AsBoolean(Obj: pointer): boolean;
+function TLyseeDataSetType.AsBoolean(Obj: pointer): boolean;
 begin
-  Result := (Obj <> nil) and TLiDataSet(Obj).Active;
+  Result := (Obj <> nil) and TLyseeDataSet(Obj).Active;
 end;
 
-function TLiDataSetType._AsString(Obj: pointer): string;
+function TLyseeDataSetType.AsString(Obj: pointer): string;
 begin
   if Obj <> nil then
-    Result := TLiDataSet(Obj).AsString else
+    Result := TLyseeDataSet(Obj).AsString else
     Result := '';
 end;
 
-function TLiDataSetType._DecRefcount(Obj: pointer): integer;
+function TLyseeDataSetType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiDataSet(Obj).DecRefcount else
+    Result := TLyseeDataSet(Obj).DecRefcount else
     Result := 0;
 end;
 
-function TLiDataSetType._IncRefcount(Obj: pointer): integer;
+function TLyseeDataSetType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiDataSet(Obj).IncRefcount else
+    Result := TLyseeDataSet(Obj).IncRefcount else
     Result := 0;
 end;
 
-function TLiDataSetType._Length(Obj: pointer): int64;
+function TLyseeDataSetType.GetLength(Obj: pointer): int64;
 begin
   if Obj <> nil then
-    Result := TLiDataSet(Obj).FieldCount else
+    Result := TLyseeDataSet(Obj).FieldCount else
     Result := 0;
 end;
 
-procedure TLiDataSetType._Validate(Obj: pointer);
+procedure TLyseeDataSetType.Validate(Obj: pointer);
 begin
   inherited;
-  Check(TLiDataSet(Obj).FDataSet <> nil, 'dataset has been released');
+  Check(TLyseeDataSet(Obj).FDataSet <> nil, 'dataset has been released');
 end;
 
-{ TLiDataBase }
+{ TLyseeDataBase }
 
-procedure TLiDataBase.ClearDataSets;
+procedure TLyseeDataBase.ClearDataSets;
 var
   I: integer;
 begin
@@ -1074,13 +1082,13 @@ begin
     DeleteDataSet(I);
 end;
 
-procedure TLiDataBase.Close;
+procedure TLyseeDataBase.Close;
 begin
   CloseDataSets;
   FConnection.Close;
 end;
 
-procedure TLiDataBase.CloseDataSets;
+procedure TLyseeDataBase.CloseDataSets;
 var
   I: integer;
 begin
@@ -1091,23 +1099,23 @@ begin
   end;
 end;
 
-procedure TLiDataBase.Commit;
+procedure TLyseeDataBase.Commit;
 begin
   { nothing }
 end;
 
-procedure TLiDataBase.CommitAndTransact;
+procedure TLyseeDataBase.CommitAndTransact;
 begin
   CommitRetaining;
   Transact;
 end;
 
-procedure TLiDataBase.CommitRetaining;
+procedure TLyseeDataBase.CommitRetaining;
 begin
   if InTransaction then Commit;
 end;
 
-constructor TLiDataBase.Create(AConnection: TCustomConnection);
+constructor TLyseeDataBase.Create(AConnection: TCustomConnection);
 begin
   FDataSets := TList.Create;
   FConnection := AConnection;
@@ -1115,9 +1123,9 @@ begin
   FConnection.AfterDisconnect := {$IFDEF FPC}@{$ENDIF}Disconnected;
 end;
 
-procedure TLiDataBase.DeleteDataSet(Index: integer);
+procedure TLyseeDataBase.DeleteDataSet(Index: integer);
 var
-  D: TLiDataSet;
+  D: TLyseeDataSet;
 begin
   D := GetDataSet(Index);
   FDataSets.Delete(Index);
@@ -1127,7 +1135,7 @@ begin
   FreeAndNil(D.FDataSet);
 end;
 
-destructor TLiDataBase.Destroy;
+destructor TLyseeDataBase.Destroy;
 begin
   Close;
   ClearDataSets;
@@ -1136,146 +1144,146 @@ begin
   inherited;
 end;
 
-procedure TLiDataBase.Disconnected(Sender: TObject);
+procedure TLyseeDataBase.Disconnected(Sender: TObject);
 begin
   CloseDataSets;
 end;
 
-function TLiDataBase.GetConnected: boolean;
+function TLyseeDataBase.GetConnected: boolean;
 begin
   Result := FConnection.Connected;
 end;
 
-function TLiDataBase.GetDataSet(Index: integer): TLiDataSet;
+function TLyseeDataBase.GetDataSet(Index: integer): TLyseeDataSet;
 begin
-  Result := TLiDataSet(FDataSets[Index]);
+  Result := TLyseeDataSet(FDataSets[Index]);
 end;
 
-function TLiDataBase.GetDataSetCount: integer;
+function TLyseeDataBase.GetDataSetCount: integer;
 begin
   if FDataSets <> nil then
     Result := FDataSets.Count else
     Result := 0;
 end;
 
-function TLiDataBase.GetLoginPrompt: boolean;
+function TLyseeDataBase.GetLoginPrompt: boolean;
 begin
   Result := FConnection.LoginPrompt;
 end;
 
-procedure TLiDataBase.GetProcedureNames(List: TStrings);
+procedure TLyseeDataBase.GetProcedureNames(List: TStrings);
 begin
   { nothing }
 end;
 
-procedure TLiDataBase.GetFieldNames(List: TStrings; const Table: string);
+procedure TLyseeDataBase.GetFieldNames(List: TStrings; const Table: string);
 begin
   { nothing }
 end;
 
-procedure TLiDataBase.GetTableNames(List: TStrings; SystemTables: boolean);
+procedure TLyseeDataBase.GetTableNames(List: TStrings; SystemTables: boolean);
 begin
   { nothing }
 end;
 
-function TLiDataBase.InTransaction: boolean;
+function TLyseeDataBase.InTransaction: boolean;
 begin
   Result := false;
 end;
 
-procedure TLiDataBase.Open;
+procedure TLyseeDataBase.Open;
 begin
   FConnection.Open;
 end;
 
-procedure TLiDataBase.Rollback;
+procedure TLyseeDataBase.Rollback;
 begin
   { nothing }
 end;
 
-procedure TLiDataBase.RollbackAndTransact;
+procedure TLyseeDataBase.RollbackAndTransact;
 begin
   RollbackRetaining;
   Transact;
 end;
 
-procedure TLiDataBase.RollbackRetaining;
+procedure TLyseeDataBase.RollbackRetaining;
 begin
   if InTransaction then Rollback;
 end;
 
-procedure TLiDataBase.SetConnected(Value: boolean);
+procedure TLyseeDataBase.SetConnected(Value: boolean);
 begin
   if Value then Open else Close;
 end;
 
-procedure TLiDataBase.SetLoginPrompt(Value: boolean);
+procedure TLyseeDataBase.SetLoginPrompt(Value: boolean);
 begin
   FConnection.LoginPrompt := Value;
 end;
 
-procedure TLiDataBase.Transact;
+procedure TLyseeDataBase.Transact;
 begin
   { nothing }
 end;
 
-{ TLiDataBaseType }
+{ TLyseeDataBaseType }
 
-procedure TLiDataBaseType.MyClose(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyClose(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
+  C: TLyseeDataBase;
 begin
   if Param.GetSelf(C) then C.Close;
 end;
 
-procedure TLiDataBaseType.MyCommit(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyCommit(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
+  C: TLyseeDataBase;
 begin
   if Param.GetSelf(C) then C.Commit;
 end;
 
-procedure TLiDataBaseType.MyGetConnected(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyGetConnected(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
+  C: TLyseeDataBase;
 begin
   if Param.GetSelf(C) then
     Param.Result.AsBoolean := C.Connected;
 end;
 
-procedure TLiDataBaseType.MyGetLoginPrompt(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyGetLoginPrompt(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
+  C: TLyseeDataBase;
 begin
   if Param.GetSelf(C) then
     Param.Result.AsBoolean := C.LoginPrompt;
 end;
 
-procedure TLiDataBaseType.MyInTransaction(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyInTransaction(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
+  C: TLyseeDataBase;
 begin
   if Param.GetSelf(C) then
     Param.Result.AsBoolean := C.InTransaction;
 end;
 
-procedure TLiDataBaseType.MyOpen(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyOpen(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
+  C: TLyseeDataBase;
 begin
   if Param.GetSelf(C) then C.Open;
 end;
 
-procedure TLiDataBaseType.MyProcedureNames(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyProcedureNames(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
-  L: TLiList;
+  C: TLyseeDataBase;
+  L: TLyseeList;
   T: TStrings;
 begin
   if Param.GetSelf(C) then
   begin
-    L := TLiList.Create;
-    Param.Result.SetTOA(my_list, L);
+    L := TLyseeList.Create;
+    Param.Result.SetTOA(my_array, L);
     T := TStringList.Create;
     try
       C.GetProcedureNames(T);
@@ -1286,40 +1294,40 @@ begin
   end;
 end;
 
-procedure TLiDataBaseType.MyRollback(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyRollback(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
+  C: TLyseeDataBase;
 begin
   if Param.GetSelf(C) then C.Rollback;
 end;
 
-procedure TLiDataBaseType.MySetConnected(const Param: TLiParam);
+procedure TLyseeDataBaseType.MySetConnected(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
+  C: TLyseeDataBase;
 begin
   if Param.GetSelf(C) then
     C.Connected := Param[1].AsBoolean;
 end;
 
-procedure TLiDataBaseType.MySetLoginPrompt(const Param: TLiParam);
+procedure TLyseeDataBaseType.MySetLoginPrompt(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
+  C: TLyseeDataBase;
 begin
   if Param.GetSelf(C) then
     C.LoginPrompt := Param[1].AsBoolean;
 end;
 
-procedure TLiDataBaseType.MySystemTableNames(const Param: TLiParam);
+procedure TLyseeDataBaseType.MySystemTableNames(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
-  L: TLiList;
+  C: TLyseeDataBase;
+  L: TLyseeList;
   T, U: TStrings;
   I, X: integer;
 begin
   if Param.GetSelf(C) then
   begin
-    L := TLiList.Create;
-    Param.Result.SetTOA(my_list, L);
+    L := TLyseeList.Create;
+    Param.Result.SetTOA(my_array, L);
     T := TStringList.Create;
     U := TStringList.Create;
     try
@@ -1338,16 +1346,16 @@ begin
   end;
 end;
 
-procedure TLiDataBaseType.MyTableFieldNames(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyTableFieldNames(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
-  L: TLiList;
+  C: TLyseeDataBase;
+  L: TLyseeList;
   T: TStrings;
 begin
   if Param.GetSelf(C) then
   begin
-    L := TLiList.Create;
-    Param.Result.SetTOA(my_list, L);
+    L := TLyseeList.Create;
+    Param.Result.SetTOA(my_array, L);
     T := TStringList.Create;
     try
       C.GetFieldNames(T, Param[1].AsString);
@@ -1358,16 +1366,16 @@ begin
   end;
 end;
 
-procedure TLiDataBaseType.MyTableNames(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyTableNames(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
-  L: TLiList;
+  C: TLyseeDataBase;
+  L: TLyseeList;
   T: TStrings;
 begin
   if Param.GetSelf(C) then
   begin
-    L := TLiList.Create;
-    Param.Result.SetTOA(my_list, L);
+    L := TLyseeList.Create;
+    Param.Result.SetTOA(my_array, L);
     T := TStringList.Create;
     try
       C.GetTableNames(T, true);
@@ -1378,23 +1386,23 @@ begin
   end;
 end;
 
-procedure TLiDataBaseType.MyTransact(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyTransact(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
+  C: TLyseeDataBase;
 begin
   if Param.GetSelf(C) then C.Transact;
 end;
 
-procedure TLiDataBaseType.MyUserTableNames(const Param: TLiParam);
+procedure TLyseeDataBaseType.MyUserTableNames(const Param: TLyseeParam);
 var
-  C: TLiDataBase;
-  L: TLiList;
+  C: TLyseeDataBase;
+  L: TLyseeList;
   T: TStrings;
 begin
   if Param.GetSelf(C) then
   begin
-    L := TLiList.Create;
-    Param.Result.SetTOA(my_list, L);
+    L := TLyseeList.Create;
+    Param.Result.SetTOA(my_array, L);
     T := TStringList.Create;
     try
       C.GetTableNames(T, false);
@@ -1405,7 +1413,7 @@ begin
   end;
 end;
 
-procedure TLiDataBaseType.Setup;
+procedure TLyseeDataBaseType.Setup;
 begin
   Method('Open', {$IFDEF FPC}@{$ENDIF}MyOpen);
   Method('Close', {$IFDEF FPC}@{$ENDIF}MyClose);
@@ -1413,11 +1421,11 @@ begin
   Method('Transact', {$IFDEF FPC}@{$ENDIF}MyTransact);
   Method('Commit', {$IFDEF FPC}@{$ENDIF}MyCommit);
   Method('Rollback', {$IFDEF FPC}@{$ENDIF}MyRollback);
-  Method('TableNames', my_list, {$IFDEF FPC}@{$ENDIF}MyTableNames);
-  Method('UserTableNames', my_list, {$IFDEF FPC}@{$ENDIF}MyUserTableNames);
-  Method('SystemTableNames', my_list, {$IFDEF FPC}@{$ENDIF}MySystemTableNames);
-  Method('ProcedureNames', my_list, {$IFDEF FPC}@{$ENDIF}MyProcedureNames);
-  Method('TableFieldNames', my_list, ['table'], [my_string],
+  Method('TableNames', my_array, {$IFDEF FPC}@{$ENDIF}MyTableNames);
+  Method('UserTableNames', my_array, {$IFDEF FPC}@{$ENDIF}MyUserTableNames);
+  Method('SystemTableNames', my_array, {$IFDEF FPC}@{$ENDIF}MySystemTableNames);
+  Method('ProcedureNames', my_array, {$IFDEF FPC}@{$ENDIF}MyProcedureNames);
+  Method('TableFieldNames', my_array, ['table'], [my_string],
          {$IFDEF FPC}@{$ENDIF}MyTableFieldNames);
   Define('Connected', my_bool,
          {$IFDEF FPC}@{$ENDIF}MyGetConnected,
@@ -1428,37 +1436,53 @@ begin
   inherited;
 end;
 
-function TLiDataBaseType._AsString(Obj: pointer): string;
+function TLyseeDataBaseType.AsString(Obj: pointer): string;
 begin
   Result := '';
 end;
 
-function TLiDataBaseType._DecRefcount(Obj: pointer): integer;
+function TLyseeDataBaseType.DecRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiDataBase(Obj).DecRefcount else
+    Result := TLyseeDataBase(Obj).DecRefcount else
     Result := 0;
 end;
 
-function TLiDataBaseType._IncRefcount(Obj: pointer): integer;
+function TLyseeDataBaseType.IncRefcount(Obj: pointer): integer;
 begin
   if Obj <> nil then
-    Result := TLiDataBase(Obj).IncRefcount else
+    Result := TLyseeDataBase(Obj).IncRefcount else
     Result := 0;
 end;
 
-procedure TLiDataBaseType._Validate(Obj: pointer);
+procedure TLyseeDataBaseType.Validate(Obj: pointer);
 begin
   inherited;
-  Check(TLiDataBase(Obj).FConnection <> nil, 'invalid database connection');
+  Check(TLyseeDataBase(Obj).FConnection <> nil, 'invalid database connection');
+end;
+
+{ TLyseeDbModule }
+
+constructor TLyseeDbModule.Create(const AName: string);
+begin
+  inherited;
+  OnSetup := {$IFDEF FPC}@{$ENDIF}DoSetup;
+end;
+
+procedure TLyseeDbModule.DoSetup(Sender: TObject);
+begin
+  OnSetup := nil;
+  my_field := TLyseeFieldType.Create('TField', my_db, nil);
+  my_dataset := TLyseeDataSetType.Create('TDataSet', my_db, nil);
+  my_database := TLyseeDataBaseType.Create('TDataBase', my_db, nil);
+  my_field.Setup;
+  my_dataset.Setup;
+  my_database.Setup;
 end;
 
 initialization
 begin
-  my_db := AddModule('Db');
-  my_field := TLiFieldType.Create('TField', my_db, nil);
-  my_dataset := TLiDataSetType.Create('TDataSet', my_db, nil);
-  my_database := TLiDataBaseType.Create('TDataBase', my_db, nil);
+  my_db := TLyseeDbModule.Create('Db');
 end;
 
 end.

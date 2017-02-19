@@ -12,8 +12,7 @@ program lysee_cmd;
 
 {$mode objfpc}{$H+}
 
-uses
-  basic, lysee, lysee_db;
+uses lysee;
 
 begin
   lysee.Command;

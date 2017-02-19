@@ -17,7 +17,7 @@
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="3"/>
       <RevisionNr Value="3"/>
-      <BuildNr Value="738"/>
+      <BuildNr Value="741"/>
       <StringTable FileDescription="lysee PAD (FPC)" LegalCopyright="Copyright (C) 2003-2010 li yun jie &lt;libudi@hotmail.com>" ProductVersion="3.0.1"/>
     </VersionInfo>
     <BuildModes Count="1">
@@ -44,13 +44,14 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="92">
+    <Units Count="97">
       <Unit0>
         <Filename Value="lysee_pad.lpr"/>
         <IsPartOfProject Value="True"/>
-        <TopLine Value="13"/>
-        <CursorPos X="12" Y="20"/>
-        <UsageCount Value="72"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="4"/>
+        <CursorPos X="26" Y="7"/>
+        <UsageCount Value="73"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
@@ -59,10 +60,9 @@
         <ComponentName Value="PadForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="5"/>
-        <TopLine Value="13"/>
-        <CursorPos X="37" Y="14"/>
-        <UsageCount Value="72"/>
+        <TopLine Value="603"/>
+        <CursorPos X="27" Y="612"/>
+        <UsageCount Value="73"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
@@ -183,12 +183,10 @@
         <ComponentName Value="AboutForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="25"/>
         <CursorPos X="15" Y="35"/>
-        <UsageCount Value="64"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="65"/>
       </Unit19>
       <Unit20>
         <Filename Value="E:\Developments\lazarus\lcl\dialogs.pp"/>
@@ -315,22 +313,20 @@
         <DefaultSyntaxHighlighter Value="LFM"/>
       </Unit39>
       <Unit40>
-        <Filename Value="..\source\lysee_syntax.pas"/>
+        <Filename Value="lysee_syntax.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="73"/>
         <CursorPos X="14" Y="81"/>
-        <UsageCount Value="54"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="55"/>
       </Unit40>
       <Unit41>
-        <Filename Value="..\source\msgbox.pas"/>
+        <Filename Value="msgbox.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="14"/>
-        <CursorPos X="12" Y="24"/>
-        <UsageCount Value="53"/>
-        <Loaded Value="True"/>
+        <CursorPos X="40" Y="19"/>
+        <UsageCount Value="54"/>
       </Unit41>
       <Unit42>
         <Filename Value="E:\Developments\lazarus\components\synedit\synedithighlighter.pp"/>
@@ -569,9 +565,11 @@
       <Unit80>
         <Filename Value="..\source\lysee.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="7"/>
-        <CursorPos X="33" Y="14"/>
-        <UsageCount Value="33"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="2825"/>
+        <CursorPos X="50" Y="2832"/>
+        <UsageCount Value="34"/>
         <Loaded Value="True"/>
       </Unit80>
       <Unit81>
@@ -602,11 +600,10 @@
       <Unit85>
         <Filename Value="..\source\basic.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="52"/>
-        <CursorPos Y="71"/>
-        <UsageCount Value="22"/>
-        <Loaded Value="True"/>
+        <CursorPos X="10" Y="61"/>
+        <UsageCount Value="23"/>
       </Unit85>
       <Unit86>
         <Filename Value="d:\tools\lazarus\components\synedit\synedithighlighter.pp"/>
@@ -642,93 +639,109 @@
       <Unit90>
         <Filename Value="..\source\lysee_db.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="3"/>
-        <UsageCount Value="21"/>
-        <Loaded Value="True"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="22"/>
       </Unit90>
       <Unit91>
         <Filename Value="..\source\lysee_pmc.pas"/>
         <EditorIndex Value="-1"/>
         <UsageCount Value="21"/>
       </Unit91>
+      <Unit92>
+        <Filename Value="..\source\lysee_classes.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="291"/>
+        <CursorPos Y="301"/>
+        <UsageCount Value="21"/>
+        <Loaded Value="True"/>
+      </Unit92>
+      <Unit93>
+        <Filename Value="..\source\lysee_math.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos Y="17"/>
+        <UsageCount Value="21"/>
+      </Unit93>
+      <Unit94>
+        <Filename Value="..\source\lysee_system.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos Y="16"/>
+        <UsageCount Value="21"/>
+      </Unit94>
+      <Unit95>
+        <Filename Value="..\source\lysee_sysutils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="53"/>
+        <CursorPos X="14" Y="53"/>
+        <UsageCount Value="21"/>
+        <Loaded Value="True"/>
+      </Unit95>
+      <Unit96>
+        <Filename Value="d:\tools\lazarus\fpc\3.0.0\source\rtl\objpas\sysutils\osutilsh.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="15"/>
+        <CursorPos X="10" Y="25"/>
+        <UsageCount Value="10"/>
+      </Unit96>
     </Units>
-    <JumpHistory Count="18" HistoryIndex="17">
+    <JumpHistory Count="12" HistoryIndex="11">
       <Position1>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="327" Column="28" TopLine="308"/>
+        <Filename Value="lysee_pad_main.pas"/>
+        <Caret Line="14" Column="37" TopLine="13"/>
       </Position1>
       <Position2>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="335" Column="55" TopLine="325"/>
+        <Filename Value="lysee_pad_main.pas"/>
+        <Caret Line="152" Column="27" TopLine="143"/>
       </Position2>
       <Position3>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="207" Column="3" TopLine="201"/>
+        <Filename Value="lysee_pad_main.pas"/>
+        <Caret Line="207" Column="13" TopLine="194"/>
       </Position3>
       <Position4>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="56" Column="18" TopLine="55"/>
+        <Filename Value="..\source\lysee_classes.pas"/>
       </Position4>
       <Position5>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="194" Column="39" TopLine="178"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="763" TopLine="756"/>
       </Position5>
       <Position6>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="307" TopLine="299"/>
+        <Filename Value="lysee_pad_main.pas"/>
+        <Caret Line="141" Column="38" TopLine="141"/>
       </Position6>
       <Position7>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="125" Column="3" TopLine="123"/>
+        <Filename Value="lysee_pad_main.pas"/>
+        <Caret Line="161" Column="19" TopLine="154"/>
       </Position7>
       <Position8>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="53" Column="17" TopLine="49"/>
+        <Filename Value="lysee_pad_main.pas"/>
+        <Caret Line="452" Column="11" TopLine="436"/>
       </Position8>
       <Position9>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="141" Column="40" TopLine="137"/>
+        <Filename Value="lysee_pad_main.pas"/>
+        <Caret Line="589" Column="11" TopLine="573"/>
       </Position9>
       <Position10>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="142" Column="40" TopLine="137"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="652" Column="16" TopLine="642"/>
       </Position10>
       <Position11>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="314" Column="12" TopLine="309"/>
+        <Filename Value="..\source\lysee.pas"/>
       </Position11>
       <Position12>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="74" Column="35" TopLine="65"/>
+        <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="2700" Column="27" TopLine="2684"/>
       </Position12>
-      <Position13>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-      </Position13>
-      <Position14>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="37" Column="8" TopLine="34"/>
-      </Position14>
-      <Position15>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="276" Column="3" TopLine="265"/>
-      </Position15>
-      <Position16>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="78" Column="20" TopLine="69"/>
-      </Position16>
-      <Position17>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="347" Column="24" TopLine="329"/>
-      </Position17>
-      <Position18>
-        <Filename Value="..\source\lysee_syntax.pas"/>
-        <Caret Line="458" Column="16" TopLine="450"/>
-      </Position18>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
     <PathDelim Value="\"/>
+    <SearchPaths>
+      <OtherUnitFiles Value="..\source"/>
+    </SearchPaths>
     <Parsing>
       <SyntaxOptions>
         <CStyleOperator Value="False"/>
