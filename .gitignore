@@ -52,6 +52,9 @@
 *.hpp
 *Resource.rc
 
+link.res
+ppas.bat
+
 # Delphi local files (user-specific info)
 *.local
 *.identcache

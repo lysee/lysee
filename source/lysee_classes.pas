@@ -743,7 +743,7 @@ begin
   if Param.GetSelf(L) then
   begin
     Param.Result.AsInteger := (L.Add(Param[1].AsString, nil));
-    A := Param[2].AsArray;
+    A := Param.VarArgs;
     if A <> nil then
       for I := 0 to A.Count - 1 do
         L.Add(A[I].AsString, nil);
@@ -1404,7 +1404,7 @@ begin
   Method('Remove', ['S'], [my_string], {$IFDEF FPC}@{$ENDIF}MyRemove);
   Method('RemoveByName', ['Name'], [my_string],
          {$IFDEF FPC}@{$ENDIF}MyRemoveByName);
-  Method('Add', my_int, ['_S', '...'], [my_string, my_array],
+  Method('Add', my_int, ['_S'], [my_string],
          {$IFDEF FPC}@{$ENDIF}MyAdd);
   Method('AddObject', my_int, ['S', 'Any'], [my_string, my_variant],
          {$IFDEF FPC}@{$ENDIF}MyAddObject);

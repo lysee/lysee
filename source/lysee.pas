@@ -34,31 +34,32 @@ const
 
   { TID: Lysee Type IDentity }
 
-  TID_VARIANT  = 0;
-  TID_NIL      = 1;
-  TID_CHAR     = 2; { basic }
-  TID_INTEGER  = 3;
-  TID_FLOAT    = 4;
-  TID_CURRENCY = 5;
-  TID_TIME     = 6;
-  TID_BOOLEAN  = 7;
-  TID_TYPE     = 8; { object }
-  TID_STRING   = 9;
-  TID_MODULE   = 10;
-  TID_FUNCTION = 11;
-  TID_HASHLIST = 12;
-  TID_ARRAY    = 13;
+  TID_VARIANT   = 0;
+  TID_NIL       = 1;
+  TID_CHAR      = 2; { basic }
+  TID_INTEGER   = 3;
+  TID_FLOAT     = 4;
+  TID_CURRENCY  = 5;
+  TID_TIME      = 6;
+  TID_BOOLEAN   = 7;
+  TID_TYPE      = 8; { object }
+  TID_EXCEPTION = 9;
+  TID_STRING    = 10;
+  TID_MODULE    = 11;
+  TID_FUNCTION  = 12;
+  TID_HASHLIST  = 13;
+  TID_ARRAY     = 14;
 
   TID_NAMES: array[TID_VARIANT..TID_ARRAY] of string = (
     'variant', 'nil', 'char', 'integer', 'float', 'currency',
-    'time', 'boolean', 'type', 'string', 'module', 'function',
-    'THash', 'array');
+    'time', 'boolean', 'type', 'exception', 'string', 'module',
+    'function', 'THash', 'array');
 
 type
 
   { forward }
 
-  TLysee            = class;{<--lysee script executer}
+  TLysee            = class; //<--lysee script engine
   TLyseeError       = class;
   TLyseeType        = class;
   TLyseeEnumItem    = class;
@@ -91,52 +92,8 @@ type
   TLyseeHash        = class;
   TLyseeGenerate    = class;
 
-  { lysee procedure }
-
   TLyseeProc = procedure(const Param: TLyseeParam);
   TLyseeObjectProc = procedure(const Param: TLyseeParam) of object;
-
-  { RLyseeFind }
-
-  TLyseeFind = (fiNone, fiVarb, fiFunc, fiType, fiModule, fiValue);
-  TLyseeFinds = set of TLyseeFind;
-
-  RLyseeFind = packed record
-    case f_find: TLyseeFind of
-    fiNone  :(VNone: pointer);
-    fiVarb  :(VVarb: TLyseeVarb);
-    fiFunc  :(VFunc: TLyseeFunc);
-    fiType  :(VType: TLyseeType);
-    fiModule:(VModule: TLyseeModule);
-    fiValue :(VValue: TLyseeValue);   // constant
-  end;
-  PLyseeFind = ^RLyseeFind;
-
-  { TLyseeError }
-
-  TLyseeError = class
-  private
-    FContext: TLysee;
-    FErrID: string;
-    FMsg: string;
-    FModule: string;
-    FFileName: string;
-    FRow: integer;
-    FCol: integer;
-    function GetText: string;
-  public
-    constructor Create(AContext: TLysee);
-    procedure Syntax(const Msg, Module, FileName: string; Row, Col: integer);
-    procedure Runtime(const Msg, Module, FileName: string; Row, Col: integer);
-    procedure Clear;
-    property ErrID: string read FErrID;
-    property EModule: string read FModule;
-    property EFileName: string read FFileName;
-    property ERow: integer read FRow;
-    property ECol: integer read FCol;
-    property EMsg: string read FMsg;
-    property ErrorText: string read GetText;
-  end;
 
   { TLysee }
 
@@ -144,7 +101,6 @@ type
   TLyseeWrite = procedure(Sender: TObject; const S: string) of object;
   TLyseeResolve = function(const ID: string; Value: TLyseeValue): boolean of object;
   TLyseeGetModule = function(Sender: TObject; const Module: string): string of object;
-
   TLyseeState = (csTerminated, csReady, csRunning, csContinue, csBreak, csExit);
 
   TLysee = class(TComponent)
@@ -238,6 +194,32 @@ type
     property OnWrite: TLyseeWrite read FOnWrite write FOnWrite;
     property OnResolve: TLyseeResolve read FOnResolve write FOnResolve;
     property OnGetModuleFile: TLyseeGetModule read FOnGetModuleFile write FOnGetModuleFile;
+  end;
+
+  { TLyseeError }
+
+  TLyseeError = class
+  private
+    FLysee: TLysee;
+    FErrID: string;
+    FMsg: string;
+    FModule: string;
+    FFileName: string;
+    FRow: integer;
+    FCol: integer;
+    function GetText: string;
+  public
+    constructor Create(ALysee: TLysee);
+    procedure Syntax(const Msg, Module, FileName: string; Row, Col: integer);
+    procedure Runtime(const Msg, Module, FileName: string; Row, Col: integer);
+    procedure Clear;
+    property ErrID: string read FErrID;
+    property EModule: string read FModule;
+    property EFileName: string read FFileName;
+    property ERow: integer read FRow;
+    property ECol: integer read FCol;
+    property EMsg: string read FMsg;
+    property ErrorText: string read GetText;
   end;
 
   { TLyseeType }
@@ -488,6 +470,23 @@ type
     procedure Convert(Value: TLyseeValue);override;
   end;
 
+  { TLyseeExceptionType }
+
+  TLyseeExceptionType = class(TLyseeType)
+  protected
+    procedure MyID(const Param: TLyseeParam);
+    procedure MyMsg(const Param: TLyseeParam);
+    procedure MyText(const Param: TLyseeParam);
+    procedure MyModule(const Param: TLyseeParam);
+    procedure MyFileName(const Param: TLyseeParam);
+    procedure MyRow(const Param: TLyseeParam);
+    procedure MyCol(const Param: TLyseeParam);
+    procedure MyExcepted(const Param: TLyseeParam);
+    procedure Setup;override;
+  public
+    function AsString(Obj: pointer): string;override;
+  end;
+
   { TLyseeStringType }
 
   TLyseeStringType = class(TLyseeType)
@@ -713,6 +712,20 @@ type
 
   { TLyseeValue }
 
+  TLyseeFind = (fiNone, fiVarb, fiFunc, fiType, fiModule, fiValue);
+  TLyseeFinds = set of TLyseeFind;
+
+  RLyseeFind = packed record
+    case f_find: TLyseeFind of
+    fiNone  :(VNone: pointer);
+    fiVarb  :(VVarb: TLyseeVarb);
+    fiFunc  :(VFunc: TLyseeFunc);
+    fiType  :(VType: TLyseeType);
+    fiModule:(VModule: TLyseeModule);
+    fiValue :(VValue: TLyseeValue);   // constant
+  end;
+  PLyseeFind = ^RLyseeFind;
+
   PLyseeValue = ^RLyseeValue;
   RLyseeValue = packed record
     case integer of
@@ -812,18 +825,21 @@ type
 
   TLyseeParam = class
   private
-    FContext: TLysee;
+    FLysee: TLysee;
     FFunc: TLyseeFunc;
     FToken: TLyseeToken;
     FParams: TLyseeList;
-    FPrmc: integer;   {<--actual parameters' count passed to function}
+    FVarArgs: TLyseeList;
+    FPrmc: integer; {<--actual parameters' count passed to function}
     FResult: TLyseeValue;
     FPrev: TLyseeParam;
     function GetCount: integer;
     function GetItem(Index: integer): TLyseeValue;
     function GetValue(const Name: string): TLyseeValue;
     procedure SetResult(Value: TLyseeValue);
+    procedure SetArgs(Args: TLyseeList);
   public
+    destructor Destroy;override;
     procedure Error(const Msg: string);overload;
     procedure Error(const Msg: string; const Args: array of const);overload;
     procedure ErrorOper(OP: TLyseeOperator; L, R: TLyseeType);
@@ -835,7 +851,7 @@ type
     function GetVarbValue(Index: integer; var VT: TLyseeType): TLyseeValue;
     function GetSelf(var Aobj): boolean;
     function GetChangeAbleFunc(var F: TLyseeFunc): boolean;
-    property Context: TLysee read FContext;
+    property Context: TLysee read FLysee;
     property Func: TLyseeFunc read FFunc;
     property Params: TLyseeList read FParams;
     property Result: TLyseeValue read FResult write SetResult;
@@ -844,6 +860,7 @@ type
     property Count: integer read GetCount;
     property Items[Index: integer]: TLyseeValue read GetItem;default;
     property Values[const Name: string]: TLyseeValue read GetValue;
+    property VarArgs: TLyseeList read FVarArgs;
   end;
 
   { TLyseeToken }
@@ -853,9 +870,9 @@ type
     syIf, syElif, syThen, syElse, syCase, syOf, syFor, syWhile, syRepeat,
     syUntil, syDo, syResult, syDiv, syMod, syTo, syDownto, syNot, syIn, syIs,
     syAs, syLike, syAnd, syOr, syXor, syShr, syShl, syTry, syExcept,
-    syFinally, syRaise, syTrue, syFalse, syNil, syEnd,
+    syFinally, syRaise, syTrue, syFalse, syNil, syVArgs, syEnd,
     {operator} syBecome, syShi, syFill, syAdd, syReduce, syMul, syDivf,
-    syLParen, syRParen, syLArray, syRArray, syDot, syRange, syVarArg, syColon,
+    syLParen, syRParen, syLArray, syRArray, syDot, syRange, syColon,
     sySemic, syComma, syAt, sySame, syEQ, syNE, syLT, syLE, syMT, syME, syVert,
     {abstract} syID, syNeg, syFloat, syInt, syStr, syChar, syHash,
     syCall, syEOF
@@ -1203,7 +1220,6 @@ type
     FResultType: TLyseeType;
     FProc: TLyseeProc;
     FData: pointer;
-    FHasVarArg: boolean; // last param is ...
     FMinArgs: integer;
     FSTMTs: TLyseeSTMTList;
     function GetSTMTs: TLyseeSTMTList;
@@ -1232,7 +1248,6 @@ type
     procedure Decompile(Level: integer; Lines: TStrings);
     function AsString: string;override;
     property Name: string read FName;
-    property HasVarArg: boolean read FHasVarArg;
     property Parent: TLyseeType read FParent;
     property FullName: string read GetFullName;
     property MinArgs: integer read GetMinArgs;
@@ -1574,6 +1589,15 @@ type
     function HasNext: boolean;override;
   end;
 
+  { TLyseeSystemModule }
+
+  TLyseeSystemModule = class(TLyseeModule)
+  private
+    procedure DoSetup(Sender: TObject);
+  public
+    constructor Create(const AName: string);override;
+  end;
+
 function AcquireLock: boolean;
 function ReleaseLock: boolean;
 function AddModule(const Name: string): TLyseeModule;
@@ -1596,7 +1620,7 @@ function Margin(Level: integer): string;
 procedure FreeOperates(var Head: PLyseeOperate);
 procedure FreeCompares(var Head: PLyseeCompare);
 function ParamOK(const Names: array of string; const Types: array of TLyseeType;
-  IsMethod: boolean; var HasVarArg: boolean): boolean;
+  IsMethod: boolean): boolean;
 
 function AddFunc(const Name: string; T: TLyseeType;
   const ParamNames: array of string; const ParamTypes: array of TLyseeType;
@@ -1653,17 +1677,17 @@ function SetupProp(const AClass: TLyseeType;
   const SetProc: TLyseeProc = nil): boolean;overload;
 
 var
-  my_program    : string;            {<--program file name}
-  my_kernel     : string;            {<--kernel file name}
-  my_gcman      : TLyseeCollect; {<--unique garbage collection manager}
-  my_system     : TLyseeModule;         {<--System module}
-  my_modules    : TLyseeModuleList;     {<--public module list}
+  my_program    : string;             {<--program file name}
+  my_kernel     : string;             {<--kernel file name}
+  my_gcman      : TLyseeCollect;      {<--unique garbage collection manager}
+  my_system     : TLyseeSystemModule; {<--System module}
+  my_modules    : TLyseeModuleList;   {<--public module list}
   my_types      : array[TID_VARIANT..TID_ARRAY] of TLyseeType;
-  my_knpath     : string;            {<--kernel file path}
-  my_kndir      : string;            {<--kernel file directory}
-  my_home       : string;            {<--home path}
-  my_tmpath     : string;            {<--temporary path}
-  my_search_path: string;            {<--module search path list}
+  my_knpath     : string;             {<--kernel file path}
+  my_kndir      : string;             {<--kernel file directory}
+  my_home       : string;             {<--home path}
+  my_tmpath     : string;             {<--temporary path}
+  my_search_path: string;             {<--module search path list}
   my_variant    : TLyseeVariantType;
   my_nil        : TLyseeNilType;
   my_char       : TLyseeCharType;
@@ -1673,6 +1697,7 @@ var
   my_time       : TLyseeTimeType;
   my_bool       : TLyseeBoolType;
   my_type       : TLyseeTypeType;
+  my_exception  : TLyseeExceptionType;
   my_string     : TLyseeStringType;
   my_module     : TLyseeModuleType;
   my_func       : TLyseeFuncType;
@@ -1737,6 +1762,7 @@ const
     (SY:syTrue;      ID:'true';      SM:'true'),
     (SY:syFalse;     ID:'false';     SM:'false'),
     (SY:syNil;       ID:'nil';       SM:'nil'),
+    (SY:syVArgs;     ID:'vargs';     SM:'ellipsis'),
     (SY:syEnd;       ID:'end';       SM:'end'),
     (SY:syBecome;    ID:':=';        SM:'become'),
     (SY:syShi;       ID:'<<';        SM:'shift into'),
@@ -1751,7 +1777,6 @@ const
     (SY:syRArray;    ID:']';         SM:'R: get item'),
     (SY:syDot;       ID:'.';         SM:'dot'),
     (SY:syRange;     ID:'..';        SM:'range to'),
-    (SY:syVarArg;    ID:'...';       SM:'ellipsis'),
     (SY:syColon;     ID:':';         SM:'colon'),
     (SY:sySemic;     ID:';';         SM:'semicolon'),
     (SY:syComma;     ID:',';         SM:'comma'),
@@ -1776,7 +1801,8 @@ const
   );
 
   NameSyms = [syID, syStr, syCall, syGet, sySet];
-  DataSyms = [syID, syResult, syFloat, syInt, syStr, syChar, syTrue, syFalse, syNil, syVarArg, syArray];
+  DataSyms = [syID, syResult, syFloat, syInt, syStr, syChar, syTrue,
+              syFalse, syNil, syVArgs, syArray];
   ExprHead = DataSyms + [syLParen, syLArray, syNot, syReduce, syAt, syVert];
 
   OperSyms = [
@@ -1801,14 +1827,9 @@ var
   my_hilights: string;
   my_TID_seed: integer = 0;
 
-function IsVarArg(const ID: string; T: TLyseeType): boolean;
-begin
-  Result := (ID = '...') and ((T = my_array) or (T = my_variant));
-end;
-
 function IsParam(const ID: string; const T: TLyseeType): boolean;
 begin
-  Result := (T <> nil) and (T <> my_nil) and (IsID(ID) or IsVarArg(ID, T));
+  Result := (T <> nil) and (T <> my_nil) and IsID(ID);
 end;
 
 procedure LyseeObjectProc(const Param: TLyseeParam);
@@ -2408,11 +2429,11 @@ end;
 
 // system.function -------------------------------------------------------------
 
-procedure pp_system_halt(const Param: TLyseeParam);
+procedure pp_halt(const Param: TLyseeParam);
 var
   cntx: TLysee;
 begin
-  cntx := Param.FContext;
+  cntx := Param.FLysee;
   if Param.FPrmc > 0 then
     cntx.FResult.SetValue(Param[0]);
   cntx.FHalted := true;
@@ -2420,35 +2441,34 @@ begin
   cntx.Terminate;
 end;
 
-procedure pp_system_exit(const Param: TLyseeParam);
+procedure pp_exit(const Param: TLyseeParam);
 begin
-  Param.FContext.FState := csExit;
+  Param.FLysee.FState := csExit;
   if Param.FPrmc > 0 then
     Param.FPrev.FResult.SetValue(Param[0]);
 end;
 
-procedure pp_system_break(const Param: TLyseeParam);
+procedure pp_break(const Param: TLyseeParam);
 begin
-  Param.FContext.FState := csBreak;
+  Param.FLysee.FState := csBreak;
 end;
 
-procedure pp_system_continue(const Param: TLyseeParam);
+procedure pp_continue(const Param: TLyseeParam);
 begin
-  Param.FContext.FState := csContinue;
+  Param.FLysee.FState := csContinue;
 end;
 
-procedure pp_system_compile(const Param: TLyseeParam);
+procedure pp_compile(const Param: TLyseeParam);
 var
   F: TLyseeFunc;
   L: TStrings;
   I: integer;
   A: array of string;
   T: array of TLyseeType;
-  V: boolean;
 begin
   if Param.FPrmc = 1 then
   begin
-    F := Param.FContext.Compile(Param[0].AsString);
+    F := Param.FLysee.Compile(Param[0].AsString);
     Param.Result.AsFunc := F;
   end
   else
@@ -2465,12 +2485,11 @@ begin
         A[I + 1] := L[I];
         T[I + 1] := my_variant;
       end;
-      if ParamOK(A, T, false, V) then
+      if ParamOK(A, T, false) then
       begin
-        F := Param.FContext.Compile(Param[0].AsString);
+        F := Param.FLysee.Compile(Param[0].AsString);
         for I := 0 to L.Count - 1 do
           F.FParams.Add(L[I], my_variant);
-        F.FHasVarArg := V;
         Param.Result.AsFunc := F;
       end
       else Param.Error('invalid arguments: ''%s''', [Param[1].AsString]);
@@ -2480,7 +2499,7 @@ begin
   end;
 end;
 
-procedure pp_system_eval(const Param: TLyseeParam);
+procedure pp_eval(const Param: TLyseeParam);
 var
   code: string;
   func: TLyseeFunc;
@@ -2488,29 +2507,29 @@ begin
   code := TrimRight(Param[0].AsString);
   if code <> '' then
   begin
-    func := Param.FContext.Compile('exit(' + code + ');');
+    func := Param.FLysee.Compile('exit(' + code + ');');
     if func <> nil then
       Param.FToken.ExecFunc(func, Param, Param.FResult, nil);
   end
   else Param.Result.SetNil;
 end;
 
-procedure pp_system_find(const Param: TLyseeParam);
+procedure pp_find(const Param: TLyseeParam);
 var
   S: string;
 begin
   S := Trim(Param[0].AsString);
-  if Param.FContext.CodeFunc.FindSave(S, Param, Param.FResult) = fiNone then
-    if not Param.FContext.Resolve(S, Param.FResult) then
+  if Param.FLysee.CodeFunc.FindSave(S, Param, Param.FResult) = fiNone then
+    if not Param.FLysee.Resolve(S, Param.FResult) then
       Param.Result.SetNil;
 end;
 
-procedure pp_system_typeof(const Param: TLyseeParam);
+procedure pp_typeof(const Param: TLyseeParam);
 begin
   Param.Result.AsType := Param[0].AsType;
 end;
 
-procedure pp_system_moduleof(const Param: TLyseeParam);
+procedure pp_moduleof(const Param: TLyseeParam);
 var
   M: TLyseeModule;
 begin
@@ -2520,7 +2539,7 @@ begin
   Param.Result.AsModule := M;
 end;
 
-procedure pp_system_fileof(const Param: TLyseeParam);
+procedure pp_fileof(const Param: TLyseeParam);
 var
   M: TLyseeModule;
 begin
@@ -2530,12 +2549,12 @@ begin
   Param.Result.AsString := M.FFileName;
 end;
 
-procedure pp_system_collectGarbage(const Param: TLyseeParam);
+procedure pp_collectGarbage(const Param: TLyseeParam);
 begin
   Param.Result.AsInteger := my_gcman.Collect;
 end;
 
-procedure pp_system_inc(const Param: TLyseeParam);
+procedure pp_inc(const Param: TLyseeParam);
 var
   T: TLyseeType;
   V: TLyseeValue;
@@ -2562,7 +2581,7 @@ begin
   else Param.Error('variable not specified');
 end;
 
-procedure pp_system_dec(const Param: TLyseeParam);
+procedure pp_dec(const Param: TLyseeParam);
 var
   T: TLyseeType;
   V: TLyseeValue;
@@ -2589,13 +2608,13 @@ begin
   else Param.Error('variable not specified');
 end;
 
-procedure pp_system_readln(const Param: TLyseeParam);
+procedure pp_readln(const Param: TLyseeParam);
 var
   S: string;
   T: TLyseeType;
   V: TLyseeValue;
 begin
-  Param.FContext.Readln(S);
+  Param.FLysee.Readln(S);
   V := Param.GetVarbValue(0, T);
   if V <> nil then
   begin
@@ -2606,18 +2625,18 @@ begin
   else Param.Result.AsString := S;
 end;
 
-procedure pp_system_write(const Param: TLyseeParam);
+procedure pp_write(const Param: TLyseeParam);
 begin
-  Param.FContext.Write(Param[0].AsString);
+  Param.FLysee.Write(Param[0].AsString);
 end;
 
-procedure pp_system_writeln(const Param: TLyseeParam);
+procedure pp_writeln(const Param: TLyseeParam);
 begin
-  Param.FContext.Write(Param[0].AsString);
-  Param.FContext.Write(sLineBreak);
+  Param.FLysee.Write(Param[0].AsString);
+  Param.FLysee.Write(sLineBreak);
 end;
 
-procedure pp_system_length(const Param: TLyseeParam);
+procedure pp_length(const Param: TLyseeParam);
 var
   O: pointer;
   T: TLyseeType;
@@ -2626,12 +2645,12 @@ begin
   Param.Result.AsInteger := T.GetLength(O);
 end;
 
-procedure pp_system_pass(const Param: TLyseeParam);
+procedure pp_pass(const Param: TLyseeParam);
 begin
   { do nothing }
 end;
 
-procedure pp_system_decompile(const Param: TLyseeParam);
+procedure pp_decompile(const Param: TLyseeParam);
 var
   L: TStringList;
   T: TLyseeType;
@@ -2647,6 +2666,11 @@ begin
   finally
     L.Free;
   end;
+end;
+
+procedure pp_exceptObject(const Param: TLyseeParam);
+begin
+  Param.Result.SetTOA(my_exception, Param.FLysee.FError);
 end;
 
 // kernel ----------------------------------------------------------------------
@@ -3061,13 +3085,11 @@ end;
 
 function ParamOK(const Names: array of string;
                  const Types: array of TLyseeType;
-                 IsMethod: boolean;
-                 var HasVarArg: boolean): boolean;
+                 IsMethod: boolean): boolean;
 var
   I, L, X: integer;
 begin
   Result := false;
-  HasVarArg := false;
   L := Length(Names);
   if L = Length(Types) then
   begin
@@ -3080,10 +3102,7 @@ begin
         for X := I + 1 to L - 1 do
           if MatchID(Names[I], Names[X]) then Exit;
       end
-      else
-      if (I = L - 1) and IsVarArg(Names[I], Types[I]) then
-        HasVarArg := true else
-        Exit;
+      else Exit;
     end;
     Result := true;
   end;
@@ -3123,19 +3142,16 @@ function AddMethod(const AClass: TLyseeType;
                    const AProc: TLyseeProc): TLyseeFunc;
 var
   I: integer;
-  E: boolean;
 begin
   Result := nil;
-  E := false;
   if (AClass <> nil) and AClass.IsObject then
     if (AType <> nil) and (AName <> '') and Assigned(AProc) then
       if AClass.FindMethod(AName) = nil then
-        if ParamOK(ParamNames, ParamTypes, true, E) then
+        if ParamOK(ParamNames, ParamTypes, true) then
           if not MatchID(AName, 'Create') or (AType = AClass) then
           begin
             Result := TLyseeFunc.CreateMethod(AName, AClass, AProc);
             Result.FResultType := AType;
-            Result.FHasVarArg := E;
             if MatchID(AName, 'Create') then
               AClass.FConstructer := Result else
               Result.FParams.Add('Self', AClass);
@@ -3207,17 +3223,15 @@ function SetupProp(const AClass: TLyseeType;
   end;
 
 var
-  E: boolean;
   L: integer;
 begin
   GetFunc := nil;
   SetFunc := nil;
-  E := false;
   L := Length(IndexNames);
   if (AClass <> nil) and AClass.IsObject then
     if (AType <> nil) and (AType <> my_nil) and Assigned(GetProc) then
       if IsID(AName) or ((AName = '') and (L > 0)) then
-        if ParamOK(IndexNames, IndexTypes, true, E) and not E then
+        if ParamOK(IndexNames, IndexTypes, true) then
           if L = 0 then      // (expression).prop
           begin
             setup_get(AName);
@@ -3273,59 +3287,6 @@ var
 begin
   Result := SetupProp(AClass, AName, AType, [], [],
                       GetProc, SetProc, G, S);
-end;
-
-{ TLyseeError }
-
-procedure TLyseeError.Clear;
-begin
-  FErrID := '';
-  FMsg := '';
-  FModule := '';
-  FFileName := '';
-  FRow := 0;
-  FCol := 0;
-end;
-
-constructor TLyseeError.Create(AContext: TLysee);
-begin
-  FContext := AContext;
-end;
-
-function TLyseeError.GetText: string;
-begin
-  if (FErrID <> '') and (FMsg <> '') then
-  begin
-    Result := EFileName;
-    if Result <> '' then
-      Result := ' file=' + Result;
-    Result := Format('[%s]: (module=%s%s row=%d col=%d) %s',
-      [FErrID, FModule, Result, FRow + 1, FCol + 1, FMsg]);
-  end
-  else Result := '';
-end;
-
-procedure TLyseeError.Runtime(const Msg, Module, FileName: string; Row, Col: integer);
-begin
-  FErrID := 'RuntimeError';
-  FMsg := Msg;
-  FModule := Module;
-  FFileName := FileName;
-  FRow := Row;
-  FCol := Col;
-  FContext.FExcepted := true;
-end;
-
-procedure TLyseeError.Syntax(const Msg, Module, FileName: string; Row, Col: integer);
-begin
-  FErrID := 'SyntaxError';
-  FMsg := Msg;
-  FModule := Module;
-  FFileName := FileName;
-  FRow := Row;
-  FCol := Col;
-  FContext.FExcepted := true;
-  Abort;
 end;
 
 { TLysee }
@@ -3449,6 +3410,7 @@ begin
   begin
     P.FResult.MarkForSurvive;
     P.FParams.MarkForSurvive;
+    P.FVarArgs.MarkForSurvive;
     P := P.FPrev;
   end;
 
@@ -3475,6 +3437,7 @@ end;
 constructor TLysee.Create(AOwner: TComponent);
 begin
   inherited;
+  my_system.Setup;
   FResult := TLyseeValue.Create;
   FError := TLyseeError.Create(Self);
   FArgs := TLyseeList.Create;
@@ -3607,7 +3570,7 @@ begin
       FMainLocals.PrepareFor(FMainFunc);
       FCurrent := TLyseeParam.Create;
       try
-        FCurrent.FContext := Self;
+        FCurrent.FLysee := Self;
         FCurrent.FFunc := FMainFunc;
         FCurrent.FParams := FMainLocals;
         FCurrent.FResult := FResult;
@@ -3752,6 +3715,59 @@ begin
   if F <> nil then
     Result := F.FModule else
     Result := nil;
+end;
+
+{ TLyseeError }
+
+procedure TLyseeError.Clear;
+begin
+  FErrID := '';
+  FMsg := '';
+  FModule := '';
+  FFileName := '';
+  FRow := 0;
+  FCol := 0;
+end;
+
+constructor TLyseeError.Create(ALysee: TLysee);
+begin
+  FLysee := ALysee;
+end;
+
+function TLyseeError.GetText: string;
+begin
+  if (FErrID <> '') and (FMsg <> '') then
+  begin
+    Result := EFileName;
+    if Result <> '' then
+      Result := ' file=' + Result;
+    Result := Format('[%s]: (module=%s%s row=%d col=%d) %s',
+      [FErrID, FModule, Result, FRow + 1, FCol + 1, FMsg]);
+  end
+  else Result := '';
+end;
+
+procedure TLyseeError.Runtime(const Msg, Module, FileName: string; Row, Col: integer);
+begin
+  FErrID := 'RuntimeError';
+  FMsg := Msg;
+  FModule := Module;
+  FFileName := FileName;
+  FRow := Row;
+  FCol := Col;
+  FLysee.FExcepted := true;
+end;
+
+procedure TLyseeError.Syntax(const Msg, Module, FileName: string; Row, Col: integer);
+begin
+  FErrID := 'SyntaxError';
+  FMsg := Msg;
+  FModule := Module;
+  FFileName := FileName;
+  FRow := Row;
+  FCol := Col;
+  FLysee.FExcepted := true;
+  Abort;
 end;
 
 { TLyseeType }
@@ -4047,7 +4063,7 @@ end;
 
 function TLyseeType.Prototype(const AName: string): string;
 begin
-  if (Self <> my_variant) and (AName <> '...') then
+  if Self <> my_variant then
     Result := AName + ':' + FName else
     Result := AName;
 end;
@@ -4250,6 +4266,68 @@ begin
   inherited;
   Value.FValue.VChar[0] := #0;
   Value.FValue.VChar[1] := #0;
+end;
+
+{ TLyseeExceptionType }
+
+procedure TLyseeExceptionType.MyID(const Param: TLyseeParam);
+begin
+  Param.Result.AsString := Param.FLysee.FError.FErrID;
+end;
+
+procedure TLyseeExceptionType.MyMsg(const Param: TLyseeParam);
+begin
+  Param.Result.AsString := Param.FLysee.FError.FMsg;
+end;
+
+procedure TLyseeExceptionType.MyText(const Param: TLyseeParam);
+begin
+  Param.Result.AsString := Param.FLysee.FError.ErrorText;
+end;
+
+procedure TLyseeExceptionType.MyModule(const Param: TLyseeParam);
+begin
+  Param.Result.AsString := Param.FLysee.FError.FModule;
+end;
+
+procedure TLyseeExceptionType.MyFileName(const Param: TLyseeParam);
+begin
+  Param.Result.AsString := Param.FLysee.FError.FFileName;
+end;
+
+procedure TLyseeExceptionType.MyRow(const Param: TLyseeParam);
+begin
+  Param.Result.AsInteger := Param.FLysee.FError.FRow;
+end;
+
+procedure TLyseeExceptionType.MyCol(const Param: TLyseeParam);
+begin
+  Param.Result.AsInteger := Param.FLysee.FError.FCol;
+end;
+
+procedure TLyseeExceptionType.MyExcepted(const Param: TLyseeParam);
+begin
+  Param.Result.AsBoolean := Param.FLysee.FExcepted;
+end;
+
+procedure TLyseeExceptionType.Setup;
+begin
+  Method('ID', my_string, {$IFDEF FPC}@{$ENDIF}MyID);
+  Method('Msg', my_string, {$IFDEF FPC}@{$ENDIF}MyMsg);
+  Method('Text', my_string, {$IFDEF FPC}@{$ENDIF}MyText);
+  Method('Module', my_string, {$IFDEF FPC}@{$ENDIF}MyModule);
+  Method('FileName', my_string, {$IFDEF FPC}@{$ENDIF}MyFileName);
+  Method('Row', my_int, {$IFDEF FPC}@{$ENDIF}MyRow);
+  Method('Col', my_int, {$IFDEF FPC}@{$ENDIF}MyCol);
+  Method('Excepted', my_bool, {$IFDEF FPC}@{$ENDIF}MyExcepted);
+  inherited;
+end;
+
+function TLyseeExceptionType.AsString(Obj: pointer): string;
+begin
+  if Obj <> nil then
+    Result := TLyseeError(Obj).ErrorText else
+    Result := '';
 end;
 
 { TLyseeStringType }
@@ -4765,7 +4843,7 @@ var
   T: TLyseeType;
 begin
   if Param.GetChangeAbleFunc(F) then
-    if not F.FHasVarArg and (F.FParams.LocalCount = 0) then
+    if F.FParams.LocalCount = 0 then
     begin
       S := Param[1].AsString;
       if Param.Prmc > 2 then
@@ -4774,7 +4852,6 @@ begin
       if IsParam(S, T) and not F.FindInside(S) then
       begin
         F.FParams.Add(S, T);
-        F.FHasVarArg := (S = '...');
         F.FMinArgs := -1;
         Param.Result.AsBoolean := true;
       end;
@@ -4787,7 +4864,6 @@ var
 begin
   if Param.GetChangeAbleFunc(F) then
   begin
-    F.FHasVarArg := false;
     F.FMinArgs := -1;
     F.FParams.Clear;
     F.FSTMTs.Clear;
@@ -4808,7 +4884,6 @@ var
 begin
   if Param.GetChangeAbleFunc(F) then
   begin
-    F.FHasVarArg := false;
     F.FMinArgs := -1;
     F.FParams.Clear;
   end;
@@ -4937,8 +5012,6 @@ begin
       begin
         F.Params[X].FName := S;
         F.FMinArgs := -1;
-        if X = F.Params.ParamCount - 1 then
-          F.FHasVarArg := (S = '...');
       end
       else Param.Error('invalid param name: ' + S);
   end;
@@ -4957,8 +5030,6 @@ begin
     if T <> F.Params[X].FType then
       if T = my_nil then
         Param.Error('invalid param type: nil') else
-      if F.Params[X].FName = '...' then
-        Param.Error('invalid VarArg type: %s', [T.FullName]) else
         F.Params[X].FType := T;
   end;
 end;
@@ -5134,7 +5205,7 @@ begin
     L.TestChange;
     L.Add(Param[1]);
     Param.Result.AsInteger := L.Count - 1;
-    A := Param[2].AsArray;
+    A := Param.VarArgs;
     if A <> nil then
       for I := 0 to A.Count - 1 do
         L.Add(A[I]);
@@ -5353,7 +5424,7 @@ begin
   Method('Sort', {$IFDEF FPC}@{$ENDIF}MySort);
   Method('Insert', ['X', '_Value'], [my_int, my_variant],
          {$IFDEF FPC}@{$ENDIF}MyInsert);
-  Method('Add', my_int, ['_Value', '...'], [my_variant, my_array],
+  Method('Add', my_int, ['_Value'], [my_variant],
          {$IFDEF FPC}@{$ENDIF}MyAdd);
   Method('Assign', ['Source'], [my_variant], {$IFDEF FPC}@{$ENDIF}MyAssign);
   Method('IndexOf', my_int, ['Value'], [my_variant],
@@ -6446,7 +6517,7 @@ var
   M: TLyseeModule;
   S: string;
 begin
-  if not FContext.FExcepted then
+  if not FLysee.FExcepted then
   begin
     F := FFunc;
     if Msg = '' then
@@ -6454,8 +6525,8 @@ begin
       S := F.Name + '() - ' + Msg;
     if Assigned(F.FProc) then
     begin
-      M := FContext.CodeModule;
-      FContext.FError.Runtime(S, M.Name, M.FileName, FToken.FRow, FToken.FCol);
+      M := FLysee.CodeModule;
+      FLysee.FError.Runtime(S, M.Name, M.FileName, FToken.FRow, FToken.FCol);
     end
     else FToken.Error(Self, S);
   end;
@@ -6570,6 +6641,31 @@ procedure TLyseeParam.SetResult(Value: TLyseeValue);
 begin
   FResult.SetValue(Value);
   FFunc.FResultType.Convert(FResult);
+end;
+
+procedure TLyseeParam.SetArgs(Args: TLyseeList);
+var
+  P: integer;
+begin
+  FParams := Args;
+  FPrmc := FParams.Count;
+  P := FFunc.FParams.ParamCount;
+  if FPrmc > P then
+  begin
+    FVarArgs := FParams.CopyRight(FPrmc - P);
+    FVarArgs.FReadonly := true;
+    FVarArgs.IncRefcount;
+    FParams.SetCount(P);
+    FPrmc := P;
+  end;
+  FParams.PrepareFor(Func);
+end;
+
+destructor TLyseeParam.Destroy;
+begin
+  if FVarArgs <> nil then
+    FVarArgs.DecRefcount;
+  inherited;
 end;
 
 function TLyseeParam.TestChangeFunc(AFunc: TLyseeFunc): boolean;
@@ -6740,7 +6836,7 @@ begin
     syHash  : Result := decompile_hash;
     syAt    : Result := decompile_at;
     else
-    if FSym in [syNil, syTrue, syFalse, syVarArg] then
+    if FSym in [syNil, syTrue, syFalse, syVArgs] then
       Result := Symbols[FSym].ID else
     if FSym in OperSyms then
     begin
@@ -6801,7 +6897,7 @@ var
   procedure exec_ID;
   begin
     if (Param.FFunc.FindSave(FName, Param, tmpv) <> fiNone)
-      or Param.FContext.Resolve(FName, tmpv) then
+      or Param.FLysee.Resolve(FName, tmpv) then
         exec_call else FailGet(Param, FName);
   end;
 
@@ -6859,28 +6955,6 @@ end;
 
 function TLyseeToken.ExecFunc(Func: TLyseeFunc; Param: TLyseeParam; Outv: TLyseeValue; Args: TLyseeList): boolean;
 
-  function prepare_arguments: integer;
-  var
-    I, L, P: integer;
-    A: TLyseeList;
-  begin
-    L := Args.Count;
-    P := Func.FParams.ParamCount;
-    if L < P then Result := L else
-    begin
-      Result := P;
-      if Func.FHasVarArg then
-      begin
-        A := TLyseeList.Create;
-        A.Add(Args[P - 1]);
-        Args[P - 1].SetAsArray(A);
-        for I := P to L - 1 do A.Add(Args[I]);
-      end;
-      Args.SetCount(P);
-    end;
-    Args.PrepareFor(Func);
-  end;
-
   function check_arguments: boolean;
   var
     X: integer;
@@ -6916,27 +6990,26 @@ begin
           if Args = nil then Args := Param.FParams.AddList;
           curr := TLyseeParam.Create;
           try
-            curr.FPrev := Param.FContext.FCurrent;
-            curr.FContext := Param.FContext;
+            curr.FPrev := Param.FLysee.FCurrent;
+            curr.FLysee := Param.FLysee;
             curr.FFunc := Func;
-            curr.FPrmc := prepare_arguments;
-            curr.FParams := Args;
             curr.FResult := Outv;
             curr.FToken := Self;
-            Param.FContext.FCurrent := curr;
+            curr.SetArgs(Args);
+            Param.FLysee.FCurrent := curr;
             Func.FResultType.SetDefault(Outv);
             if Assigned(Func.FProc) then
               Func.FProc(curr) else
               Func.FSTMTs.Execute(curr);
             Func.FResultType.Convert(Outv);
           finally
-            Param.FContext.FCurrent := curr.FPrev;
-            if Param.FContext.FState = csExit then
+            Param.FLysee.FCurrent := curr.FPrev;
+            if Param.FLysee.FState = csExit then
               if not Assigned(Func.FProc) then
-                Param.FContext.FState := csRunning;
+                Param.FLysee.FState := csRunning;
             curr.Free;
           end;
-          Result := Param.FContext.StatusOK;
+          Result := Param.FLysee.StatusOK;
         finally
           Param.EndExec(mark);
         end;
@@ -7035,7 +7108,7 @@ begin
     else Outv.SetFind(@R);
   end
   else
-  if not Param.FContext.Resolve(FName, Outv) then
+  if not Param.FLysee.Resolve(FName, Outv) then
     FailGet(Param, FName);
 end;
 
@@ -7146,7 +7219,7 @@ var
     end
     else
     if Param.FFunc.FindSave(FName, Param, Outv) = fiNone then
-      if not Param.FContext.Resolve(FName, Outv) then
+      if not Param.FLysee.Resolve(FName, Outv) then
         FailGet(Param, FName);
   end;
 
@@ -7207,16 +7280,9 @@ var
     Outv.SetAsBoolean(GetLRV(Outv, tmpv) and Outv.Same(tmpv));
   end;
 
-  procedure exec_dot3;
-  var
-    I: integer;
+  procedure exec_vargs;
   begin
-    if Param.FFunc.FHasVarArg then
-    begin
-      I := Param.FFunc.FParams.ParamCount - 1;
-      Outv.SetValue(Param.FParams[I]);
-    end
-    else Error(Param, '%s has no parameter: ... ', [Param.FFunc.FullName]);
+    Outv.AsArray := Param.FVarArgs;
   end;
 
 begin
@@ -7275,7 +7341,7 @@ begin
           syArray : exec_array;
           syHash  : exec_hash;
           syAt    : exec_at;
-          syVarArg: exec_dot3;
+          syVArgs : exec_vargs;
         end;
       finally
         Param.EndExec(mark);
@@ -7284,7 +7350,7 @@ begin
   except
     Error(Param, '');
   end;
-  Result := Param.FContext.StatusOK;
+  Result := Param.FLysee.StatusOK;
 end;
 
 procedure TLyseeToken.FailGet(Param: TLyseeParam; const Host, Prop: string);
@@ -7321,7 +7387,7 @@ begin
         FailGet(Param, TLyseeType(Host.FValue.VObject).FName, FName);
     end;
   if not Result then
-    if Param.FContext.StatusOK then
+    if Param.FLysee.StatusOK then
       FailGet(Param, Host.FType.FName, FName);
 end;
 
@@ -7342,13 +7408,13 @@ var
   M: TLyseeModule;
   S: string;
 begin
-  if not Param.FContext.FExcepted then
+  if not Param.FLysee.FExcepted then
   begin
     if Msg = '' then
       S := Param.FFunc.FName + '() - ' + ExceptionStr else
       S := Param.FFunc.FName + '() - ' + Msg;
     M := Param.FFunc.FModule;
-    Param.FContext.FError.Runtime(S, M.Name, M.FFileName, FRow, FCol);
+    Param.FLysee.FError.Runtime(S, M.Name, M.FFileName, FRow, FCol);
   end;
 end;
 
@@ -7375,9 +7441,7 @@ begin
   if Host <> nil then
     if func.IsMethod and not func.IsConstructor then
       Result.Add(Host);
-  if Func.FHasVarArg then
-    N := GetParamCount else
-    N := Min(GetParamCount, Func.FParams.ParamCount - Result.Count);
+  N := GetParamCount;
   for I := 0 to N - 1 do
     if not GetParam(I).Execute(Param, Result.Add) then
     begin
@@ -7872,12 +7936,6 @@ begin
       else token.FName := FChar;
     end;
 
-    if (token.FSym = syRange) and (FChar = '.') then
-    begin
-      token.FSym := syVarArg;
-      GetChar;
-    end;
-
     if (token.FSym = syShi) and (FChar = '<') then
     begin
       token.FSym := syFill;
@@ -8296,7 +8354,7 @@ end;
 
 procedure TLyseeParser.ParseUsesConstFunc;
 begin
-  while FLast.FSym in [syFunc, syConst, syUses] do
+  while FLast.FSym in [syFunc, syProc, syConst, syUses] do
   begin
     FFunc := nil;
     FAfter := -1;
@@ -8617,17 +8675,8 @@ var
   I, count: integer;
 begin
   count := 0;
-  SymTestNext([syID, syVarArg, EndSym]);
+  SymTestNext([syID, EndSym]);
   while FLast.FSym <> EndSym do
-  begin
-    if FLast.FSym = syVarArg then
-    begin
-      FFunc.FParams.Add('...', my_array);
-      FFunc.FHasVarArg := true;
-      SymTestNext([EndSym]);
-      Break;
-    end
-    else
     if FFunc.FindInside(FLast.FName) then ERedeclared else
     begin
       V := FFunc.FParams.Add(FLast.FName, my_variant);
@@ -8647,9 +8696,8 @@ begin
       end;
       if FLast.FSym = sySemic then count := 0;
       if FLast.FSym <> EndSym then
-        SymTestNext([syID, syVarArg]);
+        SymTestNext([syID]);
     end;
-  end;
 end;
 
 function TLyseeParser.ParseTerm: TLyseeToken;
@@ -8720,10 +8768,7 @@ begin
     begin
       FLast.FSym := syID;
       FLast.FName := 'array';
-    end
-    else
-    if (FLast.FSym = syVarArg) and not FFunc.FHasVarArg then
-      EUnexpected(FLast);
+    end;
     Result := UseToken(FLast);
     if (FLast.FSym = syID) and (SymPeekNext = syLParen) then
     begin
@@ -8912,12 +8957,12 @@ begin
     if (FItems <> nil) and (FItems.Count > 0) then
       if FItems[0].FExpr.Execute(Param, tmpv) then
       begin
-        Param.FContext.Write(tmpv.AsString);
+        Param.FLysee.Write(tmpv.AsString);
         for I := 1 to FItems.Count - 1 do
           if FItems[I].FExpr.Execute(Param, tmpv) then
           begin
-            Param.FContext.Write(' ');
-            Param.FContext.Write(tmpv.AsString);
+            Param.FLysee.Write(' ');
+            Param.FLysee.Write(tmpv.AsString);
           end
           else Break;
       end;
@@ -8935,12 +8980,13 @@ begin
   begin
     Param.BeginExec(mark, tmpv);
     try
-      FExpr.Error(Param, tmpv.AsString);
+      if FExpr.Execute(Param, tmpv) then
+        FExpr.Error(Param, tmpv.AsString);
     finally
       Param.EndExec(mark);
     end;
   end
-  else Param.FContext.FExcepted := true;
+  else Param.FLysee.FExcepted := true;
 end;
 
 procedure TLyseeSTMT.ExecRepeat(Param: TLyseeParam);
@@ -8949,7 +8995,7 @@ var
   tmpv: TLyseeValue;
   mark: integer;
 begin
-  cntx := Param.FContext;
+  cntx := Param.FLysee;
   Param.BeginExec(mark, tmpv);
   try
     repeat
@@ -8975,7 +9021,7 @@ begin
     ssRepeat: ExecRepeat(Param);
     ssRaise : ExecRaise(Param);
   end;
-  Result := Param.FContext.StatusOK;
+  Result := Param.FLysee.StatusOK;
 end;
 
 procedure TLyseeSTMT.ExecWhile(Param: TLyseeParam);
@@ -8984,7 +9030,7 @@ var
   tmpv: TLyseeValue;
   mark: integer;
 begin
-  cntx := Param.FContext;
+  cntx := Param.FLysee;
   Param.BeginExec(mark, tmpv);
   try
     while cntx.StatusOK and FExpr.Execute(Param, tmpv) and tmpv.AsBoolean do
@@ -9080,7 +9126,7 @@ begin
     ssAssign: ExecAssign(Param);
     ssResult: ExecResult(Param);
   end;
-  Result := Param.FContext.StatusOK;
+  Result := Param.FLysee.StatusOK;
 end;
 
 { TLyseeFor }
@@ -9141,7 +9187,7 @@ var
   end;
 
 begin
-  cntx := Param.FContext;
+  cntx := Param.FLysee;
   Param.BeginExec(mark);
   try
     G := get_generate;
@@ -9293,7 +9339,7 @@ begin
             Result := true;
             Break;
           end;
-      if Param.FContext.StatusOK then
+      if Param.FLysee.StatusOK then
         Result := Result or FElseItems.Execute(Param) else
         Result := false;
     end;
@@ -9325,13 +9371,13 @@ var
   E: boolean;
 begin
   FItems.Execute(Param);
-  E := Param.FContext.FExcepted;
-  Param.FContext.FExcepted := false;
+  E := Param.FLysee.FExcepted;
+  Param.FLysee.FExcepted := false;
   if FTryFinally or E then
     FElseItems.Execute(Param);
   if FTryFinally and E then
-    Param.FContext.FExcepted := true;
-  Result := Param.FContext.StatusOK;
+    Param.FLysee.FExcepted := true;
+  Result := Param.FLysee.StatusOK;
 end;
 
 { TLyseeSTMTList }
@@ -9838,7 +9884,6 @@ begin
       Result := TLyseeFunc.CreateMethod(FName, P, FProc);
       Result.FResultType := FResultType;
       Result.FParams.Assign(FParams);
-      Result.FHasVarArg := FHasVarArg;
       Result.FData := FData;
     end;
   end;
@@ -9949,16 +9994,13 @@ function TLyseeModule.AddFunc(const AName: string; T: TLyseeType;
   const Proc: TLyseeProc; const Data: pointer): TLyseeFunc;
 var
   I: integer;
-  E: boolean;
 begin
   Result := nil;
-  E := false;
   if (T <> nil) and (AName <> '') and Assigned(Proc) then
-    if not Find(AName) and ParamOK(ParamNames, ParamTypes, false, E) then
+    if not Find(AName) and ParamOK(ParamNames, ParamTypes, false) then
     begin
       Result := TLyseeFunc.Create(AName, Self, Proc);
       Result.FResultType := T;
-      Result.FHasVarArg := E;
       Result.FData := Data;
       for I := 0 to Length(ParamNames) - 1 do
         Result.FParams.Add(ParamNames[I], ParamTypes[I]);
@@ -10103,13 +10145,15 @@ end;
 procedure TLyseeModule.Use(M: TLyseeModule);
 begin
   if (M <> nil) and (M <> Self) and (M <> my_system) then
+  begin
     if (FModules <> nil) and not FModules.Has(M) then
     begin
       FModules.Add(M);
       if M.FImporters <> nil then
         M.FImporters.Add(Self);
     end;
-  M.Setup;
+    M.Setup;
+  end;
 end;
 
 function TLyseeModule.IsMainModule: boolean;
@@ -11349,93 +11393,89 @@ begin
   Result := (FV <> nil) and (FCount > 0);
 end;
 
-initialization
-begin
-  Randomize;
-  my_program := ParamStr(0);
-  my_kernel := my_program;
-  {$IFDEF MSWINDOWS}
-  my_home := FullPath(GetEnv('HOMEDRIVER') + GetEnv('HOMEPATH'));
-  {$ELSE}
-  my_home := FullPath(GetEnv('HOME'));
-  {$ENDIF}
-  my_knpath := ExtractFilePath(my_kernel);
-  my_kndir := ExcPD(my_knpath);
-  my_search_path := my_knpath + 'modules';
-  {$IFDEF MSWINDOWS}
-  my_tmpath := GetEnv(['TEMP', 'TMP'], my_knpath + '..\temp\');
-  {$ELSE}
-  my_tmpath := GetEnv(['TEMP', 'TMP'], '/tmp/');
-  {$ENDIF}
+{ TLyseeSystemModule }
 
-  my_spinlock := Syncobjs.TCriticalSection.Create;
-  my_gcman := TLyseeCollect.Create;
-  my_modules := TLyseeModuleList.Create(nil);
-  my_system := TLyseeModule.Create(LSE_SYSTE);
+procedure TLyseeSystemModule.DoSetup(Sender: TObject);
+var
+  I: integer;
+begin
+  OnSetup := nil;
+  for I := 0 to TypeCount - 1 do
+    GetType(I).Setup;
+end;
+
+constructor TLyseeSystemModule.Create(const AName: string);
+begin
+  inherited;
+  OnSetup := {$IFDEF FPC}@{$ENDIF}DoSetup;
 
   //-- types -----------------------------------------------------------------
 
-  my_variant := TLyseeVariantType.Create(TID_NAMES[TID_VARIANT], my_system, nil);
+  my_variant := TLyseeVariantType.Create(TID_NAMES[TID_VARIANT], Self, nil);
   my_variant.FStyle := tsVariant;
   my_variant.FTID := TID_VARIANT;
   my_types[TID_VARIANT] := my_variant;
 
-  my_nil := TLyseeNilType.Create(TID_NAMES[TID_NIL], my_system, nil);
+  my_nil := TLyseeNilType.Create(TID_NAMES[TID_NIL], Self, nil);
   my_nil.FStyle := tsNil;
   my_nil.FTID := TID_NIL;
   my_types[TID_NIL] := my_nil;
 
-  my_char := TLyseeCharType.Create(TID_NAMES[TID_CHAR], my_system, nil);
+  my_char := TLyseeCharType.Create(TID_NAMES[TID_CHAR], Self, nil);
   my_char.FStyle := tsBasic;
   my_char.FTID := TID_CHAR;
   my_types[TID_CHAR] := my_char;
 
-  my_int := TLyseeIntegerType.Create(TID_NAMES[TID_INTEGER], my_system, nil);
+  my_int := TLyseeIntegerType.Create(TID_NAMES[TID_INTEGER], Self, nil);
   my_int.FStyle := tsBasic;
   my_int.FTID := TID_INTEGER;
   my_types[TID_INTEGER] := my_int;
 
-  my_float := TLyseeFloatType.Create(TID_NAMES[TID_FLOAT], my_system, nil);
+  my_float := TLyseeFloatType.Create(TID_NAMES[TID_FLOAT], Self, nil);
   my_float.FStyle := tsBasic;
   my_float.FTID := TID_FLOAT;
   my_types[TID_FLOAT] := my_float;
 
-  my_curr := TLyseeCurrencyType.Create(TID_NAMES[TID_CURRENCY], my_system, nil);
+  my_curr := TLyseeCurrencyType.Create(TID_NAMES[TID_CURRENCY], Self, nil);
   my_curr.FStyle := tsBasic;
   my_curr.FTID := TID_CURRENCY;
   my_types[TID_CURRENCY] := my_curr;
 
-  my_time := TLyseeTimeType.Create(TID_NAMES[TID_time], my_system, nil);
+  my_time := TLyseeTimeType.Create(TID_NAMES[TID_time], Self, nil);
   my_time.FStyle := tsBasic;
   my_time.FTID := TID_TIME;
   my_types[TID_time] := my_time;
 
-  my_bool := TLyseeBoolType.Create(TID_NAMES[TID_BOOLEAN], my_system, nil);
+  my_bool := TLyseeBoolType.Create(TID_NAMES[TID_BOOLEAN], Self, nil);
   my_bool.FStyle := tsBasic;
   my_bool.FTID := TID_BOOLEAN;
   my_types[TID_BOOLEAN] := my_bool;
 
-  my_array := TLyseeArrayType.Create(TID_NAMES[TID_ARRAY], my_system, nil);
+  my_array := TLyseeArrayType.Create(TID_NAMES[TID_ARRAY], Self, nil);
   my_array.FTID := TID_ARRAY;
   my_types[TID_ARRAY] := my_array;
 
-  my_hash := TLyseeHashType.Create(TID_NAMES[TID_HASHLIST], my_system, nil);
+  my_hash := TLyseeHashType.Create(TID_NAMES[TID_HASHLIST], Self, nil);
   my_hash.FTID := TID_HASHLIST;
   my_types[TID_HASHLIST] := my_hash;
 
-  my_string := TLyseeStringType.Create(TID_NAMES[TID_STRING], my_system, nil);
+  my_string := TLyseeStringType.Create(TID_NAMES[TID_STRING], Self, nil);
   my_string.FTID := TID_STRING;
   my_types[TID_STRING] := my_string;
 
-  my_type := TLyseeTypeType.Create(TID_NAMES[TID_TYPE], my_system, nil);
+  my_type := TLyseeTypeType.Create(TID_NAMES[TID_TYPE], Self, nil);
   my_type.FTID := TID_TYPE;
   my_types[TID_TYPE] := my_type;
 
-  my_module := TLyseeModuleType.Create(TID_NAMES[TID_MODULE], my_system, nil);
+  my_exception := TLyseeExceptionType.Create(TID_NAMES[TID_EXCEPTION], Self, nil);
+  my_exception.FTID := TID_EXCEPTION;
+  my_types[TID_EXCEPTION] := my_exception;
+
+  my_module := TLyseeModuleType.Create(TID_NAMES[TID_MODULE], Self, nil);
   my_module.FTID := TID_MODULE;
   my_types[TID_MODULE] := my_module;
 
-  my_func := TLyseeFuncType.Create(TID_NAMES[TID_FUNCTION], my_system, nil);
+  my_func := TLyseeFuncType.Create(TID_NAMES[TID_FUNCTION], Self, nil);
   my_func.FTID := TID_FUNCTION;
   my_types[TID_FUNCTION] := my_func;
 
@@ -11443,13 +11483,13 @@ begin
 
   //-- constant --------------------------------------------------------------
 
-  my_system.FConsts.Add('MaxInt').SetAsInteger(High(int64));
-  my_system.FConsts.Add('MinInt').SetAsInteger(Low(int64));
-  my_system.FConsts.Add('PathDelim').SetAsChar(PathDelim);
-  my_system.FConsts.Add('PathSep').SetAsChar(PathSep);
-  my_system.FConsts.Add('PI').SetAsFloat(PI);
-  my_system.FConsts.Add('PointerSize').SetAsInteger(sizeof(pointer));
-  my_system.FConsts.Add('sLineBreak').SetAsString(sLineBreak);
+  FConsts.Add('MaxInt').SetAsInteger(High(int64));
+  FConsts.Add('MinInt').SetAsInteger(Low(int64));
+  FConsts.Add('PathDelim').SetAsChar(PathDelim);
+  FConsts.Add('PathSep').SetAsChar(PathSep);
+  FConsts.Add('PI').SetAsFloat(PI);
+  FConsts.Add('PointerSize').SetAsInteger(sizeof(pointer));
+  FConsts.Add('sLineBreak').SetAsString(sLineBreak);
 
   //-- operator --------------------------------------------------------------
 
@@ -11556,43 +11596,63 @@ begin
   my_time.AddCompare(my_float, {$IFDEF FPC}@{$ENDIF}compare_time_float);
   my_bool.AddCompare(my_bool, {$IFDEF FPC}@{$ENDIF}compare_bool_bool);
 
-  //-- system.functions ------------------------------------------------------
+  //-- functions -------------------------------------------------------------
 
-  AddFunc('Halt', ['_Value'], [my_variant],
-          {$IFDEF FPC}@{$ENDIF}pp_system_halt);
-  AddFunc('Exit', ['_Value'], [my_variant],
-          {$IFDEF FPC}@{$ENDIF}pp_system_exit);
-  AddFunc('Break', {$IFDEF FPC}@{$ENDIF}pp_system_break);
-  AddFunc('Continue', {$IFDEF FPC}@{$ENDIF}pp_system_continue);
+  AddFunc('ExceptObject', my_exception, {$IFDEF FPC}@{$ENDIF}pp_exceptObject);
+  AddFunc('Halt', ['_Value'], [my_variant], {$IFDEF FPC}@{$ENDIF}pp_halt);
+  AddFunc('Exit', ['_Value'], [my_variant], {$IFDEF FPC}@{$ENDIF}pp_exit);
+  AddFunc('Break', {$IFDEF FPC}@{$ENDIF}pp_break);
+  AddFunc('Continue', {$IFDEF FPC}@{$ENDIF}pp_continue);
   AddFunc('Compile', my_func, ['Code', '_Args'], [my_string, my_string],
-          {$IFDEF FPC}@{$ENDIF}pp_system_compile);
+          {$IFDEF FPC}@{$ENDIF}pp_compile);
   AddFunc('Eval', my_variant, ['Expression'], [my_string],
-          {$IFDEF FPC}@{$ENDIF}pp_system_eval);
+          {$IFDEF FPC}@{$ENDIF}pp_eval);
   AddFunc('Find', my_variant, ['Name'], [my_string],
-          {$IFDEF FPC}@{$ENDIF}pp_system_find);
+          {$IFDEF FPC}@{$ENDIF}pp_find);
   AddFunc('TypeOf', my_type, ['Any'], [my_variant],
-          {$IFDEF FPC}@{$ENDIF}pp_system_typeof);
+          {$IFDEF FPC}@{$ENDIF}pp_typeof);
   AddFunc('ModuleOf', my_module, ['Any'], [my_variant],
-          {$IFDEF FPC}@{$ENDIF}pp_system_moduleof);
+          {$IFDEF FPC}@{$ENDIF}pp_moduleof);
   AddFunc('FileOf', my_string, ['Any'], [my_variant],
-          {$IFDEF FPC}@{$ENDIF}pp_system_fileof);
-  AddFunc('CollectGarbage',
-          {$IFDEF FPC}@{$ENDIF}pp_system_collectGarbage);
+          {$IFDEF FPC}@{$ENDIF}pp_fileof);
+  AddFunc('CollectGarbage', {$IFDEF FPC}@{$ENDIF}pp_collectGarbage);
   AddFunc('Inc', ['Varb', '_Value'], [my_variant, my_int],
-          {$IFDEF FPC}@{$ENDIF}pp_system_inc);
+          {$IFDEF FPC}@{$ENDIF}pp_inc);
   AddFunc('Dec', ['Varb', '_Value'], [my_variant, my_int],
-          {$IFDEF FPC}@{$ENDIF}pp_system_dec);
+          {$IFDEF FPC}@{$ENDIF}pp_dec);
   AddFunc('Readln', my_string, ['_Varb'], [my_variant],
-          {$IFDEF FPC}@{$ENDIF}pp_system_readln);
-  AddFunc('Write', ['_Str'], [my_string],
-          {$IFDEF FPC}@{$ENDIF}pp_system_write);
-  AddFunc('Writeln', ['_Str'], [my_string],
-          {$IFDEF FPC}@{$ENDIF}pp_system_writeln);
+          {$IFDEF FPC}@{$ENDIF}pp_readln);
+  AddFunc('Write', ['_S'], [my_string], {$IFDEF FPC}@{$ENDIF}pp_write);
+  AddFunc('Writeln', ['_S'], [my_string], {$IFDEF FPC}@{$ENDIF}pp_writeln);
   AddFunc('Length', my_int, ['Any'], [my_variant],
-          {$IFDEF FPC}@{$ENDIF}pp_system_length);
-  AddFunc('Pass', {$IFDEF FPC}@{$ENDIF}pp_system_pass);
+          {$IFDEF FPC}@{$ENDIF}pp_length);
+  AddFunc('Pass', {$IFDEF FPC}@{$ENDIF}pp_pass);
   AddFunc('Decompile', my_string, ['Any'], [my_variant],
-          {$IFDEF FPC}@{$ENDIF}pp_system_decompile);
+          {$IFDEF FPC}@{$ENDIF}pp_decompile);
+end;
+
+initialization
+begin
+  Randomize;
+  my_program := ParamStr(0);
+  my_kernel := my_program;
+  {$IFDEF MSWINDOWS}
+  my_home := FullPath(GetEnv('HOMEDRIVER') + GetEnv('HOMEPATH'));
+  {$ELSE}
+  my_home := FullPath(GetEnv('HOME'));
+  {$ENDIF}
+  my_knpath := ExtractFilePath(my_kernel);
+  my_kndir := ExcPD(my_knpath);
+  my_search_path := my_knpath + 'modules';
+  {$IFDEF MSWINDOWS}
+  my_tmpath := GetEnv(['TEMP', 'TMP'], my_knpath + '..\temp\');
+  {$ELSE}
+  my_tmpath := GetEnv(['TEMP', 'TMP'], '/tmp/');
+  {$ENDIF}
+  my_spinlock := Syncobjs.TCriticalSection.Create;
+  my_gcman := TLyseeCollect.Create;
+  my_modules := TLyseeModuleList.Create(nil);
+  my_system := TLyseeSystemModule.Create(LSE_SYSTE);
 end;
 
 finalization

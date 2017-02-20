@@ -49,7 +49,7 @@ begin
   V := Param[0];
   T := Param[1];
   if V.Compare(T, [crLess]) then V := T;
-  L := Param[2].AsArray;
+  L := Param.VarArgs;
   if L <> nil then
     for I := 0 to L.Count - 1 do
     begin
@@ -68,7 +68,7 @@ begin
   V := Param[0];
   T := Param[1];
   if V.Compare(T, [crMore]) then V := T;
-  L := Param[2].AsArray;
+  L := Param.VarArgs;
   if L <> nil then
     for I := 0 to L.Count - 1 do
     begin
@@ -89,11 +89,9 @@ end;
 procedure TLyseeMathModule.DoSetup(Sender: TObject);
 begin
   OnSetup := nil;
-  AddFunc('Max', my_variant,
-          ['V1', 'V2', '...'], [my_variant, my_variant, my_array],
+  AddFunc('Max', my_variant, ['V1', 'V2'], [my_variant, my_variant],
           {$IFDEF FPC}@{$ENDIF}pp_max);
-  AddFunc('Min', my_variant,
-          ['V1', 'V2', '...'], [my_variant, my_variant, my_array],
+  AddFunc('Min', my_variant, ['V1', 'V2'], [my_variant, my_variant],
           {$IFDEF FPC}@{$ENDIF}pp_min);
 end;
 
