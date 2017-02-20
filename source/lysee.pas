@@ -8694,7 +8694,7 @@ begin
     Result := UseToken(FLast);
     if Result.FSym = syReduce then Result.FSym := syNeg;
     SymGotoNext;
-    Result.FRight := ParseTerm;
+    Result.FRight := Self.ParseTerm;
     Exit;
   end;
 
@@ -8702,7 +8702,7 @@ begin
   if FLast.FSym = syAt then
   begin
     SymGotoNext;
-    Result := ParseTerm;
+    Result := Self.ParseTerm;
     if Result.FSym = syID then Result.FSym := syAt else
     if (Result.FSym = syGet) and (Result.FName <> '') and (Result.GetParamCount = 0) then
       Result.FSym := syAt else
