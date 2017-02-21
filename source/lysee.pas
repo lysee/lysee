@@ -492,6 +492,7 @@ type
   TLyseeStringType = class(TLyseeType)
   protected
     procedure MyGet(const Param: TLyseeParam);
+    procedure MyFormat(const Param: TLyseeParam);
     procedure Setup;override;
   public
     function IncRefcount(Obj: pointer): integer;override;
@@ -871,7 +872,7 @@ type
     syUntil, syDo, syResult, syDiv, syMod, syTo, syDownto, syNot, syIn, syIs,
     syAs, syLike, syAnd, syOr, syXor, syShr, syShl, syTry, syExcept,
     syFinally, syRaise, syTrue, syFalse, syNil, syVArgs, syEnd,
-    {operator} syBecome, syShi, syFill, syAdd, syReduce, syMul, syDivf,
+    {operator} syBecome, syShi, syFill, syAdd, syReduce, syMul, syDivf, syFormat,
     syLParen, syRParen, syLArray, syRArray, syDot, syRange, syColon,
     sySemic, syComma, syAt, sySame, syEQ, syNE, syLT, syLE, syMT, syME, syVert,
     {abstract} syID, syNeg, syFloat, syInt, syStr, syChar, syHash,
@@ -910,6 +911,10 @@ type
     procedure ExecGet(Param: TLyseeParam; Outv: TLyseeValue);
     procedure ExecSet(Param: TLyseeParam);
     procedure ExecCall(Param: TLyseeParam; Outv: TLyseeValue);
+    procedure ExecAt(Param: TLyseeParam; Outv: TLyseeValue);
+    procedure ExecHash(Param: TLyseeParam; Outv: TLyseeValue);
+    procedure ExecArray(Param: TLyseeParam; Outv: TLyseeValue);
+    procedure ExecFormat(Param: TLyseeParam; Outv: TLyseeValue);
   public
     constructor Create(T: TLyseeToken = nil);
     constructor CreateWithLeft(LeftBranch: TLyseeToken; T: TLyseeToken = nil);
@@ -1452,6 +1457,7 @@ type
     function First: TLyseeValue;
     function Last: TLyseeValue;
     function AsString: string;override;
+    function AsStringFmt(const Fmt: string): string;
     property Count: integer read GetCount write SetCount;
     property Items[Index: integer]: TLyseeValue read GetItem;default;
     property Readonly: boolean read FReadonly write FReadonly;
@@ -1771,6 +1777,7 @@ const
     (SY:syReduce;    ID:'-';         SM:'reduce'),
     (SY:syMul;       ID:'*';         SM:'mul'),
     (SY:syDivf;      ID:'/';         SM:'float div'),
+    (SY:syFormat;    ID:'%';         SM:'format'),
     (SY:syLParen;    ID:'(';         SM:'left paren'),
     (SY:syRParen;    ID:')';         SM:'right paren'),
     (SY:syLArray;    ID:'[';         SM:'L: set item'),
@@ -1806,14 +1813,14 @@ const
   ExprHead = DataSyms + [syLParen, syLArray, syNot, syReduce, syAt, syVert];
 
   OperSyms = [
-    syMul, syDiv, syDivf, syMod,                                            // 0
+    syMul, syDiv, syDivf, syFormat, syMod,                                  // 0
     syAdd, syReduce,                                                        // 1
     syXor, syShl, syShr, syShi, syFill,                                     // 2
     sySame, syEQ, syNE, syLT, syLE, syMT, syME, syIn, syLike, syAs, syIs,   // 3
     syAnd, syOr];                                                           // 4
 
   OperLevel: array[0..4] of TLyseeSymbols = (
-    [syMul, syDiv, syDivf, syMod],                                          // 0
+    [syMul, syDiv, syDivf, syFormat, syMod],                                // 0
     [syAdd, syReduce],                                                      // 1
     [syXor, syShl, syShr, syShi, syFill],                                   // 2
     [sySame, syEQ, syNE, syLT, syLE, syMT, syME, syIn, syLike, syAs, syIs], // 3
@@ -3653,6 +3660,7 @@ function TLysee.Resolve(const ID: string; Value: TLyseeValue): boolean;
   begin
     Result := (Length(ID) > 2) and (ID[1] = '_') and (ID[2] = '_');
     if Result then
+      if MatchID(ID, '__version')  then Value.SetAsString(LSE_VERSION) else
       if MatchID(ID, '__module')   then Value.SetAsModule(CodeModule) else
       if MatchID(ID, '__file')     then Value.SetAsString(CodeModule.FFileName) else
       if MatchID(ID, '__func')     then Value.SetAsFunc(CodeFunc) else
@@ -3665,13 +3673,6 @@ function TLysee.Resolve(const ID: string; Value: TLyseeValue): boolean;
       if MatchID(ID, '__hilights') then Value.SetAsString(Hilights) else
       if MatchID(ID, '__main')     then Value.SetAsFunc(FMainFunc) else
       if MatchID(ID, '__in_main')  then Value.SetAsBoolean(CodeFunc.IsMainFunc) else
-      if MatchID(ID, '__ename')    then Value.SetAsString(FError.ErrID) else
-      if MatchID(ID, '__emsg')     then Value.SetAsString(FError.EMsg) else
-      if MatchID(ID, '__erow')     then Value.SetAsInteger(FError.ERow) else
-      if MatchID(ID, '__ecol')     then Value.SetAsInteger(FError.ECol) else
-      if MatchID(ID, '__efile')    then Value.SetAsString(FError.EFileName) else
-      if MatchID(ID, '__emodule')  then Value.SetAsString(FError.EModule) else
-      if MatchID(ID, '__error')    then Value.SetAsString(FError.ErrorText) else
       if MatchID(ID, '__kernel')   then Value.SetAsString(my_kernel) else
       if MatchID(ID, '__knpath')   then Value.SetAsString(my_knpath) else
       if MatchID(ID, '__kndir')    then Value.SetAsString(my_kndir) else
@@ -4340,8 +4341,14 @@ begin
   Param.Result.AsChar := S[Param[1].AsInteger];
 end;
 
+procedure TLyseeStringType.MyFormat(const Param: TLyseeParam);
+begin
+
+end;
+
 procedure TLyseeStringType.Setup;
 begin
+  Method('Format', my_string, ['Args'], [my_array], {$IFDEF FPC}@{$ENDIF}MyFormat);
   Define('', my_char, 'Index', my_int, {$IFDEF FPC}@{$ENDIF}MyGet);
   inherited;
 end;
@@ -6205,7 +6212,7 @@ end;
 
 function TLyseeValue.GetAsArray: TLyseeList;
 begin
-  if FType = my_array then Result := TLyseeList(FValue.VObject) else
+  if FType.IsTypeOf(my_array) then Result := TLyseeList(FValue.VObject) else
   begin
     Result := nil;
     ErrorConvert(FType, my_array);
@@ -6936,6 +6943,88 @@ begin
   end;
 end;
 
+procedure TLyseeToken.ExecAt(Param: TLyseeParam; Outv: TLyseeValue);
+var
+  tmpv: TLyseeValue;
+  mark: integer;
+begin
+  if FLeft <> nil then
+  begin
+    Param.BeginExec(mark, tmpv);
+    try
+      if FLeft.Execute(Param, tmpv) then
+        GetAt(Param, tmpv, Outv);
+    finally
+      Param.EndExec(mark);
+    end;
+  end
+  else
+  if Param.FFunc.FindSave(FName, Param, Outv) = fiNone then
+    if not Param.FLysee.Resolve(FName, Outv) then
+      FailGet(Param, FName);
+end;
+
+procedure TLyseeToken.ExecHash(Param: TLyseeParam; Outv: TLyseeValue);
+var
+  H: TLyseeHash;
+  I, N: integer;
+  K: string;
+begin
+  H := TLyseeHash.Create;
+  N := GetParamCount;
+  I := 0;
+  while (I < N) and GetParam(I).Execute(Param, Outv) do
+  begin
+    K := Outv.AsString;
+    if GetParam(I + 1).Execute(Param, Outv) then
+      H.Add(K).SetValue(Outv) else
+      Break;
+    Inc(I, 2);
+  end;
+  if Param.FLysee.StatusOK then
+    Outv.SetAsHash(H) else
+    H.Free;
+end;
+
+procedure TLyseeToken.ExecArray(Param: TLyseeParam; Outv: TLyseeValue);
+var
+  A: TLyseeList;
+begin
+  A := SetupParamList(Param, nil, nil);
+  if A <> nil then
+  begin
+    A.FReadonly := true;
+    Outv.SetAsArray(A);
+  end;
+end;
+
+procedure TLyseeToken.ExecFormat(Param: TLyseeParam; Outv: TLyseeValue);
+var
+  F: string;
+  L: TLyseeList;
+begin
+  if FLeft.Execute(Param, Outv) then
+  begin
+    F := Outv.AsString;
+    if FRight.Execute(Param, Outv) then
+      if Outv.FType.IsTypeOf(my_array) then
+      begin
+        L := Outv.AsArray;
+        Outv.AsString := L.AsStringFmt(F);
+      end
+      else
+      begin
+        L := TLyseeList.Create;
+        try
+          L.Add(Outv);
+          Outv.AsString := L.AsStringFmt(F);
+        finally
+          L.Free;
+        end;
+      end;
+  end;
+end;
+
 function TLyseeToken.TryFunc(Func: TLyseeFunc; Param: TLyseeParam; Outv: TLyseeValue): boolean;
 var
   A: TLyseeList;
@@ -7166,63 +7255,6 @@ var
   tmpv: TLyseeValue;
   mark: integer;
 
-  procedure exec_array;
-  var
-    A: TLyseeList;
-    I, N: integer;
-  begin
-    A := TLyseeList.Create;
-    A.FReadonly := true;
-    Outv.SetAsArray(A);
-    N := GetParamCount;
-    I := 0;
-    while (I < N) and GetParam(I).Execute(Param, tmpv) do
-    begin
-      A.Add(tmpv);
-      Inc(I);
-    end;
-  end;
-
-  procedure exec_hash;
-  var
-    hash: TLyseeHash;
-    I, N: integer;
-    key: string;
-  begin
-    hash := TLyseeHash.Create;
-    Outv.SetAsHash(hash);
-    N := GetParamCount;
-    I := 0;
-    while I < N do
-    begin
-      if GetParam(I).Execute(Param, tmpv) then
-      begin
-        key := tmpv.AsString;
-        Inc(I);
-        if GetParam(I).Execute(Param, tmpv) then
-        begin
-          hash.Add(key).SetValue(tmpv);
-          Inc(I);
-        end
-        else Break;
-      end
-      else Break;
-    end;
-  end;
-
-  procedure exec_at;
-  begin
-    if FLeft <> nil then
-    begin
-      if FLeft.Execute(Param, tmpv) then
-        GetAt(Param, tmpv, Outv);
-    end
-    else
-    if Param.FFunc.FindSave(FName, Param, Outv) = fiNone then
-      if not Param.FLysee.Resolve(FName, Outv) then
-        FailGet(Param, FName);
-  end;
-
   function GetLRV(L, R: TLyseeValue): boolean;
   begin
     Result := FLeft.Execute(Param, L) and FRight.Execute(Param, R);
@@ -7275,16 +7307,6 @@ var
     Outv.SetAsBoolean(GetLRV(Outv, tmpv) and Outv.Compare(tmpv, Wanted));
   end;
 
-  procedure exec_same;
-  begin
-    Outv.SetAsBoolean(GetLRV(Outv, tmpv) and Outv.Same(tmpv));
-  end;
-
-  procedure exec_vargs;
-  begin
-    Outv.AsArray := Param.FVarArgs;
-  end;
-
 begin
   if Self <> nil then
   try
@@ -7301,6 +7323,11 @@ begin
     if FSym = syFloat then Outv.SetAsFloat(FValue.VFloat) else
     if FSym = syVert then Outv.SetAsFunc(FValue.VFunc) else
     if FSym = syResult then Outv.SetValue(Param.FResult) else
+    if FSym = syFormat then ExecFormat(Param, Outv) else
+    if FSym = syArray then ExecArray(Param, Outv) else
+    if FSym = syHash then ExecHash(Param, Outv) else
+    if FSym = syAt then ExecAt(Param, Outv) else
+    if FSym = syVArgs then Outv.SetAsArray(Param.FVarArgs) else
     begin
       Param.BeginExec(mark, tmpv);
       try
@@ -7320,7 +7347,7 @@ begin
           syShi   : exec_oper(opShi);
           syFill  : exec_oper(opFill);
         { operator: 3}
-          sySame  : exec_same;
+          sySame  : Outv.SetAsBoolean(GetLRV(Outv, tmpv) and Outv.Same(tmpv));
           syEQ    : exec_comp([crEqual]);
           syNE    : exec_comp([crLess, crMore, crDiff]);
           syLT    : exec_comp([crLess]);
@@ -7337,11 +7364,6 @@ begin
         { operator: single }
           syNot   : exec_oper(opNot);
           syNeg   : exec_oper(opNeg);
-        { complexed }
-          syArray : exec_array;
-          syHash  : exec_hash;
-          syAt    : exec_at;
-          syVArgs : exec_vargs;
         end;
       finally
         Param.EndExec(mark);
@@ -7920,6 +7942,7 @@ begin
            else parse_set(syReduce);
       '*': parse_set(syMul);
       '/': parse_set(syDivf);
+      '%': parse_set(syFormat);
       '(': parse_set(syLParen);
       ')': parse_set(syRParen);
       '[': parse_set(syLArray);
@@ -10740,6 +10763,129 @@ begin
     end;
   end
   else Result := '[,,,]';
+end;
+
+function TLyseeList.AsStringFmt(const Fmt: string): string;
+const
+  CS_FMTINT    = ['d', 'u', 'x'];
+  CS_FMTFLOAT  = ['e', 'f', 'g', 'n', 'm'];
+  CS_FMTCHAR   = ['c'];
+  CS_FMTSTRING = ['s'];
+  CS_FMTPTR    = ['p'];
+  CS_FORMAT    = CS_FMTINT + CS_FMTFLOAT + CS_FMTCHAR + CS_FMTSTRING + CS_FMTPTR;
+var
+  fmts: string;
+  args: array of TVarRec;
+  exts: array of Extended;
+  ints: array of int64;
+  strs: array of string;
+  argc, X: integer;
+  data: TLyseeValue;
+  fmtc: char;
+
+  function format_chars(const F: pchar): string;
+  var
+    next: pchar;
+  begin
+    Result := '';
+    next := SeekChar(F, ['%']);
+    while next <> nil do
+    begin
+      Inc(next);
+      if next^ <> '%' then
+      begin
+        while (next^ <> #0) and CharInSet(next^, ['-', ':', '.', '0'..'9']) do Inc(next);
+        if not CharInSet(next^, CS_FORMAT) then
+          Throw('invalid format string: ''%s''', [F]);
+        Result := Result + next^;
+      end;
+      Inc(next);
+      next := SeekChar(next, ['%']);
+    end;
+  end;
+
+begin
+  fmts := format_chars(PChar(Fmt));
+  if fmts = '' then
+  begin
+    Result := Fmt;
+    Exit;
+  end;
+
+  argc := Min(Count, Length(fmts));
+  if argc < Length(fmts) then
+  begin
+    Throw('need %d more formating arguments', [Length(fmts) - argc]);
+    Exit;
+  end;
+
+  SetLength(args, argc);
+  SetLength(exts, argc);
+  SetLength(strs, argc);
+  SetLength(ints, argc);
+  try
+    for X := 0 to argc - 1 do
+    begin
+      data := GetItem(X);
+      fmtc := fmts[X + 1];
+      if CharInSet(fmtc, CS_FMTSTRING) then
+      begin
+        strs[X] := data.AsString;
+        {$IFDEF UNICODE}
+        args[X].VType := vtPWideChar;
+        args[X].VPWideChar := pchar(strs[X]);
+        {$ELSE}
+        args[X].VType := vtPChar;
+        args[X].VPChar := pchar(strs[X]);
+        {$ENDIF}
+      end
+      else
+      if CharInSet(fmtc, CS_FMTCHAR) then
+      begin
+        args[X].VType := vtChar;
+        {$IFDEF UNICODE}
+        args[X].VType := vtWideChar;
+        args[X].VWideChar := data.AsChar;
+        {$ELSE}
+        args[X].VType := vtChar;
+        args[X].VChar := data.AsChar;
+        {$ENDIF}
+      end
+      else
+      if CharInSet(fmtc, CS_FMTINT) then
+      begin
+        ints[X] := data.AsInteger;
+        args[X].VType := vtInt64;
+        args[X].VInt64 := @ints[X];
+      end
+      else
+      if CharInSet(fmtc, CS_FMTFLOAT) then
+      begin
+        exts[X] := data.AsFloat;
+        args[X].VType := vtExtended;
+        args[X].VExtended := @exts[X];
+      end
+      else
+      if CharInSet(fmtc, CS_FMTPTR) then
+      begin
+        args[X].VType := vtPointer;
+        if data.VType.IsObject then
+          args[X].VPointer := data.GetOA else
+          args[X].VPointer := nil;
+      end
+      else
+      begin
+        Throw('unknown format: ''%s''', [fmtc]);
+        Break;
+      end;
+    end;
+    Result := Format(Fmt, args);
+  finally
+    SetLength(args, 0);
+    SetLength(exts, 0);
+    SetLength(strs, 0);
+    SetLength(ints, 0);
+  end;
 end;
 
 procedure TLyseeList.Clear;

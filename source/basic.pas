@@ -36,12 +36,6 @@ const
   CS_QUOTE     = ['"', ''''];
   CS_SPACE     = [#9, #10, #12, #13, ' '];
   CS_HEX       = ['A'..'F', 'a'..'f'] + CS_DIGIT;
-  CS_FMTINT    = ['d', 'u', 'x'];
-  CS_FMTFLOAT  = ['e', 'f', 'g', 'n', 'm'];
-  CS_FMTCHAR   = ['c'];
-  CS_FMTSTRING = ['s'];
-  CS_FMTPTR    = ['p'];
-  CS_FORMAT    = CS_FMTINT + CS_FMTFLOAT + CS_FMTCHAR + CS_FMTSTRING + CS_FMTPTR;
   CS_LOWER_A   = Ord('a');
   CS_LOWER_F   = Ord('f');
   CS_LOWER_Z   = Ord('z');
