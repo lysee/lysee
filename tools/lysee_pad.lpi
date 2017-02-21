@@ -17,7 +17,7 @@
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="3"/>
       <RevisionNr Value="3"/>
-      <BuildNr Value="741"/>
+      <BuildNr Value="743"/>
       <StringTable FileDescription="lysee PAD (FPC)" LegalCopyright="Copyright (C) 2003-2010 li yun jie &lt;libudi@hotmail.com>" ProductVersion="3.0.1"/>
     </VersionInfo>
     <BuildModes Count="1">
@@ -60,6 +60,7 @@
         <ComponentName Value="PadForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <IsVisibleTab Value="True"/>
         <TopLine Value="603"/>
         <CursorPos X="27" Y="612"/>
         <UsageCount Value="73"/>
@@ -565,7 +566,6 @@
       <Unit80>
         <Filename Value="..\source\lysee.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="3"/>
         <TopLine Value="2825"/>
         <CursorPos X="50" Y="2832"/>

@@ -1,4 +1,5 @@
 function Sort(list);
+    list := list.copy(0, list.count);
     n := length(list);
     for i := 0 to n - 2 do
         for j := i + 1 to n - 1 do

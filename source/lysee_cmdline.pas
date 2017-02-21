@@ -10,7 +10,9 @@
 {==============================================================================}
 unit lysee_cmdline;
 
+{$IFDEF FPC}
 {$mode objfpc}
+{$ENDIF}
 
 interface
 

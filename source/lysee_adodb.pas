@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2012, Li Yun Jie. All Rights Reserved.            }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2012/05/19                                                      }
-{    MODIFIED: 2017/02/19                                                      }
+{    MODIFIED: 2017/02/21                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -812,11 +812,13 @@ end;
 initialization
 begin
   my_adodb := TLyseeAdodbModule.Create('adodb');
+  my_defdb := nil;
 end;
 
 finalization
 begin
-  my_defdb.DecRefcount;
+  if my_defdb <> nil then
+    my_defdb.DecRefcount;
 end;
 
 end.
