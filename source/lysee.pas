@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2003-2015, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2003/02/28                                                      }
-{    MODIFIED: 2017/02/19                                                      }
+{    MODIFIED: 2017/02/21                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -26,7 +26,7 @@ const
   { LSE: Lysee Script Engine }
 
   LSE_NAME     = 'lysee';
-  LSE_VERSION  = '2017.2.18';
+  LSE_VERSION  = '2017.2.21';
   LSE_FILEEXT  = '.ls';
   LSE_CONFILE  = 'lysee.conf';
   LSE_SYSTE    = 'system';
@@ -51,9 +51,9 @@ const
   TID_ARRAY     = 14;
 
   TID_NAMES: array[TID_VARIANT..TID_ARRAY] of string = (
-    'variant', 'nil', 'char', 'integer', 'float', 'currency',
-    'time', 'boolean', 'type', 'exception', 'string', 'module',
-    'function', 'THash', 'array');
+    'variant', 'nil', 'char', 'integer', 'float', 'currency', 'time',
+    'boolean', 'type', 'exception', 'string', 'module', 'function',
+    'THash', 'array');
 
 type
 
@@ -492,7 +492,6 @@ type
   TLyseeStringType = class(TLyseeType)
   protected
     procedure MyGet(const Param: TLyseeParam);
-    procedure MyFormat(const Param: TLyseeParam);
     procedure Setup;override;
   public
     function IncRefcount(Obj: pointer): integer;override;
@@ -1607,7 +1606,6 @@ type
 function AcquireLock: boolean;
 function ReleaseLock: boolean;
 function AddModule(const Name: string): TLyseeModule;
-function Command: integer;
 function MatchID(const ID1, ID2: string): boolean;overload;
 function MatchID(const ID: string; const IDList: array of string): boolean;overload;
 function OperatorStr(OP: TLyseeOperator): string;
@@ -2703,165 +2701,6 @@ begin
       Result := TLyseeModule.Create(Name);
   end
   else Result := nil;
-end;
-
-function Command: integer;
-var
-  E: TLysee;
-  spath, code, line, temp: string;
-  pause: boolean;
-  index: integer;
-
-  procedure show_lysee;
-  begin
-    Writeln(Format('Interactive LYSEE script interpreter %s (%s)', [
-      LSE_VERSION, {$IFDEF FPC}'Free Pascal'{$ELSE}'Delphi'{$ENDIF}]));
-    Writeln('');
-  end;
-
-  procedure show_usage;
-  begin
-    show_lysee;
-    Writeln('Usage: lysee [OPTION]... [FILE [ARGS]...]');
-    Writeln('');
-    Writeln('Option:');
-    Writeln('  -v, --version           display the version of lysee and exit.');
-    Writeln('  -h, --help              print this usage and exit.');
-    Writeln('  -s, --search=PATH       set module search path.');
-    Writeln('  -p, --pause             pause after executing a file.');
-    Writeln('');
-    Writeln('Args:');
-    Writeln('  *                       arguments for file execution.');
-  end;
-
-  procedure show_version;
-  begin
-    show_lysee;
-    Writeln('This program is distributed in the hope that it will be useful,');
-    Writeln('but WITHOUT ANY WARRANTY; without even the implied warranty of');
-    Writeln('MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.');
-    Writeln('');
-    Writeln('Enjoy it! I am libudi [li yunjie, zhengzhou, henan, china].');
-  end;
-
-  procedure do_restart;
-  begin
-    Writeln('*************** RESTARTED ***************');
-    E.Clear;
-    E.MainFile := '';
-    code := '';
-  end;
-
-  procedure do_cancel;
-  begin
-    Writeln('*************** CANCELED ****************');
-    code := '';
-  end;
-
-  procedure do_pause;
-  begin
-    Write('Press ENTER to continue: ');
-    Readln;
-  end;
-
-  procedure do_execute(const S: string);
-  begin
-    try
-      if S <> '' then
-        if E.Execute(S + ';') then
-        begin
-          code := FormatValue(E.FResult);
-          if code <> '' then
-            Writeln(code);
-          E.FResult.SetNil;
-        end
-        else Writeln(E.Error.ErrorText);
-    finally
-      code := '';
-    end;
-  end;
-
-begin
-  Result := 0; // OK
-  pause := false;
-  spath := '';
-  index := 1;
-  while index <= ParamCount do
-  begin
-    line := Trim(ParamStr(index));
-
-    if (line = '-h') or (line = '--help') then
-    begin
-      show_usage;
-      Exit;
-    end;
-
-    if (line = '-v') or (line = '--version') then
-    begin
-      show_version;
-      Exit;
-    end;
-
-    if (line = '-s') or (line = '--search') then
-    begin
-      if index = ParamCount then
-      begin
-        Writeln('Error: search path is not specified.');
-        Result := 1;
-        Exit;
-      end;
-      Inc(index);
-      spath := spath + ';' + Trim(ParamStr(index));
-      Inc(index);
-    end
-    else
-    if (line = '-p') or (line = '--pause') then
-    begin
-      pause := true;
-      Inc(index);
-    end
-    else Break;
-  end;
-
-  E := TLysee.Create(nil);
-  try
-    if index <= ParamCount then
-    begin
-      try
-        E.ExecuteFrom(index);
-      finally
-        if E.Excepted then
-          Writeln(E.Error.ErrorText);
-        if pause then do_pause;
-      end;
-    end
-    else
-    begin
-      show_lysee;
-      Writeln('           /C=CANCEL /Q=QUIT /R=RESTART');
-      Writeln('');
-      E.MainFile := ChangeFileExt(ParamStr(0), '.input');
-      code := '';
-      repeat
-        if code = '' then Write('>>> ') else Write('  > ');
-        Readln(line);
-        temp := Trim(line);
-        if SameText('/q', temp) then Break else
-        if SameText('/r', temp) then do_restart else
-        if SameText('/c', temp) then do_cancel else
-        if temp = '' then
-          do_execute(code) else
-        if code <> '' then
-          code := code + sLineBreak + line else
-        if temp[Length(temp)] = ';' then
-          do_execute(line) else
-          code := line;
-      until E.FHalted;
-    end;
-    if E.Excepted then Result := 1;
-  finally
-    E.Free;
-  end;
 end;
 
 function MatchID(const ID1, ID2: string): boolean;
@@ -4341,14 +4180,8 @@ begin
   Param.Result.AsChar := S[Param[1].AsInteger];
 end;
 
-procedure TLyseeStringType.MyFormat(const Param: TLyseeParam);
-begin
-
-end;
-
 procedure TLyseeStringType.Setup;
 begin
-  Method('Format', my_string, ['Args'], [my_array], {$IFDEF FPC}@{$ENDIF}MyFormat);
   Define('', my_char, 'Index', my_int, {$IFDEF FPC}@{$ENDIF}MyGet);
   inherited;
 end;

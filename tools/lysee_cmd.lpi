@@ -15,7 +15,7 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="2"/>
-      <BuildNr Value="2710"/>
+      <BuildNr Value="2715"/>
       <StringTable FileDescription="lysee script interpretor (FPC)" LegalCopyright="Copyright (C) 2003-2011 li yun jie &lt;libudi@hotmail.com>" ProductVersion="2.0.0"/>
     </VersionInfo>
     <BuildModes Count="1">
@@ -33,13 +33,14 @@
         <LaunchingApplication PathPlusParams="\usr\X11R6\bin\xterm -T 'Lazarus Run Output' -e $(LazarusDir)\tools\runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <Units Count="182">
+    <Units Count="183">
       <Unit0>
         <Filename Value="lysee_cmd.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="-1"/>
-        <CursorPos X="3" Y="18"/>
+        <EditorIndex Value="1"/>
+        <CursorPos X="42" Y="19"/>
         <UsageCount Value="200"/>
+        <Loaded Value="True"/>
       </Unit0>
       <Unit1>
         <Filename Value="..\source\lysee\lengine.pas"/>
@@ -715,10 +716,9 @@
       <Unit116>
         <Filename Value="..\source\lysee.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
-        <TopLine Value="10803"/>
-        <CursorPos Y="10822"/>
-        <UsageCount Value="91"/>
+        <TopLine Value="73"/>
+        <CursorPos X="28" Y="29"/>
+        <UsageCount Value="94"/>
         <Bookmarks Count="1">
           <Item0 X="25" Y="215"/>
         </Bookmarks>
@@ -1024,10 +1024,10 @@
       </Unit165>
       <Unit166>
         <Filename Value="..\source\basic.pas"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="28"/>
         <CursorPos Y="39"/>
-        <UsageCount Value="32"/>
+        <UsageCount Value="33"/>
         <Loaded Value="True"/>
       </Unit166>
       <Unit167>
@@ -1058,7 +1058,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="1445"/>
         <CursorPos X="5" Y="1461"/>
-        <UsageCount Value="36"/>
+        <UsageCount Value="39"/>
       </Unit170>
       <Unit171>
         <Filename Value="..\source\lysee_pmc.pas"/>
@@ -1087,7 +1087,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="737"/>
         <CursorPos X="3" Y="743"/>
-        <UsageCount Value="28"/>
+        <UsageCount Value="31"/>
       </Unit174>
       <Unit175>
         <Filename Value="..\source\lysee_system.pas"/>
@@ -1095,15 +1095,15 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="192"/>
         <CursorPos X="32" Y="183"/>
-        <UsageCount Value="28"/>
+        <UsageCount Value="31"/>
       </Unit175>
       <Unit176>
         <Filename Value="..\source\lysee_sysutils.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="391"/>
         <CursorPos X="51" Y="348"/>
-        <UsageCount Value="28"/>
+        <UsageCount Value="31"/>
         <Loaded Value="True"/>
       </Unit176>
       <Unit177>
@@ -1119,7 +1119,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="78"/>
         <CursorPos X="69" Y="94"/>
-        <UsageCount Value="28"/>
+        <UsageCount Value="31"/>
       </Unit178>
       <Unit179>
         <Filename Value="F:\tools\lazarus\fpc\3.0.0\source\rtl\objpas\sysutils\sysstrh.inc"/>
@@ -1142,126 +1142,137 @@
         <CursorPos X="3" Y="452"/>
         <UsageCount Value="10"/>
       </Unit181>
+      <Unit182>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="175"/>
+        <CursorPos X="26" Y="10"/>
+        <UsageCount Value="23"/>
+        <Loaded Value="True"/>
+      </Unit182>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7323" TopLine="7310"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="122" Column="21" TopLine="102"/>
       </Position1>
       <Position2>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7324" TopLine="7310"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="28" TopLine="14"/>
       </Position2>
       <Position3>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7325" TopLine="7310"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="48" Column="3" TopLine="27"/>
       </Position3>
       <Position4>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7326" TopLine="7310"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="92" TopLine="79"/>
       </Position4>
       <Position5>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7327" TopLine="7307"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="93" Column="16" TopLine="79"/>
       </Position5>
       <Position6>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7328" TopLine="7308"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="123" Column="34" TopLine="116"/>
       </Position6>
       <Position7>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7329" TopLine="7309"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="63" Column="13" TopLine="44"/>
       </Position7>
       <Position8>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7330" TopLine="7310"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="8" Column="29"/>
       </Position8>
       <Position9>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7331" TopLine="7311"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="66" Column="13" TopLine="44"/>
       </Position9>
       <Position10>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7332" TopLine="7312"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="94" TopLine="49"/>
       </Position10>
       <Position11>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7333" TopLine="7313"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="143" TopLine="134"/>
       </Position11>
       <Position12>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7334" TopLine="7314"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="45" Column="21" TopLine="42"/>
       </Position12>
       <Position13>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7335" TopLine="7315"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="64" Column="19" TopLine="45"/>
       </Position13>
       <Position14>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7336" TopLine="7316"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="140" Column="45" TopLine="127"/>
       </Position14>
       <Position15>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7337" TopLine="7317"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="78" Column="5" TopLine="43"/>
       </Position15>
       <Position16>
         <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7338" TopLine="7318"/>
+        <Caret Line="3169" Column="3" TopLine="3164"/>
       </Position16>
       <Position17>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7323" TopLine="7318"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="73" Column="29" TopLine="67"/>
       </Position17>
       <Position18>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7324" TopLine="7306"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="173" Column="54" TopLine="86"/>
       </Position18>
       <Position19>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7325" TopLine="7294"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="131" TopLine="88"/>
       </Position19>
       <Position20>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7326" TopLine="7314"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="191" Column="40" TopLine="171"/>
       </Position20>
       <Position21>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7327" TopLine="7314"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="199" TopLine="178"/>
       </Position21>
       <Position22>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7328" TopLine="7314"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="45" Column="36" TopLine="32"/>
       </Position22>
       <Position23>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7323" TopLine="7314"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="179" Column="12" TopLine="134"/>
       </Position23>
       <Position24>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7324" TopLine="7314"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="14" TopLine="12"/>
       </Position24>
       <Position25>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7325" TopLine="7328"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="146" TopLine="128"/>
       </Position25>
       <Position26>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7326" TopLine="7314"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="135" Column="21" TopLine="126"/>
       </Position26>
       <Position27>
         <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7327" TopLine="7314"/>
+        <Caret Line="3154" Column="3" TopLine="3150"/>
       </Position27>
       <Position28>
-        <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7328" TopLine="7323"/>
+        <Filename Value="..\source\lysee_cmdline.pas"/>
+        <Caret Line="89" Column="56" TopLine="64"/>
       </Position28>
       <Position29>
         <Filename Value="..\source\lysee.pas"/>
-        <Caret Line="7309" Column="22" TopLine="7249"/>
+        <Caret Line="17" Column="31"/>
       </Position29>
       <Position30>
         <Filename Value="..\source\lysee.pas"/>
+        <Caret Line="11648" TopLine="11623"/>
       </Position30>
     </JumpHistory>
   </ProjectOptions>

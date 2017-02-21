@@ -12,9 +12,10 @@ program lysee_cmd;
 
 {$mode objfpc}{$H+}
 
-uses lysee, lysee_classes, lysee_system, lysee_sysutils, lysee_db, lysee_math;
+uses lysee, lysee_classes, lysee_system, lysee_sysutils, lysee_db, lysee_math,
+  lysee_cmdline;
 
 begin
-  lysee.Command;
+  lysee_cmdline.Command;
 end.
 
