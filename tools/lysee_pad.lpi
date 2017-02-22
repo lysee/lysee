@@ -17,7 +17,7 @@
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="3"/>
       <RevisionNr Value="3"/>
-      <BuildNr Value="743"/>
+      <BuildNr Value="744"/>
       <StringTable FileDescription="lysee PAD (FPC)" LegalCopyright="Copyright (C) 2003-2010 li yun jie &lt;libudi@hotmail.com>" ProductVersion="3.0.1"/>
     </VersionInfo>
     <BuildModes Count="1">
