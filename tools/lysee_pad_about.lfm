@@ -100,8 +100,7 @@ object AboutForm: TAboutForm
         Width = 488
         Align = alClient
         Lines.Strings = (
-          'Copyright (c) 2003-2016, Li Yun Jie'
-          'All rights reserved.'
+          'Copyright (c) 2017, Li Yunjie<718956073@qq.com>'
           ''
           'Redistribution and use in source and binary forms, with or without '
           'modification, are permitted provided that the following conditions are met:'

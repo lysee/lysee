@@ -1,3 +1,5 @@
+uses xx;
+
 function Sort(list);
     list := list.copy(0, list.count);
     n := length(list);

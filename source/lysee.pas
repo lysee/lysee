@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2003-2015, Li Yun Jie. All Rights Reserved.       }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2003/02/28                                                      }
-{    MODIFIED: 2017/02/21                                                      }
+{    MODIFIED: 2017/02/25                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -26,7 +26,7 @@ const
   { LSE: Lysee Script Engine }
 
   LSE_NAME     = 'lysee';
-  LSE_VERSION  = '2017.2.21';
+  LSE_VERSION  = '1.0.3';
   LSE_FILEEXT  = '.ls';
   LSE_CONFILE  = 'lysee.conf';
   LSE_SYSTE    = 'system';

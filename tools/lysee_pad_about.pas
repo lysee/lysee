@@ -16,7 +16,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, Graphics, Dialogs,
-  ExtCtrls, StdCtrls;
+  ExtCtrls, StdCtrls, codeedit;
 
 type
 
@@ -35,6 +35,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure Panel3Click(Sender: TObject);
   private
+    FEdit: TCodeEdit;
     { private declarations }
   public
     { public declarations }
@@ -56,18 +57,20 @@ begin
 end;
 
 procedure TAboutForm.FormCreate(Sender: TObject);
-{var
-  list: TStringList;}
+var
+  F: string;
 begin
-  lblVersion.Caption := Format('Lysee %s', [LSE_VERSION]);
-  lblCopyright.Caption := Format('Copyright (C) 2003-%s Li Yun Jie.', [Copy(LSE_VERSION, 1, 4)]);
-{ list := TStringList.Create;
-  try
-    list.LoadFromFile(ExtractFilePath(Application.ExeName) + 'LICENSE.txt');
-    Memo1.Lines.Assign(list);
-  finally
-    list.Free;
-  end;}
+  lblVersion.Caption := Format('Lysee v%s', [LSE_VERSION]);
+  lblCopyright.Caption := 'Copyright (C) 2017 Li Yunjie<718956073@qq.com>.';
+  F := ExtractFilePath(Application.ExeName) + 'LICENSE';
+  if not FileExists(F) then
+  begin
+    F := ChangeFileExt(F, '.txt');
+    if not FileExists(F) then
+      F := '';
+  end;
+  if F <> '' then
+    Memo1.Lines.LoadFromFile(F);
 end;
 
 procedure TAboutForm.Panel3Click(Sender: TObject);
