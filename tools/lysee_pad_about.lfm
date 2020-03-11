@@ -1,15 +1,21 @@
 object AboutForm: TAboutForm
-  Left = 372
+  Left = 678
   Height = 480
-  Top = 149
+  Top = 171
   Width = 512
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'About Lysee PAD'
   ClientHeight = 480
   ClientWidth = 512
+  Font.CharSet = ANSI_CHARSET
+  Font.Color = clBlack
+  Font.Height = -14
+  Font.Name = 'Microsoft Sans Serif'
+  Font.Pitch = fpVariable
+  Font.Quality = fqDraft
   OnCreate = FormCreate
-  LCLVersion = '1.6.0.4'
+  LCLVersion = '2.0.6.0'
   object Panel1: TPanel
     Left = 12
     Height = 420
@@ -20,6 +26,7 @@ object AboutForm: TAboutForm
     ClientWidth = 488
     Color = clBtnShadow
     ParentColor = False
+    ParentFont = False
     TabOrder = 0
     object Panel2: TPanel
       Left = 0
@@ -31,6 +38,7 @@ object AboutForm: TAboutForm
       ClientHeight = 420
       ClientWidth = 488
       ParentColor = False
+      ParentFont = False
       TabOrder = 0
       object Panel3: TPanel
         Left = 0
@@ -41,13 +49,20 @@ object AboutForm: TAboutForm
         BevelOuter = bvNone
         ClientHeight = 40
         ClientWidth = 488
+        Font.CharSet = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -12
+        Font.Name = 'Microsoft Sans Serif'
+        Font.Pitch = fpVariable
+        Font.Quality = fqDraft
+        ParentFont = False
         TabOrder = 0
-        OnClick = Panel3Click
         object Image1: TImage
-          Left = 108
+          Left = 0
           Height = 32
           Top = 0
           Width = 32
+          Center = True
           Picture.Data = {
             055449636F6EFE0200000000010001002020100000000000E802000016000000
             2800000020000000400000000100040000000000800200000000000000000000
@@ -77,20 +92,22 @@ object AboutForm: TAboutForm
           }
         end
         object lblCopyright: TLabel
-          Left = 151
+          Left = 43
           Height = 17
           Top = 18
           Width = 202
-          Caption = 'Copyright (C) 2003-2010 Li Yun Jie.'
+          Caption = 'Copyright (C) 2003-2020 Li Yun Jie.'
           ParentColor = False
+          ParentFont = False
         end
         object lblVersion: TLabel
-          Left = 151
+          Left = 43
           Height = 17
           Top = 1
           Width = 58
           Caption = 'lblVersion'
           ParentColor = False
+          ParentFont = False
         end
       end
       object Memo1: TMemo
@@ -130,6 +147,8 @@ object AboutForm: TAboutForm
           'THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH '
           'DAMAGE.'
         )
+        OnKeyPress = Memo1KeyPress
+        ParentFont = False
         ReadOnly = True
         ScrollBars = ssVertical
         TabOrder = 1
@@ -141,8 +160,11 @@ object AboutForm: TAboutForm
     Height = 25
     Top = 440
     Width = 75
+    Cancel = True
     Caption = 'OK'
-    OnClick = btnOKClick
+    Default = True
+    ModalResult = 1
+    ParentFont = False
     TabOrder = 1
   end
 end

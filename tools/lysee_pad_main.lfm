@@ -1,33 +1,58 @@
 object MainForm: TMainForm
-  Left = 259
+  Left = 431
   Height = 500
-  Top = 139
-  Width = 800
+  Top = 169
+  Width = 788
   Caption = 'Sample Code Editor'
   ClientHeight = 480
-  ClientWidth = 800
+  ClientWidth = 788
+  DoubleBuffered = False
+  Font.CharSet = ANSI_CHARSET
+  Font.Color = clBlack
+  Font.Height = -14
+  Font.Name = 'Georgia'
+  Font.Pitch = fpVariable
+  Font.Quality = fqDraft
   Menu = MainMenu
   OnActivate = FormActivate
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  Position = poDesktopCenter
-  LCLVersion = '1.6.0.4'
+  ParentDoubleBuffered = False
+  ShowHint = True
+  LCLVersion = '2.0.6.0'
   object EditPanel: TPanel
     Left = 0
-    Height = 434
-    Top = 24
-    Width = 800
+    Height = 402
+    Top = 56
+    Width = 788
     Align = alClient
     BevelOuter = bvNone
-    BorderStyle = bsSingle
+    ClientHeight = 402
+    ClientWidth = 788
+    Color = clWindow
+    ParentColor = False
+    ParentFont = False
     TabOrder = 0
+    OnResize = EditPanelResize
+    object Pages: TPageControl
+      Left = 0
+      Height = 402
+      Top = 0
+      Width = 788
+      Align = alClient
+      ParentFont = False
+      TabOrder = 0
+      Visible = False
+      OnChange = PagesChange
+      Options = [nboShowCloseButtons, nboShowAddTabButton]
+    end
   end
   object StatusBar: TStatusBar
     Left = 0
     Height = 22
     Top = 458
-    Width = 800
+    Width = 788
     Panels = <    
       item
         Alignment = taCenter
@@ -44,548 +69,963 @@ object MainForm: TMainForm
       item
         Width = 50
       end>
+    ParentFont = False
     SimplePanel = False
   end
-  object ToolBar1: TToolBar
+  object barFile: TToolBar
     Left = 0
-    Height = 24
+    Height = 26
     Top = 0
-    Width = 800
-    AutoSize = True
-    Caption = 'ToolBar1'
+    Width = 788
+    Caption = 'barFile'
+    EdgeBorders = [ebTop, ebBottom]
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -14
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
     Images = ImageList
+    ParentFont = False
     TabOrder = 2
-    Visible = False
-    object NewButton: TToolButton
+    object btnFileNew: TToolButton
       Left = 1
       Top = 2
-      Action = FileNew
+      Action = aFileNew
     end
-    object OpenButton: TToolButton
+    object btnFileOpen: TToolButton
       Left = 24
       Top = 2
-      Action = FileOpen
+      Action = aFileOpen
     end
-    object SaveButton: TToolButton
+    object btnFileSave: TToolButton
       Left = 47
       Top = 2
-      Action = FileSave
+      Action = aFileSave
     end
-    object ToolButton1: TToolButton
+    object ToolButton8: TToolButton
       Left = 70
       Height = 22
       Top = 2
-      Width = 8
+      Caption = 'ToolButton8'
+      Style = tbsSeparator
+    end
+    object btnEditCut: TToolButton
+      Left = 75
+      Top = 2
+      Action = aEditCut
+    end
+    object btnEditCopy: TToolButton
+      Left = 98
+      Top = 2
+      Action = aEditCopy
+    end
+    object btnEditPaste: TToolButton
+      Left = 121
+      Top = 2
+      Action = aEditPaste
+    end
+    object btnSearch: TToolButton
+      Left = 149
+      Top = 2
+      Action = aSearchFind
+    end
+    object ToolButton13: TToolButton
+      Left = 195
+      Height = 22
+      Top = 2
+      Caption = 'ToolButton13'
+      Style = tbsSeparator
+    end
+    object btnEditUndo: TToolButton
+      Left = 200
+      Top = 2
+      Action = aEditUndo
+    end
+    object btnEditRedo: TToolButton
+      Left = 223
+      Top = 2
+      Action = aEditRedo
+    end
+    object btnReplace: TToolButton
+      Left = 172
+      Top = 2
+      Action = aSearchReplace
+    end
+    object ToolButton1: TToolButton
+      Left = 144
+      Height = 22
+      Top = 2
       Caption = 'ToolButton1'
       Style = tbsSeparator
     end
-    object CutButton: TToolButton
-      Left = 78
-      Top = 2
-      Action = EditCut
+  end
+  object pnlRivi: TPanel
+    Left = 0
+    Height = 30
+    Top = 26
+    Width = 788
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 30
+    ClientWidth = 788
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -14
+    Font.Name = 'Georgia'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    ParentFont = False
+    TabOrder = 3
+    object pnlRiviBottomLine: TPanel
+      Left = 0
+      Height = 1
+      Top = 29
+      Width = 788
+      Align = alBottom
+      BevelOuter = bvNone
+      Color = clBtnShadow
+      Font.CharSet = ANSI_CHARSET
+      Font.Color = clBlack
+      Font.Height = -14
+      Font.Name = 'Georgia'
+      Font.Pitch = fpVariable
+      Font.Quality = fqDraft
+      ParentColor = False
+      ParentFont = False
+      TabOrder = 0
     end
-    object CopyButton: TToolButton
-      Left = 101
-      Top = 2
-      Action = EditCopy
+    object pnlRiviBody: TPanel
+      Left = 0
+      Height = 29
+      Top = 0
+      Width = 788
+      Align = alClient
+      BevelOuter = bvNone
+      BorderWidth = 2
+      ClientHeight = 29
+      ClientWidth = 788
+      Font.CharSet = ANSI_CHARSET
+      Font.Color = clBlack
+      Font.Height = -14
+      Font.Name = 'Georgia'
+      Font.Pitch = fpVariable
+      Font.Quality = fqDraft
+      ParentFont = False
+      TabOrder = 1
+      object pnlFontName: TPanel
+        Left = 2
+        Height = 25
+        Top = 2
+        Width = 289
+        Align = alLeft
+        BevelOuter = bvNone
+        ClientHeight = 25
+        ClientWidth = 289
+        Font.CharSet = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -14
+        Font.Name = 'Georgia'
+        Font.Pitch = fpVariable
+        Font.Quality = fqDraft
+        ParentFont = False
+        TabOrder = 0
+        object btnHeiti: TSpeedButton
+          Left = 0
+          Height = 25
+          Top = 0
+          Width = 25
+          Caption = '黑'
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          OnClick = btnHeitiClick
+          ParentFont = False
+        end
+        object btnKaiti: TSpeedButton
+          Left = 26
+          Height = 25
+          Top = 0
+          Width = 25
+          Caption = '楷'
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          OnClick = btnKaitiClick
+          ParentFont = False
+        end
+        object btnTextColor: TSpeedButton
+          Left = 213
+          Height = 25
+          Top = 0
+          Width = 25
+          Caption = 'C'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlue
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          OnClick = btnTextColorClick
+          ParentFont = False
+        end
+        object btnSelectTextColor: TSpeedButton
+          Left = 239
+          Height = 25
+          Top = 0
+          Width = 12
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Glyph.Data = {
+            9A000000424D9A00000000000000360000002800000005000000050000000100
+            2000000000006400000064000000640000000000000000000000FFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0009090AFFFFFFFF00FFFF
+            FF00FFFFFF0009090AFF09090AFF09090AFFFFFFFF0009090AFF09090AFF0909
+            0AFF09090AFF09090AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00
+          }
+          OnClick = btnSelectTextColorClick
+          ParentFont = False
+        end
+        object pnlBackground: TPanel
+          Left = 252
+          Height = 25
+          Top = 0
+          Width = 37
+          Align = alRight
+          BevelOuter = bvNone
+          ClientHeight = 25
+          ClientWidth = 37
+          Color = clMoneyGreen
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 0
+          object btnBackground: TSpeedButton
+            Left = 0
+            Height = 25
+            Top = 0
+            Width = 25
+            Caption = 'G'
+            Flat = True
+            Font.CharSet = ANSI_CHARSET
+            Font.Color = clBlack
+            Font.Height = -14
+            Font.Name = 'Georgia'
+            Font.Pitch = fpVariable
+            Font.Quality = fqDraft
+            Font.Style = [fsBold]
+            OnClick = btnBackgroundClick
+            ParentFont = False
+          end
+          object btnSelectBackground: TSpeedButton
+            Left = 25
+            Height = 25
+            Top = 0
+            Width = 12
+            Flat = True
+            Font.CharSet = ANSI_CHARSET
+            Font.Color = clBlack
+            Font.Height = -14
+            Font.Name = 'Georgia'
+            Font.Pitch = fpVariable
+            Font.Quality = fqDraft
+            Glyph.Data = {
+              9A000000424D9A00000000000000360000002800000005000000050000000100
+              2000000000006400000064000000640000000000000000000000FFFFFF00FFFF
+              FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0009090AFFFFFFFF00FFFF
+              FF00FFFFFF0009090AFF09090AFF09090AFFFFFFFF0009090AFF09090AFF0909
+              0AFF09090AFF09090AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00
+            }
+            OnClick = btnSelectBackgroundClick
+            ParentFont = False
+          end
+        end
+        object btnFontName: TSpeedButton
+          Left = 52
+          Height = 25
+          Top = 0
+          Width = 148
+          Caption = 'Georgia'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          OnClick = btnFontNameClick
+          ParentFont = False
+        end
+        object btnSelectFontName: TSpeedButton
+          Left = 198
+          Height = 25
+          Top = 0
+          Width = 12
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Glyph.Data = {
+            9A000000424D9A00000000000000360000002800000005000000050000000100
+            2000000000006400000064000000640000000000000000000000FFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0009090AFFFFFFFF00FFFF
+            FF00FFFFFF0009090AFF09090AFF09090AFFFFFFFF0009090AFF09090AFF0909
+            0AFF09090AFF09090AFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00
+          }
+          OnClick = btnSelectFontNameClick
+          ParentFont = False
+        end
+      end
+      object pnlTextColor1: TPanel
+        Left = 296
+        Height = 25
+        Top = 2
+        Width = 150
+        Align = alLeft
+        BevelOuter = bvNone
+        ClientHeight = 25
+        ClientWidth = 150
+        Font.CharSet = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -14
+        Font.Name = 'Georgia'
+        Font.Pitch = fpVariable
+        Font.Quality = fqDraft
+        ParentFont = False
+        TabOrder = 1
+        object btnBold: TSpeedButton
+          Left = 0
+          Height = 25
+          Top = 0
+          Width = 25
+          Caption = 'B'
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          OnClick = btnBoldClick
+          ParentFont = False
+        end
+        object btnItalic: TSpeedButton
+          Left = 25
+          Height = 25
+          Top = 0
+          Width = 22
+          Caption = 'I'
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsItalic]
+          OnClick = btnItalicClick
+          ParentFont = False
+        end
+        object btnUnderline: TSpeedButton
+          Left = 50
+          Height = 25
+          Top = 0
+          Width = 22
+          Caption = 'U'
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsUnderline]
+          OnClick = btnUnderlineClick
+          ParentFont = False
+        end
+        object btnStrikeout: TSpeedButton
+          Left = 75
+          Height = 25
+          Top = 0
+          Width = 22
+          Caption = ' S '
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsStrikeOut]
+          OnClick = btnStrikeoutClick
+          ParentFont = False
+        end
+        object btnSuper: TSpeedButton
+          Left = 100
+          Height = 25
+          Top = 0
+          Width = 22
+          Caption = 'S^'
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          OnClick = btnSuperClick
+          ParentFont = False
+        end
+        object btnSub: TSpeedButton
+          Left = 125
+          Height = 25
+          Top = 0
+          Width = 22
+          Caption = 'S_'
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          OnClick = btnSubClick
+          ParentFont = False
+        end
+      end
+      object Bevel1: TBevel
+        Left = 291
+        Height = 25
+        Top = 2
+        Width = 5
+        Align = alLeft
+        Shape = bsRightLine
+      end
+      object Bevel2: TBevel
+        Left = 446
+        Height = 25
+        Top = 2
+        Width = 5
+        Align = alLeft
+        Shape = bsRightLine
+      end
+      object pnlAlign: TPanel
+        Left = 451
+        Height = 25
+        Top = 2
+        Width = 75
+        Align = alLeft
+        BevelOuter = bvNone
+        ClientHeight = 25
+        ClientWidth = 75
+        Font.CharSet = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -14
+        Font.Name = 'Georgia'
+        Font.Pitch = fpVariable
+        Font.Quality = fqDraft
+        ParentFont = False
+        TabOrder = 2
+        object btnLeft: TSpeedButton
+          Left = 0
+          Height = 25
+          Top = 0
+          Width = 25
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          Glyph.Data = {
+            36040000424D3604000000000000360000002800000010000000100000000100
+            2000000000000004000000000000000000000000000000000000FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00606060006060600060606000606060006060600060606000606060006060
+            600060606000606060006060600060606000FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00606060006060600060606000606060006060600060606000606060006060
+            6000FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00606060006060600060606000606060006060600060606000606060006060
+            600060606000606060006060600060606000FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00606060006060600060606000606060006060600060606000606060006060
+            6000FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+          }
+          OnClick = btnLeftClick
+          ParentFont = False
+        end
+        object btnCenter: TSpeedButton
+          Left = 25
+          Height = 25
+          Top = 0
+          Width = 22
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsItalic]
+          Glyph.Data = {
+            36040000424D3604000000000000360000002800000010000000100000000100
+            2000000000000004000000000000000000000000000000000000FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00606060006060600060606000606060006060600060606000606060006060
+            600060606000606060006060600060606000FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF0060606000606060006060600060606000606060006060
+            60006060600060606000FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00606060006060600060606000606060006060600060606000606060006060
+            600060606000606060006060600060606000FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF0060606000606060006060600060606000606060006060
+            60006060600060606000FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+          }
+          OnClick = btnCenterClick
+          ParentFont = False
+        end
+        object btnRight: TSpeedButton
+          Left = 50
+          Height = 25
+          Top = 0
+          Width = 22
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsUnderline]
+          Glyph.Data = {
+            36040000424D3604000000000000360000002800000010000000100000000100
+            2000000000000004000000000000000000000000000000000000FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00606060006060600060606000606060006060600060606000606060006060
+            600060606000606060006060600060606000FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF006060600060606000606060006060
+            600060606000606060006060600060606000FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00606060006060600060606000606060006060600060606000606060006060
+            600060606000606060006060600060606000FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF006060600060606000606060006060
+            600060606000606060006060600060606000FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+            FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+          }
+          OnClick = btnRightClick
+          ParentFont = False
+        end
+      end
+      object Bevel3: TBevel
+        Left = 526
+        Height = 25
+        Top = 2
+        Width = 5
+        Align = alLeft
+        Shape = bsRightLine
+      end
+      object pnlAlign1: TPanel
+        Left = 531
+        Height = 25
+        Top = 2
+        Width = 75
+        Align = alLeft
+        BevelOuter = bvNone
+        ClientHeight = 25
+        ClientWidth = 75
+        Font.CharSet = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -14
+        Font.Name = 'Georgia'
+        Font.Pitch = fpVariable
+        Font.Quality = fqDraft
+        ParentFont = False
+        TabOrder = 3
+        object btnImage: TSpeedButton
+          Left = 0
+          Height = 25
+          Top = 0
+          Width = 25
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          Glyph.Data = {
+            36040000424D3604000000000000360000002800000010000000100000000100
+            2000000000000004000064000000640000000000000000000000FFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+            FF00FFFFFF006AA766FF378733FF6AA766FFFFFFFF00FFFFFF00F9F9F900E9E9
+            E9FFE5E5E5FFE5E5E5FFE5E5E5FFE5E5E5FFE5E5E5FFE5E5E5FFE5E5E5FFE5E5
+            E5FFE5E5E5FF37972EFF2BDF1AFF37972EFFE9E9E9FFFFFFFF00A6A69BFF9191
+            80FF919180FF919180FF919180FF919180FF919180FF919180FF919180FF4388
+            33FF278E1AFF278E1AFF3DE22CFF278E1AFF278E1AFF57924FFFA2A290FFF9F9
+            E9FFF3F3E3FFF3F3E3FFF3F3E3FFF3F3E3FFF3F3E3FFF3F3E3FFF3F3E3FF3DA8
+            2EFF52E741FF52E741FF52E741FF52E741FF52E741FF2C971DFFAFAF9DFFF4F4
+            E6FF06688AFF06688AFF06688AFF06688AFF06688AFF076A8BFF076C8EFF61A1
+            2EFF3CA21AFF3EA41BFF66EB55FF41A61EFF3FAF2EFF569F43FFB3B3A2FFF5F5
+            E8FF10A0C2FF10A0C2FF10A0C2FF10A0C2FF10A0C2FF10A1C2FF10A4C5FF13B1
+            CDFF17C1D8FF41AF22FF75EE64FF43B225FFF5F5E8FFB3B3A2FFB7B7A6FFF7F7
+            ECFF094D6FFF094D6FFF0C5072FF185C7EFF1B5F81FF1D6485FF27809BFF4BDB
+            E4FF5AFBFCFF4DA92DFF3CAE1EFF6DC254FFF7F7ECFFB7B7A6FFBBBBA9FFF8F8
+            EFFF19193BFF28284AFF343759FF337395FF338DAEFF35AAC9FF42C9E1FF77FD
+            FEFF74FFFFFF71FDFEFF3ED6EFFF30C9EAFFF8F8EFFFBBBBA9FFBEBEADFFFAFA
+            F4FF393959FF3E3E5DFF3485A4FF29C2E4FF29C2E4FF2BC4E5FF32CDE9FF54EF
+            F8FF63FDFEFF54EFF8FF32CDE9FF2BC4E5FFFAFAF4FFBEBEADFFC1C1B0FFFCFC
+            F7FF3186A6FF2BA3C3FF22BBDDFF22BBDDFF22BBDDFF23BCDEFF25BFE0FF2AC8
+            E3FF2ECDE6FF2AC8E3FF25BFE0FF23BCDEFFFCFCF7FFC1C1B0FFC5C5B3FFFDFD
+            FAFF19B2D4FF19B2D4FF19B2D4FF19B2D4FF19B2D4FF1AB2D4FF1AB3D5FF1AB5
+            D6FF1BB5D6FF1AB5D6FF1AB3D5FF1AB2D4FFFDFDFAFFC5C5B3FFC7C7B7FFFEFE
+            FDFF13ACCEFF13ACCEFF13ACCEFF13ACCEFF13ACCEFF13ACCEFF13ACCEFF13AC
+            CEFF13ACCEFF13ACCEFF13ACCEFF13ACCEFFFEFEFDFFC7C7B7FFCACAB8FFFFFF
+            FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+            FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFCACAB8FFD8D8CBFFCBCB
+            BAFFCBCBBAFFCBCBBAFFCBCBBAFFCBCBBAFFCBCBBAFFCBCBBAFFCBCBBAFFCBCB
+            BAFFCBCBBAFFCBCBBAFFCBCBBAFFCBCBBAFFCBCBBAFFD8D8CBFFFFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00
+          }
+          OnClick = btnImageClick
+          ParentFont = False
+        end
+        object btnLink: TSpeedButton
+          Left = 25
+          Height = 25
+          Top = 0
+          Width = 22
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsItalic]
+          Glyph.Data = {
+            36040000424D3604000000000000360000002800000010000000100000000100
+            2000000000000004000064000000640000000000000000000000000000000000
+            00000000000000000000995100369951009F9A5200E49A5200C09A5200C69A52
+            00E19A5200AB9A52004200000000000000000000000000000000000000000000
+            00009D5704099D5605A5B17A3FD5C79E6DF7CDA574FEDFC29BFFD5B284FFDBBD
+            94FEC99D69F8C08F55CF9E5705B49E570512000000000000000000000000A25E
+            0B06A35D0BC6CA9E6CEFFBEDD6FFA5692FFFFAEAD0FFDDBB91FFD7B385FFFDF2
+            DFFFBC8747FFF8EBD6FFD8B78DEBA15C0BD8A25D0B150000000000000000A864
+            1293DCBD96EAC59965FFB88041FFC99B64FFF8E9D1FFE3C7A1FFDAB98CFFF9EC
+            D7FFD4AC7AFFBA833FFFC5975FFFE1C6A3E7A56113AE00000000AE6D1B2DC08C
+            4CD8FBEFD8FFFCE8C8FFC29257FFE0C29BFFC4955CFFBB833EFFBA823CFFC594
+            59FFD9B589FFC39456FFFEF4DFFFFDF2D8FFBF8E56CCAD6B1B48B5752487E8D0
+            ACF3FEEDCFFFF8E8CDFFC99A5FFFFDF2E1FFFEECCFFFE5C69FFFDFBF95FFFDF3
+            DFFFFBEDD0FFCA9F66FFF5E3CCFFFDEFD5FFF4E2C8F0B37323A2BB7F2DBAFDF5
+            E9FEFEF4E2FFEEDABCFFDEBB8CFFFEF7E8FFFDF3E1FFE9CFADFFE3C69CFFFEF7
+            E8FFFEF5E3FFE2C49BFFE9D1ADFFFDF4E2FFFEF4E2FEBA7C2CBAC58A38CFE5C7
+            9EFFE0C094FFDAB47FFFD8B177FFE5C9A0FFE3C399FFDCB782FFD8B178FFE5C8
+            9FFFE1C094FFDBB783FFD7AF75FFE3C59BFFE2C296FFC38736D5CC9442C3FEF8
+            ECFFFDF5E7FFE3C497FFE4C393FFFEF8EBFFFDF6E8FFE6C89DFFE3C291FFFEF7
+            EBFFFDF6EAFFE5C89EFFE2C08FFFFEF6E9FFFDF5E5FFC28536C9D39E4CB7FEF7
+            EDFEFFF8EFFFF5E7CFFFE8C89AFFFEF9F0FFFFF9EEFFEFDBBCFFECD3ACFFFFF9
+            F1FFFEF9F1FFEBD3ACFFF2DEBFFFFDF7EEFFFFF5E7FECC9342C0DAA75578F6E4
+            C7F3FEFCF5FFFFFBF4FFE6C187FFFEFCF6FFFEFAF5FFF4E1C5FFEFD8B4FFFFFB
+            F6FFFEFBF7FFE8C690FFFCF4EAFFFFFBF3FFF8EAD4F1DAA55399E1B05D1BE7BF
+            7CDFFEFCF5FFFFFDFAFFEBCA93FFEFD3A6FFE7C07FFFE6BB75FFE5BA72FFE6BF
+            7EFFEED1A1FFE9C589FFFFFDF9FFFFFCF6FFEAC487D5E1B05D3600000000E6B7
+            657EF3D9ACEEF0D29FFFEECC93FFF2D6A9FFFEFDFCFFF8E8D0FFF5E1BEFFFEFD
+            FBFFF4DFBBFFEDC98CFFEFCF9AFFF4DDB4ECE7B765990000000000000000EBBE
+            6B03EBBD6BA5F4D9A7F0FFFDF9FFF2D49DFFFEFBF7FFF9EBD2FFF7E3C1FFFFFD
+            FBFFF1D095FFFEFAF3FFF6E0B9EBECBE6BBDEBBD6B0900000000000000000000
+            000000000000EFC2705AF3CF8EDCF7DEB2F7F6DDAEFFFAECD4FFF8E5C3FFF8E3
+            BEFEF5D9A5F8F3D294D6EFC27072000000000000000000000000000000000000
+            00000000000000000000EFC2701BEFC2707EEFC270BDEFC270B4EFC270C0EFC2
+            70C0EFC27084EFC2702700000000000000000000000000000000
+          }
+          OnClick = btnLinkClick
+          ParentFont = False
+        end
+        object btnTable: TSpeedButton
+          Left = 50
+          Height = 25
+          Hint = 'Table'
+          Top = 0
+          Width = 22
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -14
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsUnderline]
+          Glyph.Data = {
+            36040000424D3604000000000000360000002800000010000000100000000100
+            2000000000000004000064000000640000000000000000000000FFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00B0A796ADBEB7
+            AEE0BEB6AEFBBAB3A8FABAB1A6FAB8AFA4FAB8AFA3FAB7AEA2FABAAFA4FABDB1
+            A6FABEB2A9FABEB3A9FABEB5AAF9C1B5AFFABFB5AEF5B3A99AAFC4BAA8FAD7CB
+            BEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CB
+            BEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFCCC1AEFBC5B8A6FEF6F6
+            F6FFF6F6F6FFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+            BEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFCDC2ADFEC4B8A3FDFFFF
+            FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+            BEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFCEC3ADFEC6BAA5FDD7CB
+            BEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CB
+            BEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD0C4AEFEC6B9A4FDFFFF
+            FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+            BEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFCCC0AAFEC3B6A1FDFFFF
+            FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+            BEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFC9BEA9FEC4B6A2FDD7CB
+            BEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CB
+            BEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFC9BDAAFEC6B7A1FDFFFF
+            FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+            BEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFCABDAAFEC6B8A1FDFFFF
+            FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+            BEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFCCBEAAFEBFB19BFDC3B8
+            ADFFC3B8ADFFC2B8ABFFC2B8AAFFC1B8AAFFC1B7AAFFC1B6A9FFC1B6A8FFC1B6
+            A9FFC1B6A9FFC2B8ABFFC3B9ACFFC3B9ADFFC4BAADFFC3B59FFEBEB09CEAE4D8
+            C8FFE4D8C8FFE2D5C5FFE1D4C5FFDCD0C2FFE1D5C5FFE0D3C4FFE2D5C8FFDDD1
+            C4FFE1D4C5FFE3D7C7FFDDD0C1FFE1D4C5FFE1D5C5FFC2B4A0EFBCB09FECF0E6
+            DCFFF0E6DCFFECE2D5FFEBE0D3FFECE1D3FFEBDCCFFFEBDDCEFFEBDDCCFFEBDD
+            CEFFEBDFCFFFEDE0D1FFEDE3D6FFEDE4DBFFEFE7DEFFC1B6A5F1BEB4A6D6C3B8
+            ADFEC3B8ADFFC2B8ABFFC2B8AAFFC1B8AAFFC1B7AAFFC1B6A9FFC1B6A8FFC1B6
+            A9FFC1B6A9FFC2B8ABFFC3B9ACFFC3B9ADFFC4BAADFFC1B9ABD9FFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+            FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00
+          }
+          OnClick = btnTableClick
+          ParentFont = False
+        end
+      end
     end
-    object PasteButton: TToolButton
-      Left = 124
-      Top = 2
-      Action = EditPaste
-    end
-    object ToolButton2: TToolButton
-      Left = 170
+  end
+  object pnlTabMan: TPanel
+    Left = 485
+    Height = 22
+    Top = 59
+    Width = 21
+    BevelOuter = bvNone
+    ClientHeight = 22
+    ClientWidth = 21
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -14
+    Font.Name = 'Georgia'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    ParentColor = False
+    ParentFont = False
+    TabOrder = 4
+    Visible = False
+    OnResize = pnlTabManResize
+    object btnTabClose: TSpeedButton
+      Left = 0
       Height = 22
-      Top = 2
-      Width = 8
-      Caption = 'ToolButton2'
-      Style = tbsSeparator
-    end
-    object UndoButton: TToolButton
-      Left = 178
-      Top = 2
-      Action = EditUndo
-    end
-    object RedoButton: TToolButton
-      Left = 201
-      Top = 2
-      Action = EditRedo
-    end
-    object FindButton: TToolButton
-      Left = 147
-      Top = 2
-      Action = SearchFind
+      Top = 0
+      Width = 21
+      Caption = 'X'
+      Flat = True
+      Font.CharSet = ANSI_CHARSET
+      Font.Color = clBlack
+      Font.Height = -14
+      Font.Name = 'Georgia'
+      Font.Pitch = fpVariable
+      Font.Quality = fqDraft
+      OnClick = btnTabCloseClick
+      ParentFont = False
     end
   end
   object MainMenu: TMainMenu
     Images = ImageList
-    left = 64
-    top = 89
-    object FileMenu: TMenuItem
+    left = 101
+    top = 91
+    object mmFile: TMenuItem
       Caption = '&File'
-      object FileNewMenu: TMenuItem
-        Action = FileNew
-        Bitmap.Data = {
-          36040000424D3604000000000000360000002800000010000000100000000100
-          2000000000000004000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
-          00FF000000FF000000FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000
-          00FF000000FF000000FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000
-          00FFFFFFFFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000
-          00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
-          00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
+      object miFileNew: TMenuItem
+        Action = aFileNew
       end
-      object FileOpenMenu: TMenuItem
-        Action = FileOpen
-        Bitmap.Data = {
-          36040000424D3604000000000000360000002800000010000000100000000100
-          2000000000000004000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
-          00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
-          00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
-          00FF008080FF008080FF008080FF008080FF008080FF008080FF008080FF0080
-          80FF008080FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF00FF
-          FFFF000000FF008080FF008080FF008080FF008080FF008080FF008080FF0080
-          80FF008080FF008080FF000000FFFF00FF00FF00FF00FF00FF00000000FFFFFF
-          FFFF00FFFFFF000000FF008080FF008080FF008080FF008080FF008080FF0080
-          80FF008080FF008080FF008080FF000000FFFF00FF00FF00FF00000000FF00FF
-          FFFFFFFFFFFF00FFFFFF000000FF008080FF008080FF008080FF008080FF0080
-          80FF008080FF008080FF008080FF008080FF000000FFFF00FF00000000FFFFFF
-          FFFF00FFFFFFFFFFFFFF00FFFFFF000000FF000000FF000000FF000000FF0000
-          00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF00FF
-          FFFFFFFFFFFF00FFFFFFFFFFFFFF00FFFFFFFFFFFFFF00FFFFFFFFFFFFFF00FF
-          FFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FFFFFF
-          FFFF00FFFFFFFFFFFFFF00FFFFFFFFFFFFFF00FFFFFFFFFFFFFF00FFFFFFFFFF
-          FFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF00FF
-          FFFFFFFFFFFF00FFFFFF000000FF000000FF000000FF000000FF000000FF0000
-          00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          00FF000000FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00000000FF000000FF000000FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00000000FF000000FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FFFF00
-          FF00FF00FF00FF00FF00000000FFFF00FF00000000FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          00FF000000FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
+      object miFileOpen: TMenuItem
+        Action = aFileOpen
       end
-      object FileSaveMenu: TMenuItem
-        Action = FileSave
-        Bitmap.Data = {
-          36040000424D3604000000000000360000002800000010000000100000000100
-          2000000000000004000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
-          00FF000000FF000000FF000000FF000000FF000000FFFF00FF00FF00FF000000
-          00FF008080FF008080FF000000FF000000FF000000FF000000FF000000FF0000
-          00FFC0C0C0FFC0C0C0FF000000FF008080FF000000FFFF00FF00FF00FF000000
-          00FF008080FF008080FF000000FF000000FF000000FF000000FF000000FF0000
-          00FFC0C0C0FFC0C0C0FF000000FF008080FF000000FFFF00FF00FF00FF000000
-          00FF008080FF008080FF000000FF000000FF000000FF000000FF000000FF0000
-          00FFC0C0C0FFC0C0C0FF000000FF008080FF000000FFFF00FF00FF00FF000000
-          00FF008080FF008080FF000000FF000000FF000000FF000000FF000000FF0000
-          00FF000000FF000000FF000000FF008080FF000000FFFF00FF00FF00FF000000
-          00FF008080FF008080FF008080FF008080FF008080FF008080FF008080FF0080
-          80FF008080FF008080FF008080FF008080FF000000FFFF00FF00FF00FF000000
-          00FF008080FF008080FF000000FF000000FF000000FF000000FF000000FF0000
-          00FF000000FF000000FF008080FF008080FF000000FFFF00FF00FF00FF000000
-          00FF008080FF000000FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FFC0C0C0FFC0C0C0FF000000FF008080FF000000FFFF00FF00FF00FF000000
-          00FF008080FF000000FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FFC0C0C0FFC0C0C0FF000000FF008080FF000000FFFF00FF00FF00FF000000
-          00FF008080FF000000FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FFC0C0C0FFC0C0C0FF000000FF008080FF000000FFFF00FF00FF00FF000000
-          00FF008080FF000000FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FFC0C0C0FFC0C0C0FF000000FF008080FF000000FFFF00FF00FF00FF000000
-          00FF008080FF000000FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FFC0C0C0FFC0C0C0FF000000FF000000FF000000FFFF00FF00FF00FF000000
-          00FF008080FF000000FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FFC0C0C0FFC0C0C0FF000000FFC0C0C0FF000000FFFF00FF00FF00FF000000
-          00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
-          00FF000000FF000000FF000000FF000000FF000000FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
+      object miFileSave: TMenuItem
+        Action = aFileSave
       end
-      object FileSaveAsMenu: TMenuItem
-        Action = FileSaveAs
+      object miFileSaveAs: TMenuItem
+        Action = aFileSaveAs
       end
-      object MenuItem1: TMenuItem
+      object miFileLine1: TMenuItem
         Caption = '-'
       end
-      object FileExitMenu: TMenuItem
-        Action = FileExit
+      object miFileExit: TMenuItem
+        Action = aFileExit
       end
     end
-    object EditMenu: TMenuItem
+    object mmEdit: TMenuItem
       Caption = '&Edit'
-      object EditUndoMenu: TMenuItem
-        Action = EditUndo
-        Bitmap.Data = {
-          36040000424D3604000000000000360000002800000010000000100000000100
-          2000000000000004000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00644904FF644904FF644904FF644904FF644904FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF007F5B00FFFF00FF00FF00FF00FF00FF00FF00
-          FF00916B0AFF7F5B00FF7F5B00FF916B0AFFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF007F5B00FFFF00FF00FF00FF00FF00FF00FF00
-          FF00916B0AFF7F5B00FF916B0AFFD9A77DFFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF007F5B00FFFF00FF00FF00FF00FF00FF00FF00
-          FF00916B0AFF916B0AFFD9A77DFF7F5B00FFD9A77DFFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00D9A77DFF7F5B00FFFF00FF00FF00FF00FF00FF00FF00
-          FF00916B0AFFFF00FF00FF00FF00D9A77DFF7F5B00FF7F5B00FFD9A77DFFFF00
-          FF00FF00FF00D9A77DFF7F5B00FFD9A77DFFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00D9A77DFF7F5B00FF7F5B
-          00FF7F5B00FF7F5B00FFD9A77DFFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
+      object miEditUndo: TMenuItem
+        Action = aEditUndo
       end
-      object EditRedoMenu: TMenuItem
-        Action = EditRedo
-        Bitmap.Data = {
-          36040000424D3604000000000000360000002800000010000000100000000100
-          2000000000000004000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF007F5B00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006449
-          04FF644904FF644904FF644904FF644904FFFF00FF00FF00FF00FF00FF00FF00
-          FF007F5B00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00916B0AFF7F5B00FF7F5B00FF916B0AFFFF00FF00FF00FF00FF00FF00FF00
-          FF007F5B00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00D9A77DFF916B0AFF7F5B00FF916B0AFFFF00FF00FF00FF00FF00FF00FF00
-          FF007F5B00FFD9A77DFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00D9A7
-          7DFF7F5B00FFD9A77DFF916B0AFF916B0AFFFF00FF00FF00FF00FF00FF00FF00
-          FF00D9A77DFF7F5B00FFD9A77DFFFF00FF00FF00FF00D9A77DFF7F5B00FF7F5B
-          00FFD9A77DFFFF00FF00FF00FF00916B0AFFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00D9A77DFF7F5B00FF7F5B00FF7F5B00FF7F5B00FFD9A77DFFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
+      object miEditRedo: TMenuItem
+        Action = aEditRedo
       end
-      object MenuItem3: TMenuItem
+      object miEditLine1: TMenuItem
         Caption = '-'
       end
-      object EditCutMenu: TMenuItem
-        Action = EditCut
-        Bitmap.Data = {
-          36040000424D3604000000000000360000002800000010000000100000000100
-          2000000000000004000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00800000FF800000FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00800000FFFF00FF00FF00FF00800000FFFF00FF00FF00
-          FF00800000FF800000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00800000FFFF00FF00FF00FF00800000FFFF00FF008000
-          00FFFF00FF00FF00FF00800000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00800000FFFF00FF00FF00FF00800000FFFF00FF008000
-          00FFFF00FF00FF00FF00800000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00800000FF800000FF800000FFFF00FF008000
-          00FFFF00FF00FF00FF00800000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00800000FFFF00FF008000
-          00FF800000FF800000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00800000FF000000FF8000
-          00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
-          00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FFFF00FF000000
-          00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FFFF00FF000000
-          00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FFFF00FF00FF00FF00FF00
-          FF00000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FFFF00FF00FF00FF00FF00
-          FF00000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FFFF00FF00FF00FF00FF00
-          FF00000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
+      object miEditCut: TMenuItem
+        Action = aEditCut
       end
-      object EditCopyMenu: TMenuItem
-        Action = EditCopy
-        Bitmap.Data = {
-          36040000424D3604000000000000360000002800000010000000100000000100
-          2000000000000004000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00800000FF800000FF8000
-          00FF800000FF800000FF800000FF800000FF800000FF800000FFFF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00800000FFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF800000FFFF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00800000FFFFFFFFFF0000
-          00FF000000FF000000FF000000FF000000FFFFFFFFFF800000FFFF00FF000000
-          00FF000000FF000000FF000000FF000000FF000000FF800000FFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF800000FFFF00FF000000
-          00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF800000FFFFFFFFFF0000
-          00FF000000FF000000FF000000FF000000FFFFFFFFFF800000FFFF00FF000000
-          00FFFFFFFFFF000000FF000000FF000000FF000000FF800000FFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF800000FFFF00FF000000
-          00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF800000FFFFFFFFFF0000
-          00FF000000FFFFFFFFFF800000FF800000FF800000FF800000FFFF00FF000000
-          00FFFFFFFFFF000000FF000000FF000000FF000000FF800000FFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF800000FFFFFFFFFF800000FFFF00FF00FF00FF000000
-          00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF800000FFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF800000FF800000FFFF00FF00FF00FF00FF00FF000000
-          00FFFFFFFFFF000000FF000000FFFFFFFFFF000000FF800000FF800000FF8000
-          00FF800000FF800000FF800000FFFF00FF00FF00FF00FF00FF00FF00FF000000
-          00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFF000000FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000FF000000FFFF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          00FF000000FF000000FF000000FF000000FF000000FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
+      object miEditCopy: TMenuItem
+        Action = aEditCopy
       end
-      object EditPasteMenu: TMenuItem
-        Action = EditPaste
-        Bitmap.Data = {
-          36040000424D3604000000000000360000002800000010000000100000000100
-          2000000000000004000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00800000FF800000FF800000FF8000
-          00FF800000FF800000FF800000FF800000FF800000FF800000FFFF00FF000000
-          00FF000000FF000000FF000000FF000000FF800000FFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF800000FF000000FF8080
-          80FF008080FF808080FF008080FF808080FF800000FFFFFFFFFF000000FF0000
-          00FF000000FF000000FF000000FF000000FFFFFFFFFF800000FF000000FF0080
-          80FF808080FF008080FF808080FF008080FF800000FFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF800000FF000000FF8080
-          80FF008080FF808080FF008080FF808080FF800000FFFFFFFFFF000000FF0000
-          00FF000000FFFFFFFFFF800000FF800000FF800000FF800000FF000000FF0080
-          80FF808080FF008080FF808080FF008080FF800000FFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF800000FFFFFFFFFF800000FFFF00FF00000000FF8080
-          80FF008080FF808080FF008080FF808080FF800000FFFFFFFFFFFFFFFFFFFFFF
-          FFFFFFFFFFFFFFFFFFFF800000FF800000FFFF00FF00FF00FF00000000FF0080
-          80FF808080FF008080FF808080FF008080FF800000FF800000FF800000FF8000
-          00FF800000FF800000FF800000FF000000FFFF00FF00FF00FF00000000FF8080
-          80FF008080FF808080FF008080FF808080FF008080FF808080FF008080FF8080
-          80FF008080FF808080FF008080FF000000FFFF00FF00FF00FF00000000FF0080
-          80FF808080FF000000FF000000FF000000FF000000FF000000FF000000FF0000
-          00FF000000FF808080FF808080FF000000FFFF00FF00FF00FF00000000FF8080
-          80FF808080FF000000FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FF000000FF808080FF008080FF000000FFFF00FF00FF00FF00000000FF0080
-          80FF808080FF008080FF000000FF00FFFFFF000000FF000000FF00FFFFFF0000
-          00FF808080FF008080FF808080FF000000FFFF00FF00FF00FF00FF00FF000000
-          00FF000000FF000000FF000000FF000000FF00FFFFFF00FFFFFF000000FF0000
-          00FF000000FF000000FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00000000FF000000FF000000FF000000FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
+      object miEditPaste: TMenuItem
+        Action = aEditPaste
       end
-      object MenuItem2: TMenuItem
+      object miEditLine2: TMenuItem
         Caption = '-'
       end
-      object EditSelectAllMenu: TMenuItem
-        Action = EditSelectAll
+      object miEditSelectAll: TMenuItem
+        Action = aEditSelectAll
       end
     end
-    object SearchMenu: TMenuItem
+    object mmSearch: TMenuItem
       Caption = '&Search'
-      object SearchFindMenu: TMenuItem
-        Action = SearchFind
-        Bitmap.Data = {
-          36040000424D3604000000000000360000002800000010000000100000000100
-          2000000000000004000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00800000FF800000FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00800000FFC0C0C0FF800000FF800000FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00800000FFC0C0C0FF800000FF800000FF800000FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF008000
-          00FFC0C0C0FF800000FF800000FF800000FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00000000FF000000FF000000FF000000FF800000FFC0C0
-          C0FF800000FF800000FF800000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FF000000FFC0C0C0FFC0C0C0FFC0C0C0FFFFFFFFFF808080FF8000
-          00FF800000FF800000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          00FF808080FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFFFFFFFFF8080
-          80FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          00FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFFFFF
-          FFFF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FFC0C0
-          C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FFC0C0C0FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FFC0C0
-          C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FFC0C0C0FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FFC0C0
-          C0FFFFFFFFFFFFFF00FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FFC0C0C0FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FFC0C0
-          C0FFFFFFFFFFFFFF00FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FFC0C0C0FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          00FFFFFFFFFFFFFFFFFFFFFF00FFFFFF00FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0
-          C0FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          00FF808080FFFFFFFFFFFFFFFFFFFFFFFFFFC0C0C0FFC0C0C0FFC0C0C0FF8080
-          80FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FF000000FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FF000000FF0000
-          00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00000000FF000000FF000000FF000000FFFF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-        }
+      object miSearchFind: TMenuItem
+        Action = aSearchFind
       end
-      object SearchReplaceMenu: TMenuItem
-        Action = SearchReplace
-        Bitmap.Data = {
-          36040000424D3604000000000000360000002800000010000000100000000100
-          2000000000000004000064000000640000000000000000000000FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00800000FF8000
-          00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00800000FF800000FF8000
-          00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000000FF000000FF000000FF000000FF800000FF800000FF800000FFFF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          00FF808080FFC0C0C0FFFFFFFFFF808080FF000000FF800000FFFF00FF00FF00
-          FF00FF00FF00FF00FF00000080FFFF00FF00FF00FF00FF00FF00000000FF8080
-          80FFC0C0C0FFC0C0C0FFC0C0C0FFFFFFFFFF808080FF000000FFFF00FF00FF00
-          FF00FF00FF00000080FF000080FFFF00FF00FF00FF00FF00FF00000000FFC0C0
-          C0FFC0C0C0FFC0C0C0FFC0C0C0FFC0C0C0FFFFFFFFFF000000FFFF00FF00FF00
-          FF00000080FF000080FF000080FF000080FF000080FFFF00FF00000000FFC0C0
-          C0FFFFFFFFFFFFFF00FFC0C0C0FFC0C0C0FFC0C0C0FF000000FFFF00FF00FF00
-          FF00FF00FF00000080FF000080FFFF00FF00FF00FF00000080FF000000FF8080
-          80FFFFFFFFFFFFFFFFFFC0C0C0FFC0C0C0FF808080FF000000FFFF00FF00FF00
-          FF00FF00FF00FF00FF00000080FFFF00FF00FF00FF00000080FFFF00FF000000
-          00FF808080FFC0C0C0FFC0C0C0FF808080FF000000FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000080FFFF00FF00FF00
-          FF00000000FF000000FF000000FF000000FFFF00FF00FF00FF00FF00FF000000
-          80FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          80FFFF00FF00FF00FF00000080FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF000000
-          80FFFF00FF00FF00FF00000080FF000080FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00000080FF000080FF000080FF000080FF000080FFFF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00000080FF000080FFFF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-          FF00FF00FF00FF00FF00000080FFFF00FF00FF00FF00FF00FF00
-        }
+      object miSearchReplace: TMenuItem
+        Action = aSearchReplace
+      end
+      object miSearchNext: TMenuItem
+        Action = aSearchNext
       end
     end
-    object LyseeMenu: TMenuItem
+    object mmLysee: TMenuItem
       Caption = '&Lysee'
-      object LyseeSyntaxCheckMenu: TMenuItem
-        Action = LyseeSyntaxCheck
+      object miLyseeSyntaxCheck: TMenuItem
+        Action = aLyseeSyntaxCheck
       end
-      object LyseeRunMenu: TMenuItem
-        Action = LyseeRun
+      object miLyseeRun: TMenuItem
+        Action = aLyseeRun
       end
     end
-    object HelpMenu: TMenuItem
+    object mmHelp: TMenuItem
       Caption = '&Help'
       Hint = 'About|Displays program information, version number, and copyright'
-      object HelpAboutMenu: TMenuItem
-        Action = HelpAbout
+      object miHelpAbout: TMenuItem
+        Action = aHelpAbout
       end
     end
   end
-  object OpenDialog: TOpenDialog
-    DefaultExt = '.ls'
-    Filter = 'Lysee Script Files(*.ls)|*.ls|Any Files(*.*)|*.*'
-    left = 144
-    top = 89
+  object dlgOpen: TOpenDialog
+    DefaultExt = '.*'
+    Filter = 'Lysee Files(*.ls; *.rivi)|*.ls; *.rivi|Any Files(*.*)|*.*'
+    left = 176
+    top = 91
   end
-  object SaveDialog: TSaveDialog
-    DefaultExt = '.ls'
-    Filter = 'Lysee Script Files(*.ls)|*.ls|Any Files(*.*)|*.*'
-    left = 216
-    top = 89
-  end
-  object FindDialog: TFindDialog
-    Options = [frDown, frHideMatchCase, frHideWholeWord, frHideUpDown, frDisableMatchCase, frDisableUpDown, frDisableWholeWord, frHideEntireScope, frButtonsAtBottom]
-    OnFind = FindDialogFind
-    left = 296
-    top = 89
-  end
-  object ReplaceDialog: TReplaceDialog
-    Options = [frDown, frHideMatchCase, frHideWholeWord, frHideUpDown, frMatchCase, frDisableMatchCase, frDisableUpDown, frDisableWholeWord, frHideEntireScope, frHidePromptOnReplace]
-    OnFind = ReplaceDialogFind
-    OnReplace = ReplaceDialogReplace
-    left = 368
-    top = 89
+  object dlgSave: TSaveDialog
+    DefaultExt = '.*'
+    Filter = 'Lysee Files(*.ls; *.rivi)|*.ls; *.rivi|Any Files(*.*)|*.*'
+    left = 245
+    top = 91
   end
   object ImageList: TImageList
-    left = 64
-    top = 168
+    left = 101
+    top = 160
     Bitmap = {
-      4C690F0000001000000010000000FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      4C69210000001000000010000000FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00000000FFFF00FF00FF00FF00FF00FF00000000FFFF00FF00FF00
@@ -1065,130 +1505,870 @@ object MainForm: TMainForm
       00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
       00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
-      FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FF606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FF606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FF606060FF606060FF606060FF606060FF606060FFFF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FF606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FF606060FF606060FF606060FF606060FF606060FFFF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FF606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00606060FF606060FF606060FF606060FF606060FF606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FF606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00606060FF606060FF606060FF606060FF606060FF606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FF606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FFFF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00606060FF606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00FF00FF00606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00FF00FF00606060FF6A6A6AFFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00606060FF606060FFFF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FFFF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00FF00FF00606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00606060FF6060
+      60FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00606060FF6060
+      60FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00FF00FF00626262FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FFFF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00606060FF606060FF606060FF606060FF606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00606060FF606060FFFF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00606060FF606060FFFF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00606060FFFF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00606060FF606060FFFF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00656565FF646464FFFF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00606060FF606060FFFF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00606060FF606060FFFF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00606060FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00606060FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FF606060FF606060FF606060FFFF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00656565FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00606060FF666666FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF6060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00606060FF606060FFFF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00606060FF606060FF606060FF656565FF606060FFFF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FF606060FF6060
+      60FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00606060FF606060FF606060FF606060FF606060FF606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00FF00FF00606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FF606060FF606060FFFF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00241CEDFF241CEDFF241CEDFF241C
+      EDFF241CEDFF241CEDFF241CEDFF241CEDFF241CEDFF241CEDFF241CEDFF241C
+      EDFF241CEDFF241CEDFFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00606060FF606060FF606060FF606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF6060
+      60FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00606060FF606060FF6060
+      60FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FFFF00FF00FF00FF00FF00FF00606060FF606060FF606060FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF006060
+      60FF606060FF606060FF606060FF606060FF606060FF606060FFFF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00B59C8AFFB59C8AFFB59C8AFFB59C8AFFB59C
+      8AFFB59C8AFFB59C8AFFB59C8AFFB59C8AFFB59C8AFFB59C8AFFB59C8AFFB59C
+      8AFFB59C8AFFB59C8AFFB59C8AFFB59C8AFFFF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF004E2E1CFFB59C8AFFFF00FF00F4B176FFF4B176FFF4B1
+      76FFF4B176FFF4B176FFF4B176FFF3B076FFB4A98FFF3FA6C9FF20A7DDFF4995
+      BBFFC19A66FFFF00FF004E2E1CFFB59C8AFFFF00FF00F4B176FFF4B176FFF4B1
+      76FFF4B176FFF4B176FFF4B176FFE6AD79FF3BA5CCFF06BFF3FF09ADF4FF0E93
+      F3FF5288ABFFFF00FF004E2E1CFFB59C8AFFFF00FF00F4B176FFF4B176FFF4B1
+      76FFF4B176FFF4B075FFF4B074FFD0A678FF1DA4E0FF0AAAF4FF0D95F4FF127E
+      F4FF317BC9FFFF00FF004E2E1CFFB59C8AFFFF00FF00F4B176FFF4B176FFF4B1
+      76FFF4B075FFF4AF73FFF4AC6AFFE7A664FF4693BCFF0F90F2FF127EF4FF1676
+      F2FF5A809AFFFF00FF004E2E1CFFB59C8AFFFF00FF00F4B176FFF4B176FFF2B0
+      75FFA39350FFD8A15DFFEFA65CFFF3A353FFBD9865FF5086ABFF307BCBFF5880
+      9AFFC98B3CFFFF00FF004E2E1CFFB59C8AFFFF00FF00F4B176FFF4B176FFA393
+      50FF1F6B18FF16500AFF9C8335FFF49F49FFF39C40FFEB963AFFDD9038FFEE8F
+      27FFF38B1CFFFF00FF004E2E1CFFB59C8AFFFF00FF00D0A566FF216E1BFF216E
+      1BFF0A821FFF084D07FF0C4804FFDD9236FFF49735FFE18C28FFEF8E23FFF48B
+      1BFFF48714FFFF00FF004E2E1CFFB59C8AFFFF00FF00216E1BFF0D8320FF0B86
+      1FFF097A1AFF05660FFF004001FF3B5A0DFFBD8423FF084C06FF2F5506FFF084
+      13FFF4820DFFFF00FF004E2E1CFFB59C8AFFFF00FF000D821FFF0B8620FF0979
+      19FF066E13FF05650EFF014B04FF013F00FF1B6616FF065C0CFF004000FF3754
+      04FFE97B07FFFF00FF004E2E1CFFB59C8AFFFF00FF000B841FFF097A1AFF066E
+      13FF04640EFF035909FF014D05FF003E00FF014201FF087417FF035609FF013E
+      00FF395201FFFEFEFEFF4E2E1CFFB59C8AFFFF00FF00087718FF066D13FF0462
+      0DFF035808FF014E04FF004502FF003D00FF003C00FF025206FF035B0AFF0145
+      02FF094401FFFEFEFEFF4E2E1CFFB59C8AFFFF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF004E2E1CFFB59C8AFF4E2E1CFF4E2E1CFF4E2E1CFF4E2E
+      1CFF4E2E1CFF4E2E1CFF4E2E1CFF4E2E1CFF4E2E1CFF4E2E1CFF4E2E1CFF4E2E
+      1CFF4E2E1CFF4E2E1CFF4E2E1CFFFF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00000000FF000000FF000000FF0000
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF0000003AFF000000FF000000FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00000000FF000000FF000000FFFF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00000000FF000000FF3A0000FFFF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00000000FF000000FF000000FFFF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FF000000FF000000FF000000FFFF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF3A0000FF000000FF000000FF3A0000FFFF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF0000003AFF000000FF000000FFFF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00000000FF000000FF000000FFFF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00000000FF000000FF000000FFFF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00000000FF000000FF3A0000FFFF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00000000FF0000
+      00FF000000FFFF00FF00FF00FF00FF00FF00FF00FF00000000FF000000FF6600
+      00FFFF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      FF00FF00FF00FF00FF00FF00FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00E4875820E27C48FFE07139FFDC672C9FFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00E4875870E27B47FFE07139FFDC682CFFDC612310FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00E58757CFE27C48FFE07139FFDC672CFFDC612370FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00E8946B20E58757FFE27B48AFE07139FFDC682CFFDC6123DFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00E7966B80E48758FFE27B4820DF7139DFDC672CFFDC6123FFDC612340FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00E89569DFE48758CFFFFFFF00E0713970DC682CFFDC6123FFDC61239FFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00EAA1
+      7D30E8956BFFE48758BFE27C4780E071399FDE672CFFDC6123FFDC6123EFDC61
+      2310FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00EAA1
+      7C8FE7956AFFDE672CFFDE672CFFDE672CFFDE672CFFDC6123FFDC6123FFDC61
+      2360FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00EAA1
+      7DEFE8946BAFFFFFFF00FFFFFF00FFFFFF00DE672C50DC6123FFDC6123FFDC61
+      23CFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00EDAF9050EAA3
+      7CFFE8946B60FFFFFF00FFFFFF00FFFFFF00FFFFFF00DC6123DFDC6123FFDC61
+      23FFDC612330FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00EDAF90CFEAA1
+      7CFFE8946B20FFFFFF00FFFFFF00FFFFFF00FFFFFF00DC61238FDC6123FFDC61
+      23FFDC6123AFFFFFFF00FFFFFF00FFFFFF00FFFFFF00E48758FFE48758FFE487
+      58FFE48758FFE5875720FFFFFF00FFFFFF00DE682C60DC6123FFDC6123FFDC61
+      23FFDC6123FFDC61238FDC612320FFFFFF00D1D1D1E5D1D1D1E5D1D1D1E5D1D1
+      D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1
+      D1E5D1D1D1E5D1D1D1E5D1D1D1E5FFFFFF00D1D1D1E5D1D1D1E5D1D1D1E5D1D1
+      D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1
+      D1E5D1D1D1E5D1D1D1E5D1D1D1E5FFFFFF00D1D1D1E5D1D1D1E5D1D1D1E5D1D1
+      D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1
+      D1E5D1D1D1E5D1D1D1E5D1D1D1E5FFFFFF00D1D1D1E5D1D1D1E5D1D1D1E5D1D1
+      D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1D1E5D1D1
+      D1E5D1D1D1E5D1D1D1E5D1D1D1E5727272007272720072727200727272007272
+      72007272720072727200727272007272720072727200717171007272721E8383
+      8344898989044040400029292900727272007272720072727200727272007272
+      720072727200727272007272720072727200717171007171711D8F8F8FC39C9C
+      9CFF7F7F7F75414141002B2B2B00727272007272720072727200727272007272
+      72007272720072727200727272007171710070707025909090D2949494FF6C6C
+      6CFF585858FF3939398328282837727272007272720072727200727272007272
+      720072727200727272007171710070707018939393C5949494FF696969FF5454
+      54FF424242FF1414149C0606064C727272007272720072727200727272007272
+      7200727272007171710070707016919191C3B2B2B2FF838383FF555555FF4343
+      43FF171717C00000001900000000727272007272720072727200727272007272
+      72007171710071717118909090C3979797FF808080FF939393FF676767FE1414
+      14CB000000290000000000000000727272007272720072727200727272007171
+      7100707070158D8D8DC4949494FF696969FF525252FF606060FF171717B80000
+      0018000000000000000000000000727272007272720072727200717171007171
+      71298A8A8AC7919191FF6A6A6AFF555555FF444444FF121212AE0000001C0000
+      0000000000000000000000000000727272007272720071717100717171178E8E
+      8ECB939393FF696969FF555555FF434343FF171717AD00000019000000000000
+      0000000000000000000000000000727272007171710071717116898989C19292
+      92FF6A6A6AFF555555FF434343FF181818AC0000001A00000000000000000000
+      0000612B00006E3100006C3000007C7C7C007D7D7D007C7C7CB28B8B8BFF6A6A
+      6AFF555555FF434343FF171717D300000027000000000703000047200000AC4C
+      0000CF5D0000D5600000D45F00008080800086868612ADADADDF656565FF5555
+      55FF444444FF161616BB0000002E12080000451E0000B04F0000CE5C0000CC5B
+      0000C6580000C5580000C55800007F7F7F05848484A3D9D9DAFF787C7FFF3236
+      3AFD111417A500000015592800009C460000DA620000C8590000C4580000C558
+      0000C5580000C5580000C558000099999987535454FF6E6E6EFF6E5F53CB1A09
+      007D3A19003AB5500018CA5A001FD05D001FC458001FC558001FC558001FC558
+      001FC5580021C5580011C55800049FA1A2DD757F87FF60300BEFB74D00CFCF5C
+      00CDCD5C00D1C95A00D5C65900D5C55800D5C55800D5C55800D5C55800D5C558
+      00D5C55800E6C5580075C558001D4231237CA86229F5C25B09E5C95900E1C558
+      00E2C55800E2C55800E2C55800E2C55800E2C55800E2C55800E2C55800E2C558
+      00E2C55800F4C558007CC558001FFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF002B2B2B002B2B2B002B2B2B00868686FF2B2B2B002B2B
+      2B002B2B2B002B2B2B002B2B2B00FF9344FFFF9344FFFF7C1B50FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF002B2B2B002B2B2B002B2B2B0067676BFF2B2B2B002B2B
+      2B002B2B2B002B2B2B002B2B2B00FFAC70FFFF9343FFFF7C1BBFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF002B2B2B002B2B2B002B2B2B00505050FF2B2B2B002B2B
+      2B002B2B2B002B2B2B002B2B2B00FFAC70FFFF9344FFFF7C1BFFF8680020FFFF
+      FF00FFFFFF00FFFFFF002B2B2B002B2B2B002B2B2B00383C38FF2B2B2B002B2B
+      2B002B2B2B002B2B2B002B2B2B00FFAC70FFFF9344FFFF7C1AFFF969008FFFFF
+      FF00FFFFFF00FFFFFF002B2B2B002B2B2BFF2B2B2BFF2B2B2BFF2B2B2BFF2B2B
+      2BFF2B2B2B002B2B2B002B2B2B00FFAC709FFF9344FFFF7C1BFFF86800EFFFFF
+      FF00FFFFFF00FFFFFF002B2B2B002B2B2B002B2B2BFF2B2B2BFF2B2B2BFF2B2B
+      2B002B2B2B002B2B2B002B2B2B00FFAC7030FF9344FFFF7C1AFFF86800FFE05E
+      0060FFFFFF00FFFFFF002B2B2B002B2B2B002B2B2B002B2B2BFF2B2B2B002B2B
+      2B002B2B2B002B2B2B002B2B2B00FFFFFF00FF9543CFFF7C1BFFF86800FFE05E
+      00AFFFFFFF00FFFFFF002B2B2B002B2B2B002B2B2B002B2B2B002B2B2B002B2B
+      2B002B2B2B002B2B2B002B2B2B00FFFFFF00FF934460FF7C1BFFF96600FFE05E
+      00FFE05E0020FFFFFF002B2B2B002B2B2B002B2B2B002B2B2B002B2B2B002B2B
+      2B00787C7CFF2B2B2B007B7B7BFFE05E00FFE05E00FFFF7C1BFFF86800FFE05E
+      00FFE05E0080FFFFFF002B2B2B002B2B2B002B2B2B002B2B2B002B2B2B002B2B
+      2B002B2B2B006B6767FF2B2B2B00FFFFFF00FFFFFF00FF7C1B9FF76800FFE05E
+      00FFE05E00DFFFFFFF002B2B2B005A5A5AFF5A5A5AFF2B2B2B002B2B2B002B2B
+      2B002B2B2B005A5A5AFF2B2B2B00FFFFFF00FFFFFF00FF7C1B40F96600FFE05E
+      00FFE05E00FFFFFFFF002B2B2B002B2B2B002B2B2B004B4B4BFF2B2B2B002B2B
+      2B002B2B2B004B4B4BFF2B2B2B00FFFFFF00FFFFFF00FFFFFF00F76800DFE05E
+      00FFE05E00FFFFFFFF002B2B2B003C403CFF3E3E3EFF3E3E3EFF2B2B2B002B2B
+      2B002B2B2B003C403CFF2B2B2B00FFFFFF00FFFFFF00FFFFFF00F8680080E05E
+      00FFE05E00FFFFFFFF00333333FF2B2B2B002B2B2B00333333FF2B2B2B002B2B
+      2B002B2B2B00333333FF2B2B2B00FFFFFF00FFFFFF00FF7C1B60E05E00FFE05E
+      00FFE05E00FFFFFFFF002B2B2BFF2B2B2B002B2B2B002B2B2BFF2B2B2B002B2B
+      2B002B2B2B002B2B2BFF2B2B2B00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF002B2B2B002B2B2BFF2B2B2BFF2B2B2B002B2B2BFF2B2B
+      2B002B2B2BFF2B2B2B002B2B2BFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF0035353500353535003535350035353500353535003535
+      35008B8B8BFF353535008C888CFFFF974DFFFF974DFFFF822650FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF0035353500353535003535350035353500353535003535
+      3500353535007B7B7BFF35353500FFB077FFFF984CFFFF8226BFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00353535008F8F8FFF8F8F8FFF35353500353535003535
+      3500353535006C6C6CFF35353500FFB276FFFF974DFFFF8226FFFF6F0620FFFF
+      FF00FFFFFF00FFFFFF00353535003535350035353500787878FF353535003535
+      3500353535005E5E5EFF35353500FFB076FFFF974DFFFF8225FFFF6F068FFFFF
+      FF00FFFFFF00FFFFFF0035353500636363FF636363FF656161FF353535003535
+      350035353500515151FF35353500FFB1779FFF974DFFFF8226FFFF6F05EFFFFF
+      FF00FFFFFF00FFFFFF00505050FF3535350035353500524E4EFF353535003535
+      350035353500464646FF35353500FFB07630FF974DFFFF8225FFFF6F05FFED65
+      0060FFFFFF00FFFFFF00414141FF3535350035353500404040FF353535003535
+      350035353500414141FF35353500FFFFFF00FF9A4CCFFF8226FFFF6F05FFED65
+      00AFFFFFFF00FFFFFF0035353500353535FF353535FF35353500353535FF3535
+      3500353535FF35353500353535FFFFFFFF00FF974D60FF8226FFFF6F06FFED65
+      00FFED650020FFFFFF0035353500353535003535350035353500353535003535
+      3500353535003535350035353500ED6500FFED6500FFFF8226FFFF6F05FFED65
+      00FFED650080FFFFFF00353535003535350035353500818181FF353535003535
+      3500353535003535350035353500FFFFFF00FFFFFF00FF82269FFF6F05FFED65
+      00FFED6500DFFFFFFF003535350035353500696969FF666A6AFF696969FF3535
+      3500353535003535350035353500FFFFFF00FFFFFF00FF822640FF6F06FFED65
+      00FFED6500FFED65005035353500545454FF545454FF515155FF515555FF5551
+      55FF353535003535350035353500FFFFFF00FFFFFF00FFFFFF00FF6F05DFED65
+      00FFED6500FFED6500AF353535003535350035353500424242FF353535003535
+      3500353535003535350035353500FFFFFF00FFFFFF00FFFFFF00FF6F0680ED65
+      00FFED6500FFED6500FFED6500303535350035353500353535FF353535003535
+      3500353535003535350035353500FFFFFF00FFFFFF00FF822660ED6500FFED65
+      00FFED6500FFED6500FFED6500FFED65008035353500353535FF353535003535
+      3500353535003535350035353500FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF0035353500353535FF353535003535
+      3500353535003535350035353500FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00BEB4A6D6C3B8ADFEC3B8ADFFC2B8ABFFC2B8
+      AAFFC1B8AAFFC1B7AAFFC1B6A9FFC1B6A8FFC1B6A9FFC1B6A9FFC2B8ABFFC3B9
+      ACFFC3B9ADFFC4BAADFFC1B9ABD9BCB09FECF0E6DCFFF0E6DCFFECE2D5FFEBE0
+      D3FFECE1D3FFEBDCCFFFEBDDCEFFEBDDCCFFEBDDCEFFEBDFCFFFEDE0D1FFEDE3
+      D6FFEDE4DBFFEFE7DEFFC1B6A5F1BEB09CEAE4D8C8FFE4D8C8FFE2D5C5FFE1D4
+      C5FFDCD0C2FFE1D5C5FFE0D3C4FFE2D5C8FFDDD1C4FFE1D4C5FFE3D7C7FFDDD0
+      C1FFE1D4C5FFE1D5C5FFC2B4A0EFBFB19BFDC3B8ADFFC3B8ADFFC2B8ABFFC2B8
+      AAFFC1B8AAFFC1B7AAFFC1B6A9FFC1B6A8FFC1B6A9FFC1B6A9FFC2B8ABFFC3B9
+      ACFFC3B9ADFFC4BAADFFC3B59FFEC6B8A1FDFFFFFFFFFFFFFFFFD7CBBEFFFFFF
+      FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+      BEFFFFFFFFFFFFFFFFFFCCBEAAFEC6B7A1FDFFFFFFFFFFFFFFFFD7CBBEFFFFFF
+      FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+      BEFFFFFFFFFFFFFFFFFFCABDAAFEC4B6A2FDD7CBBEFFD7CBBEFFD7CBBEFFD7CB
+      BEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CB
+      BEFFD7CBBEFFD7CBBEFFC9BDAAFEC3B6A1FDFFFFFFFFFFFFFFFFD7CBBEFFFFFF
+      FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+      BEFFFFFFFFFFFFFFFFFFC9BEA9FEC6B9A4FDFFFFFFFFFFFFFFFFD7CBBEFFFFFF
+      FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+      BEFFFFFFFFFFFFFFFFFFCCC0AAFEC6BAA5FDD7CBBEFFD7CBBEFFD7CBBEFFD7CB
+      BEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CB
+      BEFFD7CBBEFFD7CBBEFFD0C4AEFEC4B8A3FDFFFFFFFFFFFFFFFFD7CBBEFFFFFF
+      FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+      BEFFFFFFFFFFFFFFFFFFCEC3ADFEC5B8A6FEF6F6F6FFF6F6F6FFD7CBBEFFFFFF
+      FFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CBBEFFFFFFFFFFFFFFFFFFD7CB
+      BEFFFFFFFFFFFFFFFFFFCDC2ADFEC4BAA8FAD7CBBEFFD7CBBEFFD7CBBEFFD7CB
+      BEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CBBEFFD7CB
+      BEFFD7CBBEFFD7CBBEFFCCC1AEFBB0A796ADBEB7AEE0BEB6AEFBBAB3A8FABAB1
+      A6FAB8AFA4FAB8AFA3FAB7AEA2FABAAFA4FABDB1A6FABEB2A9FABEB3A9FABEB5
+      AAF9C1B5AFFABFB5AEF5B3A99AAFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF0000000000000000000000000000000000EFC2
+      701BEFC2707EEFC270BDEFC270B4EFC270C0EFC270C0EFC27084EFC270270000
+      0000000000000000000000000000000000000000000000000000EFC2705AF3CF
+      8EDCF7DEB2F7F6DDAEFFFAECD4FFF8E5C3FFF8E3BEFEF5D9A5F8F3D294D6EFC2
+      707200000000000000000000000000000000EBBE6B03EBBD6BA5F4D9A7F0FFFD
+      F9FFF2D49DFFFEFBF7FFF9EBD2FFF7E3C1FFFFFDFBFFF1D095FFFEFAF3FFF6E0
+      B9EBECBE6BBDEBBD6B090000000000000000E6B7657EF3D9ACEEF0D29FFFEECC
+      93FFF2D6A9FFFEFDFCFFF8E8D0FFF5E1BEFFFEFDFBFFF4DFBBFFEDC98CFFEFCF
+      9AFFF4DDB4ECE7B7659900000000E1B05D1BE7BF7CDFFEFCF5FFFFFDFAFFEBCA
+      93FFEFD3A6FFE7C07FFFE6BB75FFE5BA72FFE6BF7EFFEED1A1FFE9C589FFFFFD
+      F9FFFFFCF6FFEAC487D5E1B05D36DAA75578F6E4C7F3FEFCF5FFFFFBF4FFE6C1
+      87FFFEFCF6FFFEFAF5FFF4E1C5FFEFD8B4FFFFFBF6FFFEFBF7FFE8C690FFFCF4
+      EAFFFFFBF3FFF8EAD4F1DAA55399D39E4CB7FEF7EDFEFFF8EFFFF5E7CFFFE8C8
+      9AFFFEF9F0FFFFF9EEFFEFDBBCFFECD3ACFFFFF9F1FFFEF9F1FFEBD3ACFFF2DE
+      BFFFFDF7EEFFFFF5E7FECC9342C0CC9442C3FEF8ECFFFDF5E7FFE3C497FFE4C3
+      93FFFEF8EBFFFDF6E8FFE6C89DFFE3C291FFFEF7EBFFFDF6EAFFE5C89EFFE2C0
+      8FFFFEF6E9FFFDF5E5FFC28536C9C58A38CFE5C79EFFE0C094FFDAB47FFFD8B1
+      77FFE5C9A0FFE3C399FFDCB782FFD8B178FFE5C89FFFE1C094FFDBB783FFD7AF
+      75FFE3C59BFFE2C296FFC38736D5BB7F2DBAFDF5E9FEFEF4E2FFEEDABCFFDEBB
+      8CFFFEF7E8FFFDF3E1FFE9CFADFFE3C69CFFFEF7E8FFFEF5E3FFE2C49BFFE9D1
+      ADFFFDF4E2FFFEF4E2FEBA7C2CBAB5752487E8D0ACF3FEEDCFFFF8E8CDFFC99A
+      5FFFFDF2E1FFFEECCFFFE5C69FFFDFBF95FFFDF3DFFFFBEDD0FFCA9F66FFF5E3
+      CCFFFDEFD5FFF4E2C8F0B37323A2AE6D1B2DC08C4CD8FBEFD8FFFCE8C8FFC292
+      57FFE0C29BFFC4955CFFBB833EFFBA823CFFC59459FFD9B589FFC39456FFFEF4
+      DFFFFDF2D8FFBF8E56CCAD6B1B4800000000A8641293DCBD96EAC59965FFB880
+      41FFC99B64FFF8E9D1FFE3C7A1FFDAB98CFFF9ECD7FFD4AC7AFFBA833FFFC597
+      5FFFE1C6A3E7A56113AE0000000000000000A25E0B06A35D0BC6CA9E6CEFFBED
+      D6FFA5692FFFFAEAD0FFDDBB91FFD7B385FFFDF2DFFFBC8747FFF8EBD6FFD8B7
+      8DEBA15C0BD8A25D0B150000000000000000000000009D5704099D5605A5B17A
+      3FD5C79E6DF7CDA574FEDFC29BFFD5B284FFDBBD94FEC99D69F8C08F55CF9E57
+      05B49E5705120000000000000000000000000000000000000000000000009951
+      00369951009F9A5200E49A5200C09A5200C69A5200E19A5200AB9A5200420000
+      0000000000000000000000000000FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00F2ECE520D2BBA472D2BBA472D2BBA472D2BB
+      A472D2BBA472D2BBA472D2BBA472D2BBA472D2BBA472D2BBA472D2BBA472D2BB
+      A472D2BBA472D2BBA472D9C6B35FFBF9F70AF0E9E125F0E9E125F0E9E125F0E9
+      E125F0E9E125F0E9E125F0E9E125F0E9E125F0E9E125F0E9E125F0E9E125F0E9
+      E125F0E9E125F0E9E125F3EDE61FE2D4C549A56C3EFF9D6837FFB3734DFFB373
+      4DFFB3734DFFB3734DFFB3734DFFB3734DFFB3734DFFB3734DFFB3734DFFB373
+      4DFFAB6F45FFB0724AFFAA7F54D5E2D4C549C77D61FFA86D42FFFF9999FFFF99
+      99FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF99
+      99FFDF8979FFF4938EFFAA7F54D5E2D4C549C77D61FFA86D42FFFF9999FFFF99
+      99FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF99
+      99FFDF8979FFF4938EFFAA7F54D5E9DED338C98B70DFB98A67CDEE9088FFFF99
+      99FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFB97
+      95FFD68C78EDE28D7EF9BE9D7CA4FFFFFF00D2BBA472F0E9E125B3734DFFFF99
+      99FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFED90
+      86FFB99673AFA5774AE3FFFFFF00FFFFFF00D2BBA472F0E9E125B3734DFFFF99
+      99FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFED90
+      86FFB99673AFA5774AE3FFFFFF00F9F6F30FCFAE968FE2CFC052C37B5DFFFF99
+      99FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFF192
+      8AFFC19474BFB57D58E9EEE5DC2CE2D4C549C77D61FFA86D42FFFF9999FFFF99
+      99FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF99
+      99FFDF8979FFF4938EFFAA7F54D5E2D4C549C77D61FFA86D42FFFF9999FFFF99
+      99FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF9999FFFF99
+      99FFDF8979FFF4938EFFAA7F54D5E2D4C549BF7958FFA56C3FFFED9086FFED90
+      86FFED9086FFED9086FFED9086FFED9086FFED9086FFED9086FFED9086FFED90
+      86FFD2836CFFE38B7DFFAA7F54D5EBE2D831B99673AFB99673AFB99673AFB996
+      73AFB99673AFB99673AFB99673AFB99673AFB99673AFB99673AFB99673AFB996
+      73AFB99673AFB99673AFC5A88A92E6D9CC40A5774AE3A5774AE3A5774AE3A577
+      4AE3A5774AE3A5774AE3A5774AE3A5774AE3A5774AE3A5774AE3A5774AE3A577
+      4AE3A5774AE3A5774AE3B38D67BEFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF009E9E9E659E9E9E659E9E9E659E9E9E659E9E
+      9E659E9E9E659E9E9E659E9E9E659E9E9E659E9E9E659E9E9E659E9E9E659E9E
+      9E659E9E9E659E9E9E659E9E9E65BDBDBD45BDBDBD45BDBDBD45BDBDBD45BDBD
+      BD45BDBDBD45BDBDBD45BDBDBD45BDBDBD45BDBDBD45BDBDBD45BDBDBD45BDBD
+      BD45BDBDBD45BDBDBD45BDBDBD45D5D5D52CD5D5D52CD5D5D52CD5D5D52CD5D5
+      D52CD5D5D52CD5D5D52CD5D5D52CD5D5D52CD5D5D52CD5D5D52CD5D5D52CD5D5
+      D52CD5D5D52CD5D5D52CD5D5D52CE2E2E21EE2E2E21EE2E2E21EE2E2E21EE2E2
+      E21EE2E2E21EE2E2E21EE2E2E21EE2E2E21EE2E2E21EE2E2E21EE2E2E21EE2E2
+      E21EE2E2E21EE2E2E21EE2E2E21E444444C2505051B659595AAC5F5F5FA60909
+      0AFF09090AFF09090AFF09090AFF09090AFF09090AFF09090AFF09090AFF2F2F
+      30D7232324E41A1A1AEE141415F3313132D639393ACD404041C6434344C20909
+      0AFF09090AFF09090AFF09090AFF09090AFF09090AFF09090AFF09090AFF2323
+      24E41B1B1CED141415F3101011F7222223E5282829DF2C2C2DDB2E2E2FD80909
+      0AFF09090AFF09090AFF09090AFF09090AFF09090AFF09090AFF09090AFF1A1A
+      1AEE141415F3101011F80E0E0FFA1A1A1BED1E1E1FE9212122E6222223E50909
+      0AFF09090AFF09090AFF09090AFF09090AFF09090AFF09090AFF09090AFF1414
+      15F3101011F70E0E0FFA0C0C0DFCC4C4C53DD7D7D729E6E6E61AEEEEEE124444
+      44C2505051B659595AAC5F5F5FA62F2F30D7232324E41A1A1AEE141415F3A5A5
+      A65D939393708484857F7C7C7D88B8B8B849CFCFCF32E0E0E020EAEAEA163131
+      32D639393ACD404041C6434344C2232324E41B1B1CED141415F3101011F79393
+      93707C7C7D886B6B6B9A616161A4AFAFAF53C8C8C839DCDCDC24E7E7E7192222
+      23E5282829DF2C2C2DDB2E2E2FD81A1A1AEE141415F3101011F80E0E0FFA8484
+      857F6B6B6B9A575758AE4C4C4CBAA9A9AA59C5C5C53DDADADA27E6E6E61A1A1A
+      1BED1E1E1FE9212122E6222223E5141415F3101011F70E0E0FFA0C0C0DFC7C7C
+      7D88616161A44C4C4CBA404040C6FFFFFF00FFFFFF00FFFFFF00FFFFFF00C4C4
+      C53DD7D7D729E6E6E61AEEEEEE12A5A5A65D939393708484857F7C7C7D88FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00B8B8
+      B849CFCFCF32E0E0E020EAEAEA16939393707C7C7D886B6B6B9A616161A4FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00AFAF
+      AF53C8C8C839DCDCDC24E7E7E7198484857F6B6B6B9A575758AE4C4C4CBAFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00A9A9
+      AA59C5C5C53DDADADA27E6E6E61A7C7C7D88616161A44C4C4CBA404040C6FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00
     }
   end
-  object ActionList: TActionList
+  object Actions: TActionList
     Images = ImageList
-    left = 144
-    top = 168
-    object FileNew: TAction
+    left = 176
+    top = 160
+    object aFileNew: TAction
       Category = 'File'
       Caption = '&New'
       Hint = 'New|Create a new file'
       ImageIndex = 6
-      OnExecute = FileNewExecute
+      OnExecute = aFileNewExecute
       ShortCut = 16462
     end
-    object FileOpen: TAction
+    object aFileOpen: TAction
       Category = 'File'
       Caption = '&Open...'
       Hint = 'Open|Open a file'
       ImageIndex = 7
-      OnExecute = FileOpenExecute
+      OnExecute = aFileOpenExecute
       ShortCut = 16463
     end
-    object FileSave: TAction
+    object aFileSave: TAction
       Category = 'File'
       Caption = '&Save'
       Hint = 'Save|Save current file'
       ImageIndex = 8
-      OnExecute = FileSaveExecute
+      OnExecute = aFileSaveExecute
       ShortCut = 16467
     end
-    object FileSaveAs: TAction
+    object aFileSaveAs: TAction
       Category = 'File'
       Caption = 'Save &As...'
       Hint = 'Save As|Save current file with different name'
-      OnExecute = FileSaveAsExecute
+      OnExecute = aFileSaveAsExecute
     end
-    object FileExit: TAction
+    object aFileExit: TAction
       Category = 'File'
       Caption = 'E&xit'
       Hint = 'Exit|Exit application'
-      OnExecute = FileExitExecute
+      OnExecute = aFileExitExecute
     end
-    object EditUndo: TAction
+    object aEditUndo: TAction
       Category = 'Edit'
       Caption = '&Undo'
       Hint = 'Undo|undo'
       ImageIndex = 3
-      OnExecute = EditUndoExecute
+      OnExecute = aEditUndoExecute
       ShortCut = 16474
     end
-    object EditRedo: TAction
+    object aEditRedo: TAction
       Category = 'Edit'
       Caption = '&Redo'
       Hint = 'Redo|Redo'
       ImageIndex = 4
-      OnExecute = EditRedoExecute
+      OnExecute = aEditRedoExecute
       ShortCut = 24666
     end
-    object EditCut: TEditCut
+    object aEditCut: TEditCut
       Category = 'Edit'
       Caption = 'Cu&t'
       Hint = 'Cut|Cuts the selection and puts it on the Clipboard'
       ImageIndex = 0
-      OnExecute = EditCutExecute
+      OnExecute = aEditCutExecute
       ShortCut = 16472
     end
-    object EditCopy: TEditCopy
+    object aEditCopy: TEditCopy
       Category = 'Edit'
       Caption = '&Copy'
       Hint = 'Copy|Copies the selection and puts it on the Clipboard'
       ImageIndex = 1
-      OnExecute = EditCopyExecute
+      OnExecute = aEditCopyExecute
     end
-    object EditPaste: TEditPaste
+    object aEditPaste: TEditPaste
       Category = 'Edit'
       Caption = '&Paste'
       Hint = 'Paste|Inserts Clipboard contents'
       ImageIndex = 2
-      OnExecute = EditPasteExecute
+      OnExecute = aEditPasteExecute
       ShortCut = 16470
     end
-    object HelpAbout: TAction
+    object aHelpAbout: TAction
       Category = 'Help'
       Caption = '&About...'
       Hint = 'About|Displays program information, version number, and copyright'
-      OnExecute = HelpAboutExecute
+      OnExecute = aHelpAboutExecute
     end
-    object EditSelectAll: TAction
+    object aEditSelectAll: TAction
       Category = 'Edit'
       Caption = 'Select &All'
       Hint = 'Select All|Select all'
-      OnExecute = EditSelectAllExecute
+      OnExecute = aEditSelectAllExecute
       ShortCut = 16449
     end
-    object SearchFind: TAction
+    object aSearchFind: TAction
       Category = 'Search'
       Caption = '&Find...'
       Hint = 'Find|Find next text'
       ImageIndex = 12
-      OnExecute = SearchFindExecute
+      OnExecute = aSearchFindExecute
       ShortCut = 16454
     end
-    object SearchReplace: TAction
+    object aSearchReplace: TAction
       Category = 'Search'
       Caption = '&Replace...'
       Hint = '&Replace...'
       ImageIndex = 13
-      OnExecute = SearchReplaceExecute
+      OnExecute = aSearchReplaceExecute
       ShortCut = 16466
     end
-    object LyseeRun: TAction
+    object aLyseeRun: TAction
       Category = 'Lysee'
       Caption = '&Run...'
       Hint = 'Run|Run current file ...'
-      OnExecute = LyseeRunExecute
+      OnExecute = aLyseeRunExecute
       ShortCut = 120
     end
-    object LyseeSyntaxCheck: TAction
+    object aLyseeSyntaxCheck: TAction
       Category = 'Lysee'
       Caption = '&Syntax Check'
       Hint = 'Syntax check|check file syntax'
-      OnExecute = LyseeSyntaxCheckExecute
+      OnExecute = aLyseeSyntaxCheckExecute
       ShortCut = 16504
     end
+    object aSearchNext: TAction
+      Category = 'Search'
+      Caption = 'Find &Next'
+      Enabled = False
+      Hint = 'Find Next|Find or replace next'
+      OnExecute = aSearchNextExecute
+      ShortCut = 114
+    end
+    object aTabClose: TAction
+      Category = 'tab'
+      Caption = 'Close &Tab'
+      Enabled = False
+      Hint = 'Close Tab|Close current Tab'
+      ImageIndex = 5
+      OnExecute = aTabCloseExecute
+    end
+    object actRiviLeft: TAction
+      Category = 'rivi'
+      Caption = '&Left'
+      Hint = 'Left'
+      ImageIndex = 16
+      OnExecute = actRiviLeftExecute
+    end
+    object actRiviCenter: TAction
+      Category = 'rivi'
+      Caption = '&Center'
+      Hint = 'Center'
+      ImageIndex = 15
+      OnExecute = actRiviCenterExecute
+    end
+    object actRiviRight: TAction
+      Category = 'rivi'
+      Caption = '&Right'
+      Hint = 'Right'
+      ImageIndex = 17
+      OnExecute = actRiviRightExecute
+    end
+    object actRiviBold: TAction
+      Category = 'rivi'
+      Caption = '&Bold'
+      Hint = 'Bold'
+      ImageIndex = 18
+      OnExecute = actRiviBoldExecute
+    end
+    object actRiviItalic: TAction
+      Category = 'rivi'
+      Caption = '&Italic'
+      Hint = 'Italic'
+      ImageIndex = 19
+      OnExecute = actRiviItalicExecute
+    end
+    object actRiviUnderline: TAction
+      Category = 'rivi'
+      Caption = '&Underline'
+      Hint = 'Underline'
+      ImageIndex = 20
+      OnExecute = actRiviUnderlineExecute
+    end
+    object actRiviStrikeout: TAction
+      Category = 'rivi'
+      Caption = '&Strikeout'
+      Hint = 'Strikeout'
+      ImageIndex = 21
+      OnExecute = actRiviStrikeoutExecute
+    end
+    object actRiviSuperScript: TAction
+      Category = 'rivi'
+      Caption = 'Su&per Script'
+      Hint = 'Super Script'
+      ImageIndex = 28
+      OnExecute = actRiviSuperScriptExecute
+    end
+    object actRiviSubScript: TAction
+      Category = 'rivi'
+      Caption = 'Subsc&ript'
+      Hint = 'Subscript'
+      ImageIndex = 27
+      OnExecute = actRiviSubScriptExecute
+    end
+    object actRiviHeiti: TAction
+      Category = 'rivi'
+      Caption = '&Heiti'
+      Hint = 'Heiti'
+      ImageIndex = 23
+      OnExecute = actRiviHeitiExecute
+    end
+    object actRiviKaiti: TAction
+      Category = 'rivi'
+      Caption = '&Kaiti'
+      Hint = 'Kaiti'
+      ImageIndex = 24
+      OnExecute = actRiviKaitiExecute
+    end
+    object actRiviImage: TAction
+      Category = 'rivi'
+      Caption = 'I&nsert image ...'
+      Hint = 'Insert image ...'
+      ImageIndex = 22
+      OnExecute = actRiviImageExecute
+    end
+    object actRiviLink: TAction
+      Category = 'rivi'
+      Caption = '&Link ...'
+      Hint = 'Link ...'
+      ImageIndex = 30
+      OnExecute = actRiviLinkExecute
+    end
+    object actRiviTable: TAction
+      Category = 'rivi'
+      Caption = 'Insert &Table'
+      Hint = 'Table'
+      ImageIndex = 29
+      OnExecute = actRiviTableExecute
+    end
+    object actRiviColor: TAction
+      Category = 'rivi'
+      Caption = 'T&ext Color ...'
+      Hint = 'Text Color ...'
+      ImageIndex = 25
+      OnExecute = actRiviColorExecute
+    end
+    object actRiviBackground: TAction
+      Category = 'rivi'
+      Caption = 'B&ackground ...'
+      Hint = 'Background ...'
+      ImageIndex = 26
+      OnExecute = actRiviBackgroundExecute
+    end
+  end
+  object APP: TApplicationProperties
+    OnDropFiles = APPDropFiles
+    left = 315
+    top = 91
+  end
+  object dlgImage: TOpenPictureDialog
+    left = 315
+    top = 160
+  end
+  object dlgColor: TColorDialog
+    Color = clBlack
+    CustomColors.Strings = (
+      'ColorA=000000'
+      'ColorB=000080'
+      'ColorC=008000'
+      'ColorD=008080'
+      'ColorE=800000'
+      'ColorF=800080'
+      'ColorG=808000'
+      'ColorH=808080'
+      'ColorI=C0C0C0'
+      'ColorJ=0000FF'
+      'ColorK=00FF00'
+      'ColorL=00FFFF'
+      'ColorM=FF0000'
+      'ColorN=FF00FF'
+      'ColorO=FFFF00'
+      'ColorP=FFFFFF'
+      'ColorQ=C0DCC0'
+      'ColorR=F0CAA6'
+      'ColorS=F0FBFF'
+      'ColorT=A4A0A0'
+    )
+    left = 245
+    top = 160
   end
 end

@@ -1,0 +1,58 @@
+library strutils;
+
+uses
+  Classes, SysUtils, StrUtils, basic, lysee;
+
+type
+
+  aa = integer;
+
+  TLiStrbuf = class
+    constructor Create(const AStr: string);
+    procedure Replace(const patten, newStr:string; IgnoreCase, ReplaceFirstOnly: boolean);
+    function Pos(const SubStr:string; IgnoreCase:boolean; Start: integer): integer;
+    function LastPos(const SubStr:string; IgnoreCase:boolean; Start: integer): integer;
+    procedure Trim;
+    procedure TrimLeft;
+    procedure TrimRight;
+    procedure TrimAll;
+    procedure Lower;
+    procedure Upper;
+    procedure Delete(Index, Count:integer);
+    procedure Insert(const SubStr:string; Index: integer);
+    procedure Join(const S: string);
+    procedure Reverse;
+    procedure Randomize;
+    function Contains(const SubStr: string; IgnoreCase: boolean): boolean;
+    function Copy(Index, Count: int64): string;
+    property Buffer: string read FBuffer write FBuffer;
+    property Size: integer read GetSize write SetSize;
+  end;
+
+  strcut = class
+    constructor Create(const AHeader, ADelimiter: string);
+    procedure Clear;
+    procedure ClearValues;
+    procedure Init(const AHeader, ADelimiter: string);
+    procedure Parse(const S: string);
+    function IndexOf(const Key: string): integer;
+    function ValueAt(Index: integer): string;
+    function KeyList: string;
+    function ValueList: string;
+    function ReadMatched(Source: strcut): integer;
+    function GetKey(Index: integer): string;
+    procedure SetKey(Index: integer; const Key: string);
+    procedure RenameKey(const Key, NewKey: string);
+    function GetValue(const Name: string): string;
+    procedure SetValue(const Name, Value: string);
+    procedure Exchange(X1, X2: integer);
+    procedure ExchangeKey(const Key1, Key2: string);
+    procedure Move(X1, X2: Integer);
+    procedure MoveKey(const Key1, Key2: string);
+    procedure Delete(X: integer);
+    procedure Remove(const Key: string);
+    function Mask: string;
+    function Delimiter: string;
+  end;
+
+function hex(a: aa): aa;

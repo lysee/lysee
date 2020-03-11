@@ -1,0 +1,181 @@
+object FindForm: TFindForm
+  Left = 533
+  Height = 312
+  Top = 273
+  Width = 455
+  BorderStyle = bsDialog
+  Caption = 'Find'
+  ClientHeight = 312
+  ClientWidth = 455
+  Font.CharSet = ANSI_CHARSET
+  Font.Color = clBlack
+  Font.Height = -14
+  Font.Name = 'Microsoft Sans Serif'
+  Font.Pitch = fpVariable
+  Font.Quality = fqDraft
+  OnActivate = FormActivate
+  OnCreate = FormCreate
+  LCLVersion = '2.0.6.0'
+  object Label1: TLabel
+    Left = 27
+    Height = 17
+    Top = 21
+    Width = 53
+    Caption = 'Find text'
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -14
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    ParentColor = False
+    ParentFont = False
+  end
+  object eFind: TEdit
+    Left = 97
+    Height = 25
+    Top = 19
+    Width = 332
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -14
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    OnChange = eFindChange
+    ParentFont = False
+    TabOrder = 0
+  end
+  object cbReplace: TCheckBox
+    Left = 27
+    Height = 21
+    Top = 48
+    Width = 102
+    Caption = 'Replace with'
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -14
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    OnChange = cbReplaceChange
+    ParentFont = False
+    TabOrder = 1
+  end
+  object eReplace: TEdit
+    Left = 139
+    Height = 25
+    Top = 45
+    Width = 290
+    Enabled = False
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -14
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    OnChange = eReplaceChange
+    ParentFont = False
+    TabOrder = 2
+  end
+  object gbOptions: TGroupBox
+    Left = 25
+    Height = 169
+    Top = 80
+    Width = 404
+    Caption = ' Options '
+    ClientHeight = 147
+    ClientWidth = 400
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -14
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    ParentFont = False
+    TabOrder = 3
+    object cbSelectedText: TCheckBox
+      Left = 21
+      Height = 21
+      Top = 71
+      Width = 147
+      Caption = 'Find in selected text'
+      Font.CharSet = ANSI_CHARSET
+      Font.Color = clBlack
+      Font.Height = -14
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Pitch = fpVariable
+      Font.Quality = fqDraft
+      OnChange = cbSelectedTextChange
+      ParentFont = False
+      TabOrder = 2
+    end
+    object cbCaseSensitive: TCheckBox
+      Left = 21
+      Height = 21
+      Top = 42
+      Width = 113
+      Caption = 'Case sensitive'
+      Font.CharSet = ANSI_CHARSET
+      Font.Color = clBlack
+      Font.Height = -14
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Pitch = fpVariable
+      Font.Quality = fqDraft
+      OnChange = cbCaseSensitiveChange
+      ParentFont = False
+      TabOrder = 1
+    end
+    object cbWholeWord: TCheckBox
+      Left = 21
+      Height = 21
+      Top = 13
+      Width = 126
+      Caption = 'Whole word only'
+      Font.CharSet = ANSI_CHARSET
+      Font.Color = clBlack
+      Font.Height = -14
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Pitch = fpVariable
+      Font.Quality = fqDraft
+      OnChange = cbWholeWordChange
+      ParentFont = False
+      TabOrder = 0
+    end
+  end
+  object bFind: TButton
+    Left = 149
+    Height = 25
+    Top = 262
+    Width = 75
+    Caption = 'Find'
+    Default = True
+    Enabled = False
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -14
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    ModalResult = 1
+    ParentFont = False
+    TabOrder = 4
+  end
+  object bCancel: TButton
+    Left = 231
+    Height = 25
+    Top = 262
+    Width = 75
+    Cancel = True
+    Caption = 'Cancel'
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -14
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    ModalResult = 2
+    ParentFont = False
+    TabOrder = 5
+  end
+end

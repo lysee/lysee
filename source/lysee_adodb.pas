@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2012, Li Yun Jie. All Rights Reserved.            }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2012/05/19                                                      }
-{    MODIFIED: 2017/02/21                                                      }
+{    MODIFIED: 2019/03/02                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -14,16 +14,13 @@ unit lysee_adodb;
 {$mode objfpc}{$H+}
 {$ENDIF}
 
-{$IFNDEF WINDOWS}
-{$IFDEF MSWINDOWS}{$DEFINE WINDOWS}{$ENDIF}
-{$ENDIF}
-
 interface
 
 uses
-  Classes, SysUtils, Db, adodb, basic, lysee, lysee_db;
+  Classes, SysUtils, Db, adodb, Basic, Lysee, lysee_db;
 
 const
+
   CS_SQLSERVER = 'Provider=SQLOLEDB.1;Persist Security Info=True;' +
                  'User ID={user};Password={password};' +
                  'Initial Catalog={dbname};Data Source={host}';
@@ -57,11 +54,12 @@ const
   CS_PARADOX   = 'Provider=Microsoft.Jet.OLEDB.4.0;Data Source={dir};' +
                  'Mode=Share Deny None;Extended Properties=Paradox 7.X;' +
                  'Persist Security Info=False';
+
 type
 
-  { TLyseeAdoQuery }
+  { TLyAdoQuery }
 
-  TLyseeAdoQuery = class(TLyseeDataSet)
+  TLyAdoQuery = class(TLyDataSet)
   private
     FQuery: TADOQuery;
   public
@@ -69,18 +67,22 @@ type
     procedure OpenSQL(const SQL: string);
   end;
 
-  { TLyseeAdoQueryType }
+  { TLyAdoQueryType }
 
-  TLyseeAdoQueryType = class(TLyseeDataSetType)
+  TLyAdoQueryType = class(TLyDataSetType)
+  private
+    procedure MyOpenSQL(const Param: TLyParam);
+    procedure MyExecSQL(const Param: TLyParam);
   protected
-    procedure MyOpenSQL(const Param: TLyseeParam);
-    procedure MyExecSQL(const Param: TLyseeParam);
     procedure Setup;override;
+  public
+    function InheriteClassType: TLyTypeClass;override;
+    procedure Convert(Value: TLyValue);override;
   end;
 
-  { TLyseeAdoConnection }
+  { TLyAdoConnection }
 
-  TLyseeAdoConnection = class(TLyseeDataBase)
+  TLyAdoConnection = class(TLyDataBase)
   private
     FADODB: TADOConnection;
     FQuery: TADOQuery;
@@ -102,90 +104,130 @@ type
     procedure GetTableNames(List: TStrings; SystemTables: boolean);override;
     procedure GetProcedureNames(List: TStrings);override;
     procedure GetFieldNames(List: TStrings; const Table: string);override;
-    function OpenSQL(const SQL: string): TLyseeAdoQuery;
+    function OpenSQL(const SQL: string): TLyAdoQuery;
     function ExecSQL(const SQL: string): integer;
-    function NewQuery: TLyseeAdoQuery;
+    function NewQuery: TLyAdoQuery;
     property ConnectionString: string read GetConnectionString write SetConnectionString;
     property CursorLocation: TCursorLocation read GetCursorLocation write SetCursorLocation;
     property Mode: TConnectMode read GetMode write SetMode;
   end;
 
-  { TLyseeAdoConnectionType }
+  { TLyAdoConnectionType }
 
-  TLyseeAdoConnectionType = class(TLyseeDataBaseType)
-  protected
-    procedure MyCreate(const Param: TLyseeParam);
-    procedure MyOpenEx(const Param: TLyseeParam);
-    procedure MyConnectSQLServer(const Param: TLyseeParam);
-    procedure MyConnectAccess(const Param: TLyseeParam);
-    procedure MyConnectExcelForRead(const Param: TLyseeParam);
-    procedure MyConnectExcelForReadWrite(const Param: TLyseeParam);
-    procedure MyConnectOracle(const Param: TLyseeParam);
-    procedure MyConnectTextDB(const Param: TLyseeParam);
-    procedure MyConnectDBase(const Param: TLyseeParam);
-    procedure MyConnectParadox(const Param: TLyseeParam);
-    procedure MyOpenSQL(const Param: TLyseeParam);
-    procedure MyExecSQL(const Param: TLyseeParam);
-    procedure MyGetConnectionString(const Param: TLyseeParam);
-    procedure MySetConnectionString(const Param: TLyseeParam);
-    procedure MyGetConnectMode(const Param: TLyseeParam);
-    procedure MySetConnectMode(const Param: TLyseeParam);
-    procedure MyGetConnectOption(const Param: TLyseeParam);
-    procedure MySetConnectOption(const Param: TLyseeParam);
-    procedure MyGetCursorLocation(const Param: TLyseeParam);
-    procedure MySetCursorLocation(const Param: TLyseeParam);
-    procedure MyGetCommandTimeout(const Param: TLyseeParam);
-    procedure MySetCommandTimeout(const Param: TLyseeParam);
-    procedure MyGetConnectionTimeout(const Param: TLyseeParam);
-    procedure MySetConnectionTimeout(const Param: TLyseeParam);
-    procedure MyGetIsolationLevel(const Param: TLyseeParam);
-    procedure MySetIsolationLevel(const Param: TLyseeParam);
-    procedure MyGetKeepConnection(const Param: TLyseeParam);
-    procedure MySetKeepConnection(const Param: TLyseeParam);
-    procedure MyGetProvider(const Param: TLyseeParam);
-    procedure MySetProvider(const Param: TLyseeParam);
-    procedure MyGetDefaultDatabase(const Param: TLyseeParam);
-    procedure MySetDefaultDatabase(const Param: TLyseeParam);
-    procedure Setup;override;
-  end;
-
-  { TLyseeAdodbModule }
-
-  TLyseeAdodbModule = class(TLyseeModule)
+  TLyAdoConnectionType = class(TLyDataBaseType)
   private
-    procedure DoSetup(Sender: TObject);
+    procedure MyOpenEx(const Param: TLyParam);
+    procedure MyConnectSQLServer(const Param: TLyParam);
+    procedure MyConnectAccess(const Param: TLyParam);
+    procedure MyConnectExcelForRead(const Param: TLyParam);
+    procedure MyConnectExcelForReadWrite(const Param: TLyParam);
+    procedure MyConnectOracle(const Param: TLyParam);
+    procedure MyConnectTextDB(const Param: TLyParam);
+    procedure MyConnectDBase(const Param: TLyParam);
+    procedure MyConnectParadox(const Param: TLyParam);
+    procedure MyOpenSQL(const Param: TLyParam);
+    procedure MyExecSQL(const Param: TLyParam);
+    procedure MyGetConnectionString(const Param: TLyParam);
+    procedure MySetConnectionString(const Param: TLyParam);
+    procedure MyGetConnectMode(const Param: TLyParam);
+    procedure MySetConnectMode(const Param: TLyParam);
+    procedure MyGetConnectOption(const Param: TLyParam);
+    procedure MySetConnectOption(const Param: TLyParam);
+    procedure MyGetCursorLocation(const Param: TLyParam);
+    procedure MySetCursorLocation(const Param: TLyParam);
+    procedure MyGetCommandTimeout(const Param: TLyParam);
+    procedure MySetCommandTimeout(const Param: TLyParam);
+    procedure MyGetConnectionTimeout(const Param: TLyParam);
+    procedure MySetConnectionTimeout(const Param: TLyParam);
+    procedure MyGetIsolationLevel(const Param: TLyParam);
+    procedure MySetIsolationLevel(const Param: TLyParam);
+    procedure MyGetKeepConnection(const Param: TLyParam);
+    procedure MySetKeepConnection(const Param: TLyParam);
+    procedure MyGetProvider(const Param: TLyParam);
+    procedure MySetProvider(const Param: TLyParam);
+    procedure MyGetDefaultDatabase(const Param: TLyParam);
+    procedure MySetDefaultDatabase(const Param: TLyParam);
+  protected
+    function InstanceClass: TClass;override;
+    function CreateInstance: pointer;override;
+    procedure Setup;override;
   public
-    constructor Create(const AName: string);override;
+    procedure Convert(Value: TLyValue);override;
   end;
 
 var
-  my_adodb: TLyseeAdodbModule;
-  my_defdb: TLyseeAdoConnection;
-  my_connection: TLyseeAdoConnectionType;
-  my_query: TLyseeAdoQueryType;
-  my_cursorLocation: TLyseeEnumType;
-  my_connectOption: TLyseeEnumType;
-  my_connectMode: TLyseeEnumType;
-  my_isolationLevel: TLyseeEnumType;
+  my_connection: TLyAdoConnectionType;
+  my_query: TLyAdoQueryType;
+  my_cursorLocation: TLyEnumType;
+  my_connectOption: TLyEnumType;
+  my_connectMode: TLyEnumType;
+  my_isolationLevel: TLyEnumType;
 
-function NewConnection: TLyseeAdoConnection;
-function DefConnection: TLyseeAdoConnection;
+procedure Setup;
+
+function NewConnection: TLyAdoConnection;
+function DefConnection: TLyAdoConnection;
 function SelectStr(const S1, S2: string): string;
 function ReplaceTag(const S, Tag, Value: string): string;
-function ReplaceTags(const S: string; const Tags, Values: array of string): string;
+function ReplaceTags(const S: string;
+  const Tags, Values: array of string): string;
 
 implementation
 
 uses
   ActiveX;
 
-function NewConnection: TLyseeAdoConnection;
+var
+  my_adb: TLyAdoConnection;
+
+procedure pp_adodb_adb(const Param: TLyParam);
+begin
+  Param.Result.Assign(my_connection, DefConnection);
+end;
+
+procedure Setup;
+begin
+  my_system.Consts.Add('CS_SQLSERVER').AsString := CS_SQLSERVER;
+  my_system.Consts.Add('CS_ACCESS').AsString := CS_ACCESS;
+  my_system.Consts.Add('CS_ORACLE').AsString := CS_ORACLE;
+  my_system.Consts.Add('CS_EXCEL_R').AsString := CS_EXCEL_R;
+  my_system.Consts.Add('CS_EXCEL_W').AsString := CS_EXCEL_W;
+  my_system.Consts.Add('CS_EXCELX').AsString := CS_EXCELX;
+  my_system.Consts.Add('CS_TEXT').AsString := CS_TEXT;
+  my_system.Consts.Add('CS_DBASE').AsString := CS_DBASE;
+  my_system.Consts.Add('CS_PARADOX').AsString := CS_PARADOX;
+
+  my_cursorLocation := my_system.AddEnumType(
+    'TCursorLocation',
+    ['clUseServer', 'clUseClient']);
+
+  my_connectOption := my_system.AddEnumType(
+    'TConnectOption',
+    ['coConnectUnspecified', 'coAsyncConnect']);
+
+  my_connectMode := my_system.AddEnumType(
+    'TConnectMode',
+    ['cmUnknown', 'cmRead', 'cmWrite', 'cmReadWrite', 'cmShareDenyRead',
+     'cmShareDenyWrite', 'cmShareExclusive', 'cmShareDenyNone']);
+
+  my_isolationLevel := my_system.AddEnumType(
+    'TIsolationLevel',
+    ['ilUnspecified', 'ilChaos', 'ilReadUncommitted', 'ilBrowse',
+     'ilCursorStability', 'ilReadCommitted', 'ilRepeatableRead',
+     'ilSerializable', 'ilIsolated']);
+
+  my_query := TLyAdoQueryType.Create('TADOQuery', my_system);
+  my_connection := TLyAdoConnectionType.Create('TADOConnection', my_system);
+  my_system.AddFunc('Adb', my_connection, {$IFDEF FPC}@{$ENDIF}pp_adodb_adb);
+end;
+
+function NewConnection: TLyAdoConnection;
 var
   A: TADOConnection;
 begin
   A := TADOConnection.Create(nil);
   try
-    Result := TLyseeAdoConnection.Create(A);
+    Result := TLyAdoConnection.Create(A);
     Result.FADODB := A;
     A.LoginPrompt := false;
   except
@@ -194,14 +236,14 @@ begin
   end;
 end;
 
-function DefConnection: TLyseeAdoConnection;
+function DefConnection: TLyAdoConnection;
 begin
-  if my_defdb = nil then
+  if my_adb = nil then
   begin
-    my_defdb := NewConnection;
-    my_defdb.IncRefcount;
+    my_adb := NewConnection;
+    my_adb.IncRefcount;
   end;
-  Result := my_defdb;
+  Result := my_adb;
 end;
 
 function SelectStr(const S1, S2: string): string;
@@ -216,7 +258,8 @@ begin
   Result := StringReplace(S, '{' + Tag + '}', Value, [rfReplaceAll, rfIgnoreCase]);
 end;
 
-function ReplaceTags(const S: string; const Tags, Values: array of string): string;
+function ReplaceTags(const S: string;
+  const Tags, Values: array of string): string;
 var
   I: integer;
 begin
@@ -225,23 +268,16 @@ begin
     Result := ReplaceTag(Result, Tags[I], Values[I]);
 end;
 
-//-- my_adodb ------------------------------------------------------------------
+{ TLyAdoQuery }
 
-procedure pp_adodb_adb(const Param: TLyseeParam);
-begin
-  Param.Result.SetTOA(my_connection, DefConnection);
-end;
-
-{ TLyseeAdoQuery }
-
-procedure TLyseeAdoQuery.OpenSQL(const SQL: string);
+procedure TLyAdoQuery.OpenSQL(const SQL: string);
 begin
   Close;
   FQuery.SQL.Text := SQL;
   Open;
 end;
 
-function TLyseeAdoQuery.ExecSQL(const SQL: string): integer;
+function TLyAdoQuery.ExecSQL(const SQL: string): integer;
 begin
   Close;
   FQuery.SQL.Text := SQL;
@@ -252,43 +288,57 @@ begin
   end;
 end;
 
-{ TLyseeAdoQueryType }
+{ TLyAdoQueryType }
 
-procedure TLyseeAdoQueryType.MyExecSQL(const Param: TLyseeParam);
+procedure TLyAdoQueryType.Convert(Value: TLyValue);
+begin
+  if Value.VType <> Self then
+    if Value.VType is TLyAdoQueryType then
+      Value.Assign(Self, Value.Data) else
+      inherited;
+end;
+
+function TLyAdoQueryType.InheriteClassType: TLyTypeClass;
+begin
+  Result := nil;
+end;
+
+procedure TLyAdoQueryType.MyExecSQL(const Param: TLyParam);
 var
-  Q: TLyseeAdoQuery;
+  Q: TLyAdoQuery;
 begin
   if Param.GetSelf(Q) then
     Param.Result.AsInteger := Q.ExecSQL(Param[1].AsString);
 end;
 
-procedure TLyseeAdoQueryType.MyOpenSQL(const Param: TLyseeParam);
+procedure TLyAdoQueryType.MyOpenSQL(const Param: TLyParam);
 var
-  Q: TLyseeAdoQuery;
+  Q: TLyAdoQuery;
 begin
   if Param.GetSelf(Q) then
     Q.OpenSQL(Param[1].AsString);
 end;
 
-procedure TLyseeAdoQueryType.Setup;
+procedure TLyAdoQueryType.Setup;
 begin
+  Parent := my_dataset;
+  inherited;
   Method('OpenSQL', my_nil, ['SQL'], [my_string],
          {$IFDEF FPC}@{$ENDIF}MyOpenSQL);
   Method('ExecSQL', my_int, ['SQL'], [my_string],
          {$IFDEF FPC}@{$ENDIF}MyExecSQL);
-  inherited;
 end;
 
-{ TLyseeAdoConnection }
+{ TLyAdoConnection }
 
-destructor TLyseeAdoConnection.Destroy;
+destructor TLyAdoConnection.Destroy;
 begin
   Close;
   FreeAndNil(FQuery);
   inherited Destroy;
 end;
 
-function TLyseeAdoConnection.ExecSQL(const SQL: string): integer;
+function TLyAdoConnection.ExecSQL(const SQL: string): integer;
 begin
   if FQuery = nil then
   begin
@@ -304,50 +354,50 @@ begin
   end;
 end;
 
-function TLyseeAdoConnection.GetConnectionString: string;
+function TLyAdoConnection.GetConnectionString: string;
 begin
   Result := FADODB.ConnectionString;
 end;
 
-function TLyseeAdoConnection.GetCursorLocation: TCursorLocation;
+function TLyAdoConnection.GetCursorLocation: TCursorLocation;
 begin
   Result := FADODB.CursorLocation;
 end;
 
-procedure TLyseeAdoConnection.GetProcedureNames(List: TStrings);
+procedure TLyAdoConnection.GetProcedureNames(List: TStrings);
 begin
   FADODB.GetProcedureNames(List);
 end;
 
-procedure TLyseeAdoConnection.GetFieldNames(List: TStrings; const Table: string);
+procedure TLyAdoConnection.GetFieldNames(List: TStrings; const Table: string);
 begin
   FADODB.GetFieldNames(Table, List);
 end;
 
-function TLyseeAdoConnection.GetMode: TConnectMode;
+function TLyAdoConnection.GetMode: TConnectMode;
 begin
   Result := FADODB.Mode;
 end;
 
-procedure TLyseeAdoConnection.GetTableNames(List: TStrings; SystemTables: boolean);
+procedure TLyAdoConnection.GetTableNames(List: TStrings; SystemTables: boolean);
 begin
   FADODB.GetTableNames(List, SystemTables);
 end;
 
-procedure TLyseeAdoConnection.Connect(const AConnectionString: string);
+procedure TLyAdoConnection.Connect(const AConnectionString: string);
 begin
   Close;
   FADODB.ConnectionString := AConnectionString;
   Open;
 end;
 
-procedure TLyseeAdoConnection.Connect(const AConnectionString: string;
+procedure TLyAdoConnection.Connect(const AConnectionString: string;
   const Tags, Values: array of string);
 begin
   Connect(ReplaceTags(AConnectionString, Tags, Values));
 end;
 
-function TLyseeAdoConnection.OpenSQL(const SQL: string): TLyseeAdoQuery;
+function TLyAdoConnection.OpenSQL(const SQL: string): TLyAdoQuery;
 begin
   Result := NewQuery;
   try
@@ -358,61 +408,74 @@ begin
   end;
 end;
 
-function TLyseeAdoConnection.InTransaction: boolean;
+function TLyAdoConnection.InTransaction: boolean;
 begin
   Result := FADODB.InTransaction;
 end;
 
-function TLyseeAdoConnection.NewQuery: TLyseeAdoQuery;
+function TLyAdoConnection.NewQuery: TLyAdoQuery;
 var
   Q: TADOQuery;
 begin
   Q := TADOQuery.Create(nil);
   Q.Connection := FADODB;
-  Result := TLyseeAdoQuery.Create(Q, Self);
+  Result := TLyAdoQuery.Create(Q, Self);
   Result.FQuery := Q;
 end;
 
-procedure TLyseeAdoConnection.Transact;
+procedure TLyAdoConnection.Transact;
 begin
   FADODB.BeginTrans;
 end;
 
-procedure TLyseeAdoConnection.Commit;
+procedure TLyAdoConnection.Commit;
 begin
   FADODB.CommitTrans;
 end;
 
-procedure TLyseeAdoConnection.Rollback;
+procedure TLyAdoConnection.Rollback;
 begin
   FADODB.RollbackTrans;
 end;
 
-procedure TLyseeAdoConnection.SetConnectionString(const Value: string);
+procedure TLyAdoConnection.SetConnectionString(const Value: string);
 begin
   FADODB.ConnectionString := Value;
 end;
 
-procedure TLyseeAdoConnection.SetCursorLocation(Value: TCursorLocation);
+procedure TLyAdoConnection.SetCursorLocation(Value: TCursorLocation);
 begin
   FADODB.CursorLocation := Value;
 end;
 
-procedure TLyseeAdoConnection.SetMode(Value: TConnectMode);
+procedure TLyAdoConnection.SetMode(Value: TConnectMode);
 begin
   FADODB.Mode := Value;
 end;
 
-{ TLyseeAdoConnectionType }
+{ TLyAdoConnectionType }
 
-procedure TLyseeAdoConnectionType.MyConnectAccess(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.Convert(Value: TLyValue);
+begin
+  if Value.VType <> Self then
+    if Value.VType is TLyAdoConnectionType then
+      Value.Assign(Self, Value.Data) else
+      inherited;
+end;
+
+function TLyAdoConnectionType.InstanceClass: TClass;
+begin
+  Result := TLyAdoConnection;
+end;
+
+procedure TLyAdoConnectionType.MyConnectAccess(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
   S: string;
 begin
   if Param.GetSelf(C) then
   begin
-    S := ReplaceTag(CS_ACCESS, 'fname', Param[1].GetFileName);
+    S := ReplaceTag(CS_ACCESS, 'fname', Param[1].AsFileName);
     if Param.Prmc > 2 then
       S := S + ';Jet OLEDB:Database Password=' + Param[2].AsString;
      {S := S + ';Password=' + Param[2].AsString;}
@@ -420,36 +483,36 @@ begin
   end;
 end;
 
-procedure TLyseeAdoConnectionType.MyConnectDBase(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyConnectDBase(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
   begin
     C.FADODB.CursorLocation := clUseServer;
-    C.Connect(CS_DBASE, ['dir'], [Param[1].GetFileName]);
+    C.Connect(CS_DBASE, ['dir'], [Param[1].AsFileName]);
   end;
 end;
 
-procedure TLyseeAdoConnectionType.MyConnectExcelForRead(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyConnectExcelForRead(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
-    C.Connect(CS_EXCEL_R, ['fname'], [Param[1].GetFileName]);
+    C.Connect(CS_EXCEL_R, ['fname'], [Param[1].AsFileName]);
 end;
 
-procedure TLyseeAdoConnectionType.MyConnectExcelForReadWrite(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyConnectExcelForReadWrite(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
-    C.Connect(CS_EXCEL_W, ['fname'], [Param[1].GetFileName]);
+    C.Connect(CS_EXCEL_W, ['fname'], [Param[1].AsFileName]);
 end;
 
-procedure TLyseeAdoConnectionType.MyConnectOracle(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyConnectOracle(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
   H, U, P: string;
 begin
   if Param.GetSelf(C) then
@@ -461,20 +524,20 @@ begin
   end;
 end;
 
-procedure TLyseeAdoConnectionType.MyConnectParadox(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyConnectParadox(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
   begin
     C.FADODB.CursorLocation := clUseServer;
-    C.Connect(CS_PARADOX, ['dir'], [Param[1].GetFileName]);
+    C.Connect(CS_PARADOX, ['dir'], [Param[1].AsFileName]);
   end;
 end;
 
-procedure TLyseeAdoConnectionType.MyConnectSQLServer(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyConnectSQLServer(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
   H, D, U, P: string;
 begin
   if Param.GetSelf(C) then
@@ -487,113 +550,108 @@ begin
   end;
 end;
 
-procedure TLyseeAdoConnectionType.MyConnectTextDB(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyConnectTextDB(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
-    C.Connect(CS_TEXT, ['dir'], [Param[1].GetFileName]);
+    C.Connect(CS_TEXT, ['dir'], [Param[1].AsFileName]);
 end;
 
-procedure TLyseeAdoConnectionType.MyCreate(const Param: TLyseeParam);
-begin
-  Param.Result.SetTOA(Self, NewConnection);
-end;
-
-procedure TLyseeAdoConnectionType.MyExecSQL(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyExecSQL(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     Param.Result.AsInteger := C.ExecSQL(Param[1].AsString);
 end;
 
-procedure TLyseeAdoConnectionType.MyGetCommandTimeout(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyGetCommandTimeout(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     Param.Result.AsInteger := C.FADODB.CommandTimeout;
 end;
 
-procedure TLyseeAdoConnectionType.MyGetConnectionString(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyGetConnectionString(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     Param.Result.AsString := C.ConnectionString;
 end;
 
-procedure TLyseeAdoConnectionType.MyGetConnectionTimeout(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyGetConnectionTimeout(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     Param.Result.AsInteger := C.FADODB.ConnectionTimeout;
 end;
 
-procedure TLyseeAdoConnectionType.MyGetConnectMode(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyGetConnectMode(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     my_connectMode.SetValue(Param.Result, Ord(C.FADODB.Mode));
 end;
 
-procedure TLyseeAdoConnectionType.MyGetConnectOption(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyGetConnectOption(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     my_connectOption.SetValue(Param.Result,
       Ord(C.FADODB.ConnectOptions));
 end;
 
-procedure TLyseeAdoConnectionType.MyGetCursorLocation(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyGetCursorLocation(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     my_cursorLocation.SetValue(Param.Result,
       Ord(C.FADODB.CursorLocation));
 end;
 
-procedure TLyseeAdoConnectionType.MyGetDefaultDatabase(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyGetDefaultDatabase(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     Param.Result.AsString := C.FADODB.DefaultDatabase;
 end;
 
-procedure TLyseeAdoConnectionType.MyGetIsolationLevel(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyGetIsolationLevel(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     my_isolationLevel.SetValue(Param.Result,
       Ord(C.FADODB.IsolationLevel));
 end;
 
-procedure TLyseeAdoConnectionType.MyGetKeepConnection(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyGetKeepConnection(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     Param.Result.AsBoolean := C.FADODB.KeepConnection;
 end;
 
-procedure TLyseeAdoConnectionType.MyGetProvider(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyGetProvider(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     Param.Result.AsString := C.FADODB.Provider;
 end;
 
-procedure TLyseeAdoConnectionType.MyOpenEx(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyOpenEx(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     if Param.Prmc > 1 then
@@ -601,98 +659,104 @@ begin
       C.Open;
 end;
 
-procedure TLyseeAdoConnectionType.MyOpenSQL(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MyOpenSQL(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
-    Param.Result.SetTOA(my_query, C.OpenSQL(Param[1].AsString));
+    Param.Result.Assign(my_query, C.OpenSQL(Param[1].AsString));
 end;
 
-procedure TLyseeAdoConnectionType.MySetCommandTimeout(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MySetCommandTimeout(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     C.FADODB.CommandTimeout := Param[1].AsInteger;
 end;
 
-procedure TLyseeAdoConnectionType.MySetConnectionString(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MySetConnectionString(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     C.ConnectionString := Param[1].AsString;
 end;
 
-procedure TLyseeAdoConnectionType.MySetConnectionTimeout(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MySetConnectionTimeout(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     C.FADODB.ConnectionTimeout := Param[1].AsInteger;
 end;
 
-procedure TLyseeAdoConnectionType.MySetConnectMode(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MySetConnectMode(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     C.FADODB.Mode := TConnectMode(Param[1].AsInteger);
 end;
 
-procedure TLyseeAdoConnectionType.MySetConnectOption(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MySetConnectOption(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     C.FADODB.ConnectOptions := TConnectOption(Param[1].AsInteger);
 end;
 
-procedure TLyseeAdoConnectionType.MySetCursorLocation(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MySetCursorLocation(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     C.FADODB.CursorLocation := TCursorLocation(Param[1].AsInteger);
 end;
 
-procedure TLyseeAdoConnectionType.MySetDefaultDatabase(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MySetDefaultDatabase(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     C.FADODB.DefaultDatabase := Param[1].AsString;
 end;
 
-procedure TLyseeAdoConnectionType.MySetIsolationLevel(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MySetIsolationLevel(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     C.FADODB.IsolationLevel := TIsolationLevel(Param[1].AsInteger);
 end;
 
-procedure TLyseeAdoConnectionType.MySetKeepConnection(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MySetKeepConnection(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     C.FADODB.KeepConnection := Param[1].AsBoolean;
 end;
 
-procedure TLyseeAdoConnectionType.MySetProvider(const Param: TLyseeParam);
+procedure TLyAdoConnectionType.MySetProvider(const Param: TLyParam);
 var
-  C: TLyseeAdoConnection;
+  C: TLyAdoConnection;
 begin
   if Param.GetSelf(C) then
     C.FADODB.Provider := Param[1].AsString;
 end;
 
-procedure TLyseeAdoConnectionType.Setup;
+function TLyAdoConnectionType.CreateInstance: pointer;
 begin
-  Method('Create', Self,
-         {$IFDEF FPC}@{$ENDIF}MyCreate);
+  Result := NewConnection;
+end;
+
+procedure TLyAdoConnectionType.Setup;
+begin
+  Parent := my_database;
+
+  Method(LSE_CREATE, Self, {$IFDEF FPC}@{$ENDIF}MyCreate);
   Method('Open', my_nil,
          ['_ConnectionString'], [my_string],
          {$IFDEF FPC}@{$ENDIF}MyOpenEx);
@@ -758,67 +822,19 @@ begin
   Define('DefaultDatabase', my_string,
          {$IFDEF FPC}@{$ENDIF}MyGetDefaultDatabase,
          {$IFDEF FPC}@{$ENDIF}MySetDefaultDatabase);
+
   inherited;
-end;
-
-{ TLyseeAdodbModule }
-
-constructor TLyseeAdodbModule.Create(const AName: string);
-begin
-  inherited;
-  OnSetup := {$IFDEF FPC}@{$ENDIF}DoSetup;
-end;
-
-procedure TLyseeAdodbModule.DoSetup(Sender: TObject);
-begin
-  OnSetup := nil;
-  my_db.Setup;
-
-  CoInitialize(nil);
-
-  Consts.Add('CS_SQLSERVER').AsString := CS_SQLSERVER;
-  Consts.Add('CS_ACCESS').AsString := CS_ACCESS;
-  Consts.Add('CS_ORACLE').AsString := CS_ORACLE;
-  Consts.Add('CS_EXCEL_R').AsString := CS_EXCEL_R;
-  Consts.Add('CS_EXCEL_W').AsString := CS_EXCEL_W;
-  Consts.Add('CS_EXCELX').AsString := CS_EXCELX;
-  Consts.Add('CS_TEXT').AsString := CS_TEXT;
-  Consts.Add('CS_DBASE').AsString := CS_DBASE;
-  Consts.Add('CS_PARADOX').AsString := CS_PARADOX;
-
-  my_cursorLocation := AddEnumType('TCursorLocation',
-    ['clUseServer', 'clUseClient']);
-
-  my_connectOption := AddEnumType('TConnectOption',
-    ['coConnectUnspecified', 'coAsyncConnect']);
-
-  my_connectMode := AddEnumType('TConnectMode',
-    ['cmUnknown', 'cmRead', 'cmWrite', 'cmReadWrite', 'cmShareDenyRead',
-     'cmShareDenyWrite', 'cmShareExclusive', 'cmShareDenyNone']);
-
-  my_isolationLevel := AddEnumType('TIsolationLevel',
-    ['ilUnspecified', 'ilChaos', 'ilReadUncommitted', 'ilBrowse',
-     'ilCursorStability', 'ilReadCommitted', 'ilRepeatableRead',
-     'ilSerializable', 'ilIsolated']);
-
-  my_query := TLyseeAdoQueryType.Create('TADOQuery', Self, my_dataset);
-  my_connection := TLyseeAdoConnectionType.Create('TADOConnection', Self, my_database);
-  my_query.Setup;
-  my_connection.Setup;
-
-  AddFunc('Adb', my_connection, {$IFDEF FPC}@{$ENDIF}pp_adodb_adb);
 end;
 
 initialization
 begin
-  my_adodb := TLyseeAdodbModule.Create('adodb');
-  my_defdb := nil;
+  CoInitialize(nil);
 end;
 
 finalization
 begin
-  if my_defdb <> nil then
-    my_defdb.DecRefcount;
+  if my_adb <> nil then
+    my_adb.DecRefcount;
 end;
 
 end.

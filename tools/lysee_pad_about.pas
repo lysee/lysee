@@ -16,7 +16,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, LResources, Forms, Controls, Graphics, Dialogs,
-  ExtCtrls, StdCtrls, codeedit;
+  ExtCtrls, StdCtrls;
 
 type
 
@@ -31,11 +31,9 @@ type
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
-    procedure btnOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure Panel3Click(Sender: TObject);
+    procedure Memo1KeyPress(Sender: TObject; var Key: char);
   private
-    FEdit: TCodeEdit;
     { private declarations }
   public
     { public declarations }
@@ -51,31 +49,25 @@ uses
 
 { TAboutForm }
 
-procedure TAboutForm.btnOKClick(Sender: TObject);
-begin
-  Close;
-end;
-
 procedure TAboutForm.FormCreate(Sender: TObject);
 var
   F: string;
 begin
-  lblVersion.Caption := Format('Lysee v%s', [LSE_VERSION]);
-  lblCopyright.Caption := 'Copyright (C) 2017 Li Yunjie<718956073@qq.com>.';
+  lblVersion.Caption := 'Lysee ' + LSE_VERSION;
+  lblCopyright.Caption := 'Copyright (C) 2003,...,2020 Li Yunjie<718956073@qq.com>.';
   F := ExtractFilePath(Application.ExeName) + 'LICENSE';
   if not FileExists(F) then
   begin
     F := ChangeFileExt(F, '.txt');
-    if not FileExists(F) then
-      F := '';
+    if not FileExists(F) then F := '';
   end;
   if F <> '' then
     Memo1.Lines.LoadFromFile(F);
 end;
 
-procedure TAboutForm.Panel3Click(Sender: TObject);
+procedure TAboutForm.Memo1KeyPress(Sender: TObject; var Key: char);
 begin
-
+  if CharInSet(Key, [#10, #13]) then Close;
 end;
 
 initialization

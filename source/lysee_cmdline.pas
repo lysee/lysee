@@ -4,7 +4,7 @@
 {   COPYRIGHT: Copyright (c) 2017, Li Yunjie. All Rights Reserved.             }
 {     LICENSE: modified BSD license                                            }
 {     CREATED: 2017/02/21                                                      }
-{    MODIFIED: 2017/02/21                                                      }
+{    MODIFIED: 2019/03/16                                                      }
 {==============================================================================}
 { Contributor(s):                                                              }
 {==============================================================================}
@@ -23,6 +23,9 @@ function Command: integer;
 
 implementation
 
+uses
+  lysee_pmc;
+
 procedure ShowHeader;
 begin
   Writeln(Format('Interactive LYSEE script interpreter v%s', [LSE_VERSION]));
@@ -38,6 +41,8 @@ begin
   Writeln('  -v, --version           print version information of lysee.');
   Writeln('  -h, --help              print this usage and.');
   Writeln('  -p, --pause             pause after executing.');
+  Writeln('  -w, --wrap              wrap Pascal unit file.');
+  Writeln('  -l, --library           wrap Pascal unit to library.');
   Writeln('');
   Writeln('Args:');
   Writeln('  *                       arguments passed to script file.');
@@ -54,6 +59,64 @@ begin
   Writeln('Enjoy it! I am Li Yunjie<718956073@qq.com>.');
 end;
 
+function ExecutePMC(const FileName: string): integer;
+var
+  P: TLyPasTranslater;
+begin
+  Result := 0;
+  try
+    if FileName = '' then
+    begin
+      Writeln('Usage: lysee -w/--wrap PascalUnitFile');
+      Result := 1;
+    end
+    else
+    begin
+      P := TLyPasTranslater.Create;
+      try
+        P.SourceCodes.LoadFromFile(SetPD(FileName));
+        P.UnitToLibrary := false;
+        P.Execute;
+        Writeln(P.ResultCodes.Text);
+      finally
+        P.Free;
+      end;
+    end;
+  except
+    Writeln(ExceptionStr);
+    Result := 1;
+  end;
+end;
+
+function ExecuteUnitToLibrary(const FileName: string): integer;
+var
+  P: TLyPasTranslater;
+begin
+  Result := 0;
+  try
+    if FileName = '' then
+    begin
+      Writeln('Usage: lysee -l/--library PascalUnitFile');
+      Result := 1;
+    end
+    else
+    begin
+      P := TLyPasTranslater.Create;
+      try
+        P.SourceCodes.LoadFromFile(SetPD(FileName));
+        P.UnitToLibrary := true;
+        P.Execute;
+        Writeln(P.ResultCodes.Text);
+      finally
+        P.Free;
+      end;
+    end;
+  except
+    Writeln(ExceptionStr);
+    Result := 1;
+  end;
+end;
+
 function ExecuteFrom(Index: integer): integer;
 var
   E: TLysee;
@@ -62,11 +125,11 @@ begin
   try
     E := TLysee.Create(nil);
     try
-      E.ExecuteFrom(Index);
+      E.ExecuteFileFrom(Index);
     finally
-      if E.Excepted then
+      if E.MainThread.Excepted then
       begin
-        Writeln(E.Error.ErrorText);
+        Writeln(E.MainThread.Error.AsText);
         Result := 1;
       end;
       E.Free;
@@ -81,12 +144,12 @@ function Interpreter: integer;
 var
   S, code: string;
   E: TLysee;
+  N: int64;
 
   procedure do_restart;
   begin
     Writeln('*************** RESTARTED ***************');
     E.Clear;
-    E.MainFile := ChangeFileExt(ParamStr(0), '.input');
     code := '';
   end;
 
@@ -100,14 +163,18 @@ var
   begin
     try
       if S <> '' then
-        if E.Execute(S + ';') then
+      begin
+        N := E.WriteCount;
+        if E.MainThread.Execute(AddTrailingChar(S, ';')) then
         begin
-          code := FormatValue(E.Result);
-          if code <> '' then
-            Writeln(code);
-          E.Result.SetNil;
+          if N <> E.WriteCount then
+            if not CharInSet(E.LastWritenChar, [#10, #13])  then
+              E.Writeln;
+          if E.MainThread.Result.VType <> my_nil then
+            Writeln('--> ' + FormatValue(E.MainThread.Result));
         end
-        else Writeln(E.Error.ErrorText);
+        else Writeln(E.MainThread.Error.AsText);
+      end;
     finally
       code := '';
     end;
@@ -139,7 +206,6 @@ begin
     Writeln('');
     Writeln('        /C=CANCEL /Q=QUIT /R=RESTART');
     Writeln('');
-    E.MainFile := ChangeFileExt(ParamStr(0), '.input');
     code := '';
     repeat
       if code = '' then Write('>>> ') else Write('  > ');
@@ -157,8 +223,8 @@ begin
             code := S else
             do_execute(S);
       end;
-    until E.Halted;
-    if E.Excepted then Result := 1;
+    until E.MainThread.Halted;
+    if E.MainThread.Excepted then Result := 1;
   finally
     E.Free;
   end;
@@ -187,6 +253,28 @@ begin
     if MatchID(S, '-v') or MatchID(S, '--version') then
     begin
       ShowVersion;
+      Exit;
+    end;
+
+    if MatchID(S, '-w') or MatchID(S, '--wrap') then
+    begin
+      ExecutePMC(Trim(ParamStr(I + 1)));
+      if P then
+      begin
+        Write('Press ENTER to continue: ');
+        Readln;
+      end;
+      Exit;
+    end;
+
+    if MatchID(S, '-l') or MatchID(S, '--library') then
+    begin
+      ExecuteUnitToLibrary(Trim(ParamStr(I + 1)));
+      if P then
+      begin
+        Write('Press ENTER to continue: ');
+        Readln;
+      end;
       Exit;
     end;
 

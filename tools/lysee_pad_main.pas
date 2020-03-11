@@ -5,121 +5,238 @@ unit lysee_pad_main;
 interface
 
 uses
-  {$IFDEF MSWINDOWS}Windows,{$ENDIF}
-  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  Menus, ExtCtrls, ComCtrls, Clipbrd, ActnList, StdActns, codeedit,
-  Messages, lysee;
-
-const
-
-  LYSEEPAD_TITLE   = 'LyseePAD';
-  LYSEE_SAVEPROMPT = 'Save changes to file?';
+  {$IFDEF MSWINDOWS}Windows,{$ELSE}LMessage,{$ENDIF}
+  Classes, SysUtils, FileUtil, SynEdit, Forms, Controls,
+  Graphics, Dialogs, Menus, ExtCtrls, ComCtrls, Clipbrd, ActnList, StdActns,
+  Buttons, ExtDlgs, StdCtrls, Messages, CodeMemo, Basic, lysee, lysee_pad_sheet;
 
 type
+
+  TFindOption = (frReplace, frMatchCase, frWholeWord, frSelectedOnly);
+  TFindOptions = set of TFindOption;
 
   { TMainForm }
 
   TMainForm = class(TForm)
-    ActionList: TActionList;
-    EditCopy: TEditCopy;
-    EditCut: TEditCut;
-    EditPaste: TEditPaste;
-    EditRedo: TAction;
-    EditSelectAll: TAction;
-    EditUndo: TAction;
-    FileExit: TAction;
-    FileNew: TAction;
-    FileOpen: TAction;
-    FileSave: TAction;
-    FileSaveAs: TAction;
-    FindDialog: TFindDialog;
-    HelpAbout: TAction;
+    actRiviBackground: TAction;
+    actRiviColor: TAction;
+    actRiviTable: TAction;
+    actRiviLink: TAction;
+    actRiviImage: TAction;
+    actRiviKaiti: TAction;
+    actRiviHeiti: TAction;
+    actRiviSubScript: TAction;
+    actRiviSuperScript: TAction;
+    actRiviUnderline: TAction;
+    actRiviStrikeout: TAction;
+    actRiviItalic: TAction;
+    actRiviBold: TAction;
+    actRiviRight: TAction;
+    actRiviCenter: TAction;
+    actRiviLeft: TAction;
+    aTabClose: TAction;
+    APP: TApplicationProperties;
+    aSearchNext: TAction;
+    Actions: TActionList;
+    aEditCopy: TEditCopy;
+    aEditCut: TEditCut;
+    aEditPaste: TEditPaste;
+    aEditRedo: TAction;
+    aEditSelectAll: TAction;
+    aEditUndo: TAction;
+    aFileExit: TAction;
+    aFileNew: TAction;
+    aFileOpen: TAction;
+    aFileSave: TAction;
+    aFileSaveAs: TAction;
+    aHelpAbout: TAction;
+    Bevel1: TBevel;
+    Bevel2: TBevel;
+    Bevel3: TBevel;
+    btnLink: TSpeedButton;
+    btnLeft: TSpeedButton;
+    btnCenter: TSpeedButton;
+    btnImage: TSpeedButton;
+    btnTable: TSpeedButton;
+    btnBackground: TSpeedButton;
+    btnKaiti: TSpeedButton;
+    btnHeiti: TSpeedButton;
+    btnItalic: TSpeedButton;
+    btnSuper: TSpeedButton;
+    btnSub: TSpeedButton;
+    btnUnderline: TSpeedButton;
+    btnStrikeout: TSpeedButton;
+    btnBold: TSpeedButton;
+    btnRight: TSpeedButton;
+    dlgColor: TColorDialog;
     ImageList: TImageList;
     MainMenu: TMainMenu;
-    FileMenu: TMenuItem;
-    FileNewMenu: TMenuItem;
-    FileOpenMenu: TMenuItem;
-    FileSaveMenu: TMenuItem;
-    MenuItem1: TMenuItem;
-    FileExitMenu: TMenuItem;
+    mmFile: TMenuItem;
+    miFileNew: TMenuItem;
+    miFileOpen: TMenuItem;
+    miFileSave: TMenuItem;
+    miFileLine1: TMenuItem;
+    miFileExit: TMenuItem;
     EditPanel: TPanel;
-    EditMenu: TMenuItem;
-    EditCutMenu: TMenuItem;
-    EditCopyMenu: TMenuItem;
-    EditPasteMenu: TMenuItem;
-    MenuItem2: TMenuItem;
-    EditSelectAllMenu: TMenuItem;
-    EditUndoMenu: TMenuItem;
-    EditRedoMenu: TMenuItem;
-    MenuItem3: TMenuItem;
-    FileSaveAsMenu: TMenuItem;
-    LyseeMenu: TMenuItem;
-    LyseeRunMenu: TMenuItem;
-    LyseeSyntaxCheckMenu: TMenuItem;
-    HelpMenu: TMenuItem;
-    HelpAboutMenu: TMenuItem;
-    ReplaceDialog: TReplaceDialog;
-    LyseeRun: TAction;
-    LyseeSyntaxCheck: TAction;
-    SearchFind: TAction;
-    SearchReplace: TAction;
-    SearchReplaceMenu: TMenuItem;
-    SearchFindMenu: TMenuItem;
-    SearchMenu: TMenuItem;
-    OpenDialog: TOpenDialog;
-    SaveDialog: TSaveDialog;
+    mmEdit: TMenuItem;
+    miEditCut: TMenuItem;
+    miEditCopy: TMenuItem;
+    miEditPaste: TMenuItem;
+    miEditLine2: TMenuItem;
+    miEditSelectAll: TMenuItem;
+    miEditUndo: TMenuItem;
+    miEditRedo: TMenuItem;
+    miEditLine1: TMenuItem;
+    miFileSaveAs: TMenuItem;
+    mmLysee: TMenuItem;
+    miLyseeRun: TMenuItem;
+    miLyseeSyntaxCheck: TMenuItem;
+    mmHelp: TMenuItem;
+    miHelpAbout: TMenuItem;
+    miSearchNext: TMenuItem;
+    dlgImage: TOpenPictureDialog;
+    Pages: TPageControl;
+    pnlTabMan: TPanel;
+    pnlAlign1: TPanel;
+    pnlRiviBody: TPanel;
+    pnlRiviBottomLine: TPanel;
+    pnlRivi: TPanel;
+    aLyseeRun: TAction;
+    aLyseeSyntaxCheck: TAction;
+    aSearchFind: TAction;
+    aSearchReplace: TAction;
+    miSearchReplace: TMenuItem;
+    miSearchFind: TMenuItem;
+    mmSearch: TMenuItem;
+    dlgOpen: TOpenDialog;
+    dlgSave: TSaveDialog;
+    btnTextColor: TSpeedButton;
+    btnSelectTextColor: TSpeedButton;
+    pnlBackground: TPanel;
+    pnlFontName: TPanel;
+    pnlTextColor1: TPanel;
+    pnlAlign: TPanel;
+    btnSelectBackground: TSpeedButton;
+    btnFontName: TSpeedButton;
+    btnSelectFontName: TSpeedButton;
+    btnTabClose: TSpeedButton;
     StatusBar: TStatusBar;
-    ToolBar1: TToolBar;
-    NewButton: TToolButton;
-    OpenButton: TToolButton;
-    SaveButton: TToolButton;
+    barFile: TToolBar;
+    btnEditCopy: TToolButton;
+    btnEditPaste: TToolButton;
+    btnSearch: TToolButton;
+    btnReplace: TToolButton;
     ToolButton1: TToolButton;
-    CutButton: TToolButton;
-    CopyButton: TToolButton;
-    PasteButton: TToolButton;
-    ToolButton2: TToolButton;
-    RedoButton: TToolButton;
-    FindButton: TToolButton;
-    UndoButton: TToolButton;
-    procedure FormCreate(Sender: TObject);
+    ToolButton13: TToolButton;
+    btnEditUndo: TToolButton;
+    btnEditRedo: TToolButton;
+    btnFileNew: TToolButton;
+    btnFileOpen: TToolButton;
+    btnFileSave: TToolButton;
+    ToolButton8: TToolButton;
+    btnEditCut: TToolButton;
+    procedure actRiviBackgroundExecute(Sender: TObject);
+    procedure actRiviBoldExecute(Sender: TObject);
+    procedure actRiviCenterExecute(Sender: TObject);
+    procedure actRiviColorExecute(Sender: TObject);
+    procedure actRiviHeitiExecute(Sender: TObject);
+    procedure actRiviImageExecute(Sender: TObject);
+    procedure actRiviItalicExecute(Sender: TObject);
+    procedure actRiviKaitiExecute(Sender: TObject);
+    procedure actRiviLeftExecute(Sender: TObject);
+    procedure actRiviLinkExecute(Sender: TObject);
+    procedure actRiviRightExecute(Sender: TObject);
+    procedure actRiviStrikeoutExecute(Sender: TObject);
+    procedure actRiviSubScriptExecute(Sender: TObject);
+    procedure actRiviSuperScriptExecute(Sender: TObject);
+    procedure actRiviTableExecute(Sender: TObject);
+    procedure actRiviUnderlineExecute(Sender: TObject);
+    procedure btnBackgroundClick(Sender: TObject);
+    procedure btnBoldClick(Sender: TObject);
+    procedure btnCenterClick(Sender: TObject);
+    procedure btnFontNameClick(Sender: TObject);
+    procedure btnHeitiClick(Sender: TObject);
+    procedure btnImageClick(Sender: TObject);
+    procedure btnItalicClick(Sender: TObject);
+    procedure btnKaitiClick(Sender: TObject);
+    procedure btnLeftClick(Sender: TObject);
+    procedure btnLinkClick(Sender: TObject);
+    procedure btnRightClick(Sender: TObject);
+    procedure btnSelectBackgroundClick(Sender: TObject);
+    procedure btnSelectFontNameClick(Sender: TObject);
+    procedure btnSelectTextColorClick(Sender: TObject);
+    procedure btnStrikeoutClick(Sender: TObject);
+    procedure btnSubClick(Sender: TObject);
+    procedure btnSuperClick(Sender: TObject);
+    procedure btnTabCloseClick(Sender: TObject);
+    procedure btnTableClick(Sender: TObject);
+    procedure btnTextColorClick(Sender: TObject);
+    procedure btnUnderlineClick(Sender: TObject);
+    procedure EditPanelResize(Sender: TObject);
     procedure FormActivate(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormDestroy(Sender: TObject);
-    procedure FileNewExecute(Sender: TObject);
-    procedure FileOpenExecute(Sender: TObject);
-    procedure FileSaveExecute(Sender: TObject);
-    procedure FileSaveAsExecute(Sender: TObject);
-    procedure FileExitExecute(Sender: TObject);
-    procedure EditUndoExecute(Sender: TObject);
-    procedure EditRedoExecute(Sender: TObject);
-    procedure EditCutExecute(Sender: TObject);
-    procedure EditCopyExecute(Sender: TObject);
-    procedure EditPasteExecute(Sender: TObject);
-    procedure EditSelectAllExecute(Sender: TObject);
-    procedure SearchFindExecute(Sender: TObject);
-    procedure SearchReplaceExecute(Sender: TObject);
-    procedure LyseeRunExecute(Sender: TObject);
-    procedure LyseeSyntaxCheckExecute(Sender: TObject);
-    procedure HelpAboutExecute(Sender: TObject);
-    procedure FindDialogFind(Sender: TObject);
-    procedure ReplaceDialogFind(Sender: TObject);
-    procedure ReplaceDialogReplace(Sender: TObject);
+    procedure aFileNewExecute(Sender: TObject);
+    procedure aFileOpenExecute(Sender: TObject);
+    procedure aFileSaveExecute(Sender: TObject);
+    procedure aFileSaveAsExecute(Sender: TObject);
+    procedure aFileExitExecute(Sender: TObject);
+    procedure aEditUndoExecute(Sender: TObject);
+    procedure aEditRedoExecute(Sender: TObject);
+    procedure aEditCutExecute(Sender: TObject);
+    procedure aEditCopyExecute(Sender: TObject);
+    procedure aEditPasteExecute(Sender: TObject);
+    procedure aEditSelectAllExecute(Sender: TObject);
+    procedure aSearchFindExecute(Sender: TObject);
+    procedure aSearchReplaceExecute(Sender: TObject);
+    procedure aSearchNextExecute(Sender: TObject);
+    procedure aLyseeRunExecute(Sender: TObject);
+    procedure aLyseeSyntaxCheckExecute(Sender: TObject);
+    procedure aTabCloseExecute(Sender: TObject);
+    procedure aHelpAboutExecute(Sender: TObject);
+    procedure APPDropFiles(Sender: TObject; const FileNames: array of string);
+    procedure PagesChange(Sender: TObject);
+    procedure pnlTabManResize(Sender: TObject);
   private
-    FEdit: TCodeEdit;
-    FFileName: string;
+    FPath: string;
     FLysee: string;
     FNextMonitor: HWND;
-    procedure DrawClipboard(var Msg: TMessage);message WM_DRAWCLIPBOARD;
-    procedure EditStatus(Sender: TObject);
-    procedure CloseDialogs;
+    FErrorRow: integer;
+    FFindText: string;
+    FReplaceText: string;
+    FOptions: TFindOptions;
+    FTabHeight: integer;
+    function GetPage(Index: integer): TLyFilePage;
+    function GetCount: integer;
+  protected
+    procedure MsgDrawClipboard(var Msg: TMessage); message PAD_DRAWCLIPBOARD;
+    procedure MsgShowFile(var Msg: TMessage); message PAD_SHOWFILE;
+    procedure OnExecuting(Sender: TObject; AThread: TLyThread);
+    procedure OnChange(Sender: TObject);
+    procedure OnStatus(Sender: TObject);
+    procedure OnHint(Sender: TObject);
+    procedure OnDblClose(Sender: TObject);
+    procedure GetFindReplaceOptions;
     procedure SetCaption;
-    procedure Terminate(Sender: TObject);
-    procedure LoadFromFile(const FileName: string);
-    procedure SaveToFile(const FileName: string);
-    function PromptSaveChange: boolean;
-    function SaveChange: boolean;
-    function Yes(const Question: string): boolean;
-    function YesNoCancel(const Question: string): cardinal;
+    procedure SetButtons;
+    { RIVI }
+    procedure SetFontStyle(const BegTag, EndTag: string); overload;
+    procedure SetFontStyle(const NewStyle: string); overload;
+    procedure SetHorzAlign(const NewAlign: string); overload;
+  public
+    function NewPage: TLyFilePage;
+    function GetEmptyPage: TLyFilePage;
+    function FindEmptyPage: TLyFilePage;
+    function FindPage(const FileName: string): TLyFilePage; overload;
+    function FindPage(FileID: int64): TLyFilePage; overload;
+    function SelectPage(APage: TLyFilePage): TLyFilePage;
+    function ActivePage: TLyFilePage;
+    function ActiveMemo: TLyCodeMemo;
+    function LoadFromFile(const FileName: string; IsCmd: boolean): TLyFilePage;
+    function QueryClose(APage: TLyFilePage): boolean;
+    property PageCount: integer read GetCount;
+    property Page[Index: integer]: TLyFilePage read GetPage;
   end;
 
 var
@@ -128,7 +245,7 @@ var
 implementation
 
 uses
-  Process, lysee_pad_about;
+  Process, MsgBox, UIDefs, lysee_pad_find, lysee_pad_fontname, lysee_pad_about;
 
 {$R *.lfm}
 
@@ -136,141 +253,507 @@ uses
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  Application.Title := LYSEEPAD_TITLE;
-  FFileName := '';
+  Application.Title := PAD_TITLE;
+  Application.ShowHint := true;
+  Application.OnHint := @OnHint;
+  AllowDropFiles := True;
   SetCaption;
-  FEdit := PlaceACodeEdit(EditPanel);
-  FEdit.Syntax.SyntaxClass := TLyseeSyntax;
-  FEdit.OnStatus := @EditStatus;
+
+  FPath := ExtractFilePath(Application.ExeName);
+  FLysee := FPath + 'lysee' + ExtractFileExt(Application.ExeName);
+  aLyseeRun.Enabled := (FLysee <> '');
+
   FNextMonitor := SetClipBoardViewer(Handle);
-  FLysee := ExtractFilePath(Application.ExeName) +
-    {$IFDEF MSWINDOWS}'lysee.exe'{$ELSE}'lysee'{$ENDIF};
-  if not FileExists(FLysee) then
-    FLysee := ExtractFileName(FLysee);
-end;
+  SetButtons;
 
-procedure TMainForm.FormActivate(Sender: TObject);
-var
-  F: string;
-begin
-  OnActivate := nil;
-  EditStatus(nil);
-  F := Trim(ParamStr(1));
-  if F <> '' then
-    LoadFromFile(F);
-end;
-
-procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: boolean);
-var
-  K: cardinal;
-begin
-  if FEdit.Modified then
+  if FileExists(ParamStr(1)) then
   begin
-    K := YesNoCancel(LYSEE_SAVEPROMPT);
-    if K = mrYes then
-      CanClose := SaveChange else
-      CanClose := (K = mrNo);
+    if not LoadFromFile(ParamStr(1), True).Locked then
+      Application.Terminate;
+  end
+  else NewPage;
+
+  pnlTabMan.Color := clWindow;
+end;
+
+procedure TMainForm.actRiviLeftExecute(Sender: TObject);
+begin
+  SetHorzAlign('left');
+end;
+
+procedure TMainForm.actRiviLinkExecute(Sender: TObject);
+var
+  L: string;
+begin
+  L := Trim(InputBox('Insert link', 'Please input link address:', ''));
+  if L <> '' then
+    SetFontStyle('a=' + L, '/a');
+end;
+
+procedure TMainForm.actRiviRightExecute(Sender: TObject);
+begin
+  SetHorzAlign('right');
+end;
+
+procedure TMainForm.actRiviStrikeoutExecute(Sender: TObject);
+begin
+  SetFontStyle('s');
+end;
+
+procedure TMainForm.actRiviSubScriptExecute(Sender: TObject);
+begin
+  SetFontStyle('sub');
+end;
+
+procedure TMainForm.actRiviSuperScriptExecute(Sender: TObject);
+begin
+  SetFontStyle('sup');
+end;
+
+procedure TMainForm.actRiviTableExecute(Sender: TObject);
+
+  function GridString(Rows, Cols: integer): string;
+  begin
+    Result := '[';
+    while Cols > 2 do
+    begin
+      Result := Result + ' |';
+      Dec(Cols);
+    end;
+    Result := Result + ' ]';
+    while Rows > 1 do
+    begin
+      Result := Result + sLineBreak + Result;
+      Dec(Rows);
+    end;
+  end;
+
+begin
+  ActiveMemo.SelText := StrToWide(sLineBreak + GridString(3, 3) + sLineBreak);
+end;
+
+procedure TMainForm.actRiviUnderlineExecute(Sender: TObject);
+begin
+end;
+
+procedure TMainForm.btnBackgroundClick(Sender: TObject);
+begin
+  SetFontStyle('g=' + ColorToID(pnlBackground.Color), '/g');
+end;
+
+procedure TMainForm.btnBoldClick(Sender: TObject);
+begin
+  SetFontStyle('b');
+end;
+
+procedure TMainForm.btnCenterClick(Sender: TObject);
+begin
+  SetHorzAlign('center');
+end;
+
+procedure TMainForm.btnFontNameClick(Sender: TObject);
+begin
+  if ActiveMemo.SelAvail then
+    SetFontStyle('f=' + DoubleQuote(btnFontName.Caption), '/f');
+end;
+
+procedure TMainForm.btnHeitiClick(Sender: TObject);
+begin
+  SetFontStyle('hei');
+end;
+
+procedure TMainForm.btnImageClick(Sender: TObject);
+begin
+  actRiviImageExecute(nil);
+end;
+
+procedure TMainForm.btnItalicClick(Sender: TObject);
+begin
+  SetFontStyle('i');
+end;
+
+procedure TMainForm.btnKaitiClick(Sender: TObject);
+begin
+  SetFontStyle('kai');
+end;
+
+procedure TMainForm.btnLeftClick(Sender: TObject);
+begin
+  SetHorzAlign('left');
+end;
+
+procedure TMainForm.btnLinkClick(Sender: TObject);
+begin
+  actRiviLinkExecute(nil);
+end;
+
+procedure TMainForm.btnRightClick(Sender: TObject);
+begin
+  SetHorzAlign('right');
+end;
+
+procedure TMainForm.btnSelectBackgroundClick(Sender: TObject);
+begin
+  if dlgColor.Execute then
+  begin
+    SetFontStyle('g=' + ColorToID(dlgColor.Color), '/g');
+    pnlBackground.Color := dlgColor.Color;
+    btnBackground.Font.Color := dlgColor.Color xor $00FFFFFF;
   end;
 end;
 
-procedure TMainForm.FileSaveAsExecute(Sender: TObject);
+procedure TMainForm.btnSelectFontNameClick(Sender: TObject);
+var
+  F: string;
 begin
-  CloseDialogs;
-  if SaveDialog.Execute then
-    SaveToFile(SaveDialog.FileName);
+  F := SelectFontName(btnFontName.Caption);
+  if F <> '' then
+  begin
+    btnFontName.Caption := F;
+    btnFontName.Font.Name := F;
+    btnFontNameClick(nil);
+  end;
 end;
 
-procedure TMainForm.FileNewExecute(Sender: TObject);
+procedure TMainForm.btnSelectTextColorClick(Sender: TObject);
 begin
-  CloseDialogs;
-  if PromptSaveChange then
+  if dlgColor.Execute then
   begin
-    FEdit.Readonly := true;
+    SetFontStyle('c=' + ColorToID(dlgColor.Color), '/c');
+    btnTextColor.Font.Color := dlgColor.Color;
+  end;
+end;
+
+procedure TMainForm.btnStrikeoutClick(Sender: TObject);
+begin
+  SetFontStyle('s');
+end;
+
+procedure TMainForm.btnSubClick(Sender: TObject);
+begin
+  SetFontStyle('sub');
+end;
+
+procedure TMainForm.btnSuperClick(Sender: TObject);
+begin
+  SetFontStyle('sup');
+end;
+
+procedure TMainForm.btnTabCloseClick(Sender: TObject);
+var
+  P: TLyFilePage;
+begin
+  P := ActivePage;
+  if (P <> nil) and QueryClose(P) then
+  begin
+    P.Free;
+    SetButtons;
+  end;
+end;
+
+procedure TMainForm.btnTableClick(Sender: TObject);
+begin
+  actRiviTableExecute(nil);
+end;
+
+procedure TMainForm.btnTextColorClick(Sender: TObject);
+begin
+  SetFontStyle('c=' + ColorToID(btnTextColor.Font.Color), '/c');
+end;
+
+procedure TMainForm.btnUnderlineClick(Sender: TObject);
+begin
+  SetFontStyle('u');
+end;
+
+procedure TMainForm.EditPanelResize(Sender: TObject);
+begin
+  pnlTabMan.top := EditPanel.Top;
+  pnlTabMan.Left := EditPanel.left + EditPanel.Width - pnlTabMan.Width;
+end;
+
+procedure TMainForm.FormActivate(Sender: TObject);
+begin
+  OnActivate := nil;
+  if ActiveMemo <> nil then
+    ActiveMemo.SetFocus;
+end;
+
+procedure TMainForm.actRiviCenterExecute(Sender: TObject);
+begin
+  SetHorzAlign('center');
+end;
+
+procedure TMainForm.actRiviColorExecute(Sender: TObject);
+begin
+  if dlgColor.Execute then
+    SetFontStyle('c=' + ColorToID(dlgColor.Color), '/c');
+end;
+
+procedure TMainForm.actRiviHeitiExecute(Sender: TObject);
+begin
+  SetFontStyle('hei');
+end;
+
+procedure TMainForm.actRiviImageExecute(Sender: TObject);
+var
+  S, P: string;
+begin
+  if dlgImage.Execute then
+  begin
+    P := GetRelativePath(dlgImage.FileName, ActivePage.FileName);
+    S := Format('<image source=%s>', [DoubleQuote(SetUD(P))]);
+    ActiveMemo.Lines.BeginUpdate;
     try
-      FEdit.Lines.ClearToOneEmptyLine;
-      FEdit.Syntax.SyntaxClass := TLyseeSyntax;
-      FEdit.Modified := false;
-      FFileName := '';
-      SetCaption;
-      EditStatus(nil);
+      ActiveMemo.SelText := StrToWide(S);
     finally
-      FEdit.Readonly := false;
+      ActiveMemo.Lines.EndUpdate;
     end;
   end;
 end;
 
-procedure TMainForm.FileOpenExecute(Sender: TObject);
+procedure TMainForm.actRiviItalicExecute(Sender: TObject);
 begin
-  CloseDialogs;
-  if PromptSaveChange then
-    if OpenDialog.Execute then
-      LoadFromFile(OpenDialog.FileName);
 end;
 
-procedure TMainForm.FileSaveExecute(Sender: TObject);
+procedure TMainForm.actRiviKaitiExecute(Sender: TObject);
 begin
-  if FFileName <> '' then
+  SetFontStyle('kai');
+end;
+
+procedure TMainForm.actRiviBoldExecute(Sender: TObject);
+begin
+end;
+
+procedure TMainForm.actRiviBackgroundExecute(Sender: TObject);
+begin
+  if dlgColor.Execute then
+    SetFontStyle('g=' + ColorToID(dlgColor.Color), '/g');
+end;
+
+procedure TMainForm.aTabCloseExecute(Sender: TObject);
+var
+  P: TLyFilePage;
+begin
+  P := ActivePage;
+  if (P <> nil) and QueryClose(P) then
   begin
-    FEdit.Lines.SaveToFile(FFileName);
-    FEdit.Modified := false;
-  end
+    P.Free;
+    SetButtons;
+  end;
+end;
+
+procedure TMainForm.APPDropFiles(Sender: TObject; const FileNames: array of string);
+var
+  I: integer;
+begin
+  for I := 0 to Length(FileNames) - 1 do
+    if FileExists(FileNames[I]) then
+      LoadFromFile(FileNames[I], False);
+end;
+
+procedure TMainForm.PagesChange(Sender: TObject);
+begin
+  OnStatus(nil);
+  SetButtons;
+end;
+
+procedure TMainForm.pnlTabManResize(Sender: TObject);
+begin
+  btnTabClose.Height := pnlTabMan.Height;
+end;
+
+function TMainForm.GetCount: integer;
+begin
+  Result := Pages.PageCount;
+end;
+
+function TMainForm.GetPage(Index: integer): TLyFilePage;
+begin
+  Result := TLyFilePage(Pages.Pages[Index]);
+end;
+
+procedure TMainForm.OnChange(Sender: TObject);
+begin
+  { nothing }
+end;
+
+procedure TMainForm.OnStatus(Sender: TObject);
+var
+  M: TLyCodeMemo;
+begin
+  M := ActiveMemo;
+  if M <> nil then
+  begin
+    StatusBar.Panels[0].Text := Format('%d, %d', [M.CaretY + 1, M.CaretX]);
+    if M.Modified then
+      StatusBar.Panels[1].Text := 'Modified'
+    else
+      StatusBar.Panels[1].Text := '';
+    StatusBar.Panels[2].Text := M.Hilighter.Language;
+  end;
+  SetButtons;
+end;
+
+procedure TMainForm.OnHint(Sender: TObject);
+begin
+  StatusBar.Panels[3].Text := GetLongHint(Application.Hint);
+end;
+
+procedure TMainForm.OnDblClose(Sender: TObject);
+begin
+  ShowMessage('');
+end;
+
+procedure TMainForm.aSearchNextExecute(Sender: TObject);
+var
+  S: string;
+  K: TModalResult;
+  M: TLyCodeMemo;
+begin
+  M := ActiveMemo;
+  while M.FindNext(StrToWide(FFindText)) do
+  begin
+    if not (frReplace in FOptions) then
+      Exit;
+    S := Format('Replace current string "%s" with "%s"?',
+      [FFindText, FReplaceText]);
+    K := MessageDlg(PAD_TITLE, S, mtConfirmation,
+      [mbYes, mbAll, mbNo, mbCancel], 0);
+    if K <> mrNo then
+      if K = mrYes then
+        M.SelText := StrToWide(FReplaceText)
+      else
+      if K = mrAll then
+      begin
+        repeat
+          M.SelText := StrToWide(FReplaceText);
+        until not M.FindNext(StrToWide(FFindText), False);
+        Exit;
+      end
+      else
+        Exit;
+  end;
+  ShowMessage('text not found!');
+end;
+
+procedure TMainForm.GetFindReplaceOptions;
+begin
+  FFindText := FindForm.FindText;
+  FReplaceText := FindForm.ReplaceText;
+  if FindForm.Replace then
+    FOptions := [frReplace]
   else
+    FOptions := [];
+  if FindForm.CaseSensitive then
+    FOptions := FOptions + [frMatchCase];
+  if FindForm.WholeWord then
+    FOptions := FOptions + [frWholeWord];
+  if FindForm.FindInSelected then
+    FOptions := FOptions + [frSelectedOnly];
+  SetButtons;
+end;
+
+procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: boolean);
+var
+  I: integer;
+begin
+  for I := Pages.PageCount - 1 downto 0 do
+    if not QueryClose(Page[I]) then
+    begin
+      CanClose := False;
+      Exit;
+    end
+    else
+      Page[I].Free;
+  SetButtons;
+end;
+
+procedure TMainForm.aFileSaveAsExecute(Sender: TObject);
+var
+  P: TLyFilePage;
+  F: string;
+begin
+  P := ActivePage;
+  dlgSave.FileName := P.FileName;
+  if dlgSave.Execute then
   begin
-    CloseDialogs;
-    if SaveDialog.Execute then
-      SaveToFile(SaveDialog.FileName);
+    F := dlgSave.FileName;
+    if SameFileName(F, P.FileName) then
+      P.Save
+    else
+    if FindPage(F) <> nil then
+      MsgErr('File is beging edited')
+    else
+      P.SaveToFile(F);
   end;
 end;
 
-procedure TMainForm.FileExitExecute(Sender: TObject);
+procedure TMainForm.aFileNewExecute(Sender: TObject);
 begin
-  CloseDialogs;
-  if PromptSaveChange then
-  begin
-    FEdit.Modified := false;
-    OnCloseQuery := nil;
-    Close;
-  end;
+  NewPage;
 end;
 
-procedure TMainForm.EditUndoExecute(Sender: TObject);
+procedure TMainForm.aFileOpenExecute(Sender: TObject);
 begin
-  FEdit.Undos.Apply;
+  if dlgOpen.Execute then
+    LoadFromFile(dlgOpen.FileName, False);
 end;
 
-procedure TMainForm.EditRedoExecute(Sender: TObject);
+procedure TMainForm.aFileSaveExecute(Sender: TObject);
+var
+  P: TLyFilePage;
 begin
-  FEdit.Redos.Apply;
+  P := ActivePage;
+  if P.FileName <> '' then
+    P.Save
+  else
+    aFileSaveAsExecute(nil);
 end;
 
-procedure TMainForm.EditCutExecute(Sender: TObject);
+procedure TMainForm.aFileExitExecute(Sender: TObject);
 begin
-  FEdit.Selection.CutToClipboard;
+  Close;
 end;
 
-procedure TMainForm.EditCopyExecute(Sender: TObject);
+procedure TMainForm.aEditUndoExecute(Sender: TObject);
 begin
-  FEdit.Selection.CopyToClipboard;
+  ActiveMemo.Undo;
 end;
 
-procedure TMainForm.EditPasteExecute(Sender: TObject);
+procedure TMainForm.aEditRedoExecute(Sender: TObject);
 begin
-  FEdit.Selection.PasteFromClipboard;
+  ActiveMemo.Redo;
 end;
 
-procedure TMainForm.EditSelectAllExecute(Sender: TObject);
+procedure TMainForm.aEditCutExecute(Sender: TObject);
 begin
-  FEdit.Selection.SelectAll;
+  ActiveMemo.CutToClipboard;
 end;
 
-procedure TMainForm.HelpAboutExecute(Sender: TObject);
+procedure TMainForm.aEditCopyExecute(Sender: TObject);
+begin
+  ActiveMemo.CopyToClipboard;
+end;
+
+procedure TMainForm.aEditPasteExecute(Sender: TObject);
+begin
+  ActiveMemo.PasteFromClipboard;
+end;
+
+procedure TMainForm.aEditSelectAllExecute(Sender: TObject);
+begin
+  ActiveMemo.SelectAll;
+end;
+
+procedure TMainForm.aHelpAboutExecute(Sender: TObject);
 begin
   with TAboutForm.Create(Application) do
-  try
-    ShowModal;
-  finally
-    Release;
-  end;
+    try
+      ShowModal;
+    finally
+      Release;
+    end;
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
@@ -279,21 +762,45 @@ begin
   SendMessage(FNextMonitor, WM_CHANGECBCHAIN, Handle, FNextMonitor);
 end;
 
-procedure TMainForm.LyseeRunExecute(Sender: TObject);
+procedure TMainForm.aLyseeRunExecute(Sender: TObject);
+
+  function PromptSaveChange: boolean;
+  begin
+    Result := not ActiveMemo.Modified;
+    if not Result then
+      if YesNo(PAD_SAVEPROMPT) = 'yes' then
+      begin
+        aFileSaveExecute(nil);
+        Result := not ActiveMemo.Modified;
+      end
+      else
+        Result := True;
+  end;
+
 var
   F: string;
   P: TProcess;
+  L: TStrings;
+  S: TLyFilePage;
 begin
-  if PromptSaveChange then
+  if (FLysee <> '') and PromptSaveChange then
   begin
     P := TProcess.Create(nil);
     try
-      if FFileName = '' then
+      S := ActivePage;
+      if S.FileName = '' then
       begin
         F := ExtractFilePath(Application.ExeName) + 'temp.ls';
-        FEdit.Lines.SaveToFile(F);
+        L := TStringList.Create;
+        try
+          L.Assign(S.Memo.Lines);
+          L.SaveToFile(F);
+        finally
+          L.Free;
+        end;
       end
-      else F := FFileName;
+      else
+        F := S.FileName;
       P.Executable := FLysee;
       P.Parameters.Add('--pause');
       P.Parameters.Add(F);
@@ -304,162 +811,320 @@ begin
   end;
 end;
 
-procedure TMainForm.LyseeSyntaxCheckExecute(Sender: TObject);
+procedure TMainForm.aLyseeSyntaxCheckExecute(Sender: TObject);
 var
   X: TLysee;
+  E: TLyError;
+  P: TLyFilePage;
 begin
   X := TLysee.Create(Self);
   try
-    X.OnExecuting := @Terminate;
-    if not X.Execute(FEdit.Lines.Text) then
+    P := ActivePage;
+    if P.FileName <> '' then
+      X.MainModule.FileName := P.FileName
+    else
+      X.MainModule.FileName := FPath + 'temp.ls';
+    X.OnExecuting := @OnExecuting;
+    if not X.Execute(WideToStr(P.Memo.Lines.Text)) then
     begin
-      FEdit.Caret.MoveTo(X.Error.ERow, X.Error.ECol + 1);
-      FEdit.Caret.MakeVisible;
-      ShowMessage(X.Error.ErrorText);
+      E := X.MainThread.Error;
+     {M.CaretY := E.Row + 1;
+      M.CaretX := E.Col + 1;}
+      MsgErrFmt(' %s[%d, %d] %s', [E.Errno,
+        E.Row + 1, E.Col + 1, E.Msg]);
+      FErrorRow := E.Row + 1;
     end;
   finally
     X.Free;
   end;
 end;
 
-procedure TMainForm.SearchFindExecute(Sender: TObject);
+procedure TMainForm.aSearchFindExecute(Sender: TObject);
 begin
-  CloseDialogs;
-  FindDialog.Execute;
-end;
-
-procedure TMainForm.SearchReplaceExecute(Sender: TObject);
-begin
-  CloseDialogs;
-  FEdit.Selection.Unselect;
-  ReplaceDialog.Execute;
-end;
-
-procedure TMainForm.FindDialogFind(Sender: TObject);
-begin
-  ReplaceDialog.FindText := FindDialog.FindText;
-  if not FEdit.FindNext(StrToCode(FindDialog.FindText)) then
-    ShowMessage('text not found!');
-end;
-
-procedure TMainForm.ReplaceDialogFind(Sender: TObject);
-begin
-  FindDialog.FindText := ReplaceDialog.FindText;
-  if not FEdit.FindNext(StrToCode(ReplaceDialog.FindText)) then
-    ShowMessage('text not found!');
-end;
-
-procedure TMainForm.ReplaceDialogReplace(Sender: TObject);
-begin
-  if FEdit.Selection.Selected then
-    FEdit.Selection.Text := StrToCode(ReplaceDialog.ReplaceText);
-  if frReplaceAll in ReplaceDialog.Options then
+  if ModalFindReplace(True, ActiveMemo.SelAvail) then
   begin
-    while FEdit.FindNext(StrToCode(ReplaceDialog.FindText)) do
-      FEdit.Selection.Text := StrToCode(ReplaceDialog.ReplaceText);
-  end
-  else ReplaceDialogFind(nil);
+    GetFindReplaceOptions;
+    aSearchNextExecute(nil);
+  end;
 end;
 
-procedure TMainForm.DrawClipboard(var Msg: TMessage);
+procedure TMainForm.aSearchReplaceExecute(Sender: TObject);
+begin
+  if ModalFindReplace(False, ActiveMemo.SelAvail) then
+  begin
+    GetFindReplaceOptions;
+    aSearchNextExecute(nil);
+  end;
+end;
+
+procedure TMainForm.MsgDrawClipboard(var Msg: TMessage);
 begin
   SendMessage(FNextMonitor, Msg.Msg, Msg.WParam, Msg.LParam);
-  EditPaste.Enabled := HasTextFormat;
+  aEditPaste.Enabled := (ActiveMemo <> nil) and HasTextFormat;
 end;
 
-procedure TMainForm.EditStatus(Sender: TObject);
+procedure TMainForm.MsgShowFile(var Msg: TMessage);
+var
+  P: TLyFilePage;
 begin
-  StatusBar.Panels[0].Text := Format('%d, %d',
-    [FEdit.Caret.LineIndex + 1, FEdit.Caret.TextIndex]);
-  if FEdit.Modified then
-    StatusBar.Panels[1].Text := 'Modified' else
-    StatusBar.Panels[1].Text := '';
-  StatusBar.Panels[2].Text := FEdit.Syntax.Language;
-  EditUndo.Enabled := (FEdit.Undos.Last <> nil);
-  EditRedo.Enabled := (FEdit.Redos.Last <> nil);
-  EditCut.Enabled := FEdit.Selection.Selected;
-  EditCopy.Enabled := FEdit.Selection.Selected;
-  EditPaste.Enabled := HasTextFormat;
-  EditSelectAll.Enabled := (FEdit.Lines.Count > 1) or (FEdit.Lines.First.Text <> '');
-  LyseeMenu.Visible := SameText(FEdit.Syntax.Language, 'Lysee');
-  LyseeSyntaxCheck.Enabled := LyseeMenu.Visible;
-  LyseeRun.Enabled := LyseeMenu.Visible;
-end;
-
-procedure TMainForm.CloseDialogs;
-begin
-  FindDialog.CloseDialog;
-  ReplaceDialog.CloseDialog;
+  P := FindPage(Msg.lParam);
+  if P <> nil then
+  begin
+    SelectPage(P);
+    if WindowState = wsMinimized then
+      Application.Restore;
+    Application.BringToFront;
+    SetForegroundWindow(Handle);
+    BringToFront;
+  end;
 end;
 
 procedure TMainForm.SetCaption;
 begin
-  if FFileName <> '' then
-    Caption := LYSEEPAD_TITLE + ' - ' + ExtractFileName(FFileName) else
-    Caption := LYSEEPAD_TITLE + ' - Untitled';
+  Caption := PAD_TITLE;
 end;
 
-procedure TMainForm.Terminate(Sender: TObject);
+procedure TMainForm.SetButtons;
+var
+  M: TLyCodeMemo;
+  F: boolean;
 begin
-  TLysee(Sender).Terminate;
+  M := ActiveMemo;
+  F := (M <> nil);
+
+  Pages.Visible := F;
+  aTabClose.Enabled := F;
+
+  aFileSave.Enabled := F;
+  aFileSaveAs.Enabled := F;
+
+  aEditUndo.Enabled := F and M.CanUndo;
+  aEditRedo.Enabled := F and M.CanRedo;
+  aEditCut.Enabled := F and M.SelAvail;
+  aEditCopy.Enabled := F and M.SelAvail;
+  aEditPaste.Enabled := F and HasTextFormat;
+  aEditSelectAll.Enabled := F;
+
+  aSearchFind.Enabled := F;
+  aSearchReplace.Enabled := F;
+  aSearchNext.Enabled := F and (FFindText <> '');
+
+  aLyseeSyntaxCheck.Enabled := F and MatchID('lysee', M.Hilighter.Language);
+  aLyseeRun.Enabled := F and MatchID('lysee', M.Hilighter.Language);
+
+  pnlRivi.Visible := F and MatchID('rivi', M.Hilighter.Language);
+
+  pnlTabMan.Visible := F;
 end;
 
-procedure TMainForm.LoadFromFile(const FileName: string);
+procedure TMainForm.SetFontStyle(const BegTag, EndTag: string);
+var
+  S: string;
+  L: TStrings;
+  I: integer;
 begin
+  ActiveMemo.Lines.BeginUpdate;
   try
-    FEdit.Readonly := true;
-    FFileName := '';
-    FEdit.Lines.LoadFromFile(FileName);
-    FFileName := ExpandFileName(Trim(FileName));
-  finally
-    FEdit.Readonly := false;
-    SetCaption;
-  end;
-end;
-
-procedure TMainForm.SaveToFile(const FileName: string);
-begin
-  try
-    FEdit.Lines.SaveToFile(FileName);
-    FEdit.Modified := false;
-    FFileName := ExpandFileName(Trim(FileName));
-  finally
-    SetCaption;
-  end;
-end;
-
-function TMainForm.PromptSaveChange: boolean;
-begin
-  Result := not FEdit.Modified;
-  if not Result then
-    if Yes(LYSEE_SAVEPROMPT) then
-      Result := SaveChange else
-      Result := true;
-end;
-
-function TMainForm.SaveChange: boolean;
-begin
-  if FEdit.Modified then
-    if FFileName <> '' then
+    S := WideToStr(ActiveMemo.SelText);
+    if HasLineBreak(S) then
     begin
-      FEdit.Lines.SaveToFile(FFileName);
-      FEdit.Modified := false;
+      L := TStringList.Create;
+      try
+        L.Text := S;
+        for I := 0 to L.Count - 1 do
+          L[I] := Format('<%s>%s<%s>', [BegTag, L[I], EndTag]);
+        S := L.Text;
+      finally
+        L.Free;
+      end;
     end
     else
-    if SaveDialog.Execute then
-      SaveToFile(SaveDialog.FileName);
-  Result := not FEdit.Modified;
+      S := Format('<%s>%s<%s>', [BegTag, S, EndTag]);
+    ActiveMemo.SelText := StrToWide(S);
+  finally
+    ActiveMemo.Lines.EndUpdate;
+    ;
+  end;
 end;
 
-function TMainForm.Yes(const Question: string): boolean;
+procedure TMainForm.SetFontStyle(const NewStyle: string);
 begin
-  Result := (mrYes = MessageDlg(LYSEEPAD_TITLE, Question, mtConfirmation, [mbYes, mbNo], 0));
+  SetFontStyle(NewStyle, '/' + NewStyle);
 end;
 
-function TMainForm.YesNoCancel(const Question: string): cardinal;
+procedure TMainForm.SetHorzAlign(const NewAlign: string);
+var
+  S: string;
+  L: TStrings;
+  I: integer;
 begin
-  Result := MessageDlg(LYSEEPAD_TITLE, Question, mtConfirmation, [mbYes, mbNo, mbCancel], 0);
+  ActiveMemo.Lines.BeginUpdate;
+  try
+    S := WideToStr(ActiveMemo.SelText);
+    if HasLineBreak(S) then
+    begin
+      L := TStringList.Create;
+      try
+        L.Text := S;
+        for I := 0 to L.Count - 1 do
+          L[I] := Format('<%s>%s', [NewAlign, L[I]]);
+        S := L.Text;
+      finally
+        L.Free;
+      end;
+    end
+    else
+      S := Format('<%s>%s', [NewAlign, S]);
+    ActiveMemo.SelText := StrToWide(S);
+  finally
+    ActiveMemo.Lines.EndUpdate;
+  end;
+end;
+
+procedure TMainForm.OnExecuting(Sender: TObject; AThread: TLyThread);
+begin
+  AThread.Terminate;
+end;
+
+function TMainForm.LoadFromFile(const FileName: string; IsCmd: boolean): TLyFilePage;
+begin
+  Result := FindPage(FileName);
+  if Result = nil then
+  begin
+    Result := ActivePage;
+    if (Result = nil) or not Result.IsEmpty then
+      Result := GetEmptyPage;
+    Result.LoadFromFile(FileName, IsCmd);
+  end;
+  SelectPage(Result);
+end;
+
+function TMainForm.QueryClose(APage: TLyFilePage): boolean;
+var
+  K: string;
+begin
+  Result := True;
+  if APage.Memo.Modified then
+  begin
+    K := YesNoCancel(PAD_SAVEPROMPT);
+    if K = 'yes' then
+    begin
+      if APage.FileName <> '' then
+        APage.Memo.Lines.SaveToFile(APage.FileName)
+      else
+      if dlgSave.Execute then
+      begin
+        if FindPage(dlgSave.FileName) = nil then
+          APage.SaveToFile(dlgSave.FileName)
+        else
+          MsgErr('File is beging edited');
+        Result := not APage.Memo.Modified;
+      end;
+    end
+    else
+      Result := (K = 'no');
+  end;
+end;
+
+function TMainForm.SelectPage(APage: TLyFilePage): TLyFilePage;
+begin
+  if APage <> nil then
+  begin
+    Result := APage;
+    Pages.ActivePage := Result;
+    OnStatus(nil);
+  end
+  else
+    Result := NewPage;
+end;
+
+function TMainForm.NewPage: TLyFilePage;
+begin
+  Result := TLyFilePage.Create(Pages);
+  Result.PageControl := Pages;
+  Result.HandleNeeded;
+  Result.Memo.HandleNeeded;
+  Result.Memo.OnChange := @OnChange;
+  Result.Memo.OnStatus := @OnStatus;
+  SelectPage(Result);
+end;
+
+function TMainForm.FindPage(const FileName: string): TLyFilePage;
+var
+  F: string;
+  I: integer;
+begin
+  if FileName <> '' then
+  begin
+    F := ExpandFileName(FileName);
+    for I := 0 to PageCount - 1 do
+    begin
+      Result := Page[I];
+      if SameFileName(F, Result.FileName) then
+        Exit;
+    end;
+    Result := nil;
+  end
+  else
+    Result := FindEmptyPage;
+end;
+
+function TMainForm.FindPage(FileID: int64): TLyFilePage;
+var
+  I: integer;
+begin
+  for I := 0 to PageCount - 1 do
+  begin
+    Result := Page[I];
+    if Result.FileID = FileID then
+      Exit;
+  end;
+  Result := nil;
+end;
+
+function TMainForm.FindEmptyPage: TLyFilePage;
+var
+  I: integer;
+begin
+  for I := 0 to PageCount - 1 do
+  begin
+    Result := Page[I];
+    if Result.IsEmpty then
+      Exit;
+  end;
+  Result := nil;
+end;
+
+function TMainForm.GetEmptyPage: TLyFilePage;
+begin
+  Result := FindEmptyPage;
+  if Result = nil then
+    Result := NewPage;
+end;
+
+function TMainForm.ActivePage: TLyFilePage;
+begin
+  Result := TLyFilePage(Pages.ActivePage);
+end;
+
+function TMainForm.ActiveMemo: TLyCodeMemo;
+var
+  P: TLyFilePage;
+  H: integer;
+begin
+  P := ActivePage;
+  if P <> nil then
+  begin
+    Result := P.Memo;
+    H := Pages.Height - Result.height - 6;
+    if (H > 20) and (H < ScreenHeight(12)) and (H <> FTabHeight) then
+    begin
+      FTabHeight := H;
+      pnlTabMan.Height := FTabHeight;
+    end;
+  end
+  else
+    Result := nil;
 end;
 
 end.
-
