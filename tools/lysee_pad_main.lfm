@@ -1,15 +1,16 @@
 object MainForm: TMainForm
   Left = 431
-  Height = 500
+  Height = 750
   Top = 169
-  Width = 788
+  Width = 1182
   Caption = 'Sample Code Editor'
-  ClientHeight = 480
-  ClientWidth = 788
+  ClientHeight = 720
+  ClientWidth = 1182
+  DesignTimePPI = 144
   DoubleBuffered = False
   Font.CharSet = ANSI_CHARSET
   Font.Color = clBlack
-  Font.Height = -14
+  Font.Height = -21
   Font.Name = 'Georgia'
   Font.Pitch = fpVariable
   Font.Quality = fqDraft
@@ -23,13 +24,13 @@ object MainForm: TMainForm
   LCLVersion = '2.0.6.0'
   object EditPanel: TPanel
     Left = 0
-    Height = 402
-    Top = 56
-    Width = 788
+    Height = 602
+    Top = 84
+    Width = 1182
     Align = alClient
     BevelOuter = bvNone
-    ClientHeight = 402
-    ClientWidth = 788
+    ClientHeight = 602
+    ClientWidth = 1182
     Color = clWindow
     ParentColor = False
     ParentFont = False
@@ -37,9 +38,9 @@ object MainForm: TMainForm
     OnResize = EditPanelResize
     object Pages: TPageControl
       Left = 0
-      Height = 402
+      Height = 602
       Top = 0
-      Width = 788
+      Width = 1182
       Align = alClient
       ParentFont = False
       TabOrder = 0
@@ -50,38 +51,38 @@ object MainForm: TMainForm
   end
   object StatusBar: TStatusBar
     Left = 0
-    Height = 22
-    Top = 458
-    Width = 788
+    Height = 34
+    Top = 686
+    Width = 1182
     Panels = <    
       item
         Alignment = taCenter
-        Width = 100
+        Width = 150
       end    
       item
         Alignment = taCenter
-        Width = 100
+        Width = 150
       end    
       item
         Alignment = taCenter
-        Width = 100
+        Width = 150
       end    
       item
-        Width = 50
+        Width = 75
       end>
     ParentFont = False
     SimplePanel = False
   end
   object barFile: TToolBar
     Left = 0
-    Height = 26
+    Height = 39
     Top = 0
-    Width = 788
+    Width = 1182
     Caption = 'barFile'
     EdgeBorders = [ebTop, ebBottom]
     Font.CharSet = ANSI_CHARSET
     Font.Color = clBlack
-    Font.Height = -14
+    Font.Height = -21
     Font.Name = 'Microsoft Sans Serif'
     Font.Pitch = fpVariable
     Font.Quality = fqDraft
@@ -94,67 +95,67 @@ object MainForm: TMainForm
       Action = aFileNew
     end
     object btnFileOpen: TToolButton
-      Left = 24
+      Left = 36
       Top = 2
       Action = aFileOpen
     end
     object btnFileSave: TToolButton
-      Left = 47
+      Left = 71
       Top = 2
       Action = aFileSave
     end
     object ToolButton8: TToolButton
-      Left = 70
-      Height = 22
+      Left = 106
+      Height = 33
       Top = 2
       Caption = 'ToolButton8'
       Style = tbsSeparator
     end
     object btnEditCut: TToolButton
-      Left = 75
+      Left = 118
       Top = 2
       Action = aEditCut
     end
     object btnEditCopy: TToolButton
-      Left = 98
+      Left = 153
       Top = 2
       Action = aEditCopy
     end
     object btnEditPaste: TToolButton
-      Left = 121
+      Left = 188
       Top = 2
       Action = aEditPaste
     end
     object btnSearch: TToolButton
-      Left = 149
+      Left = 235
       Top = 2
       Action = aSearchFind
     end
     object ToolButton13: TToolButton
-      Left = 195
-      Height = 22
+      Left = 305
+      Height = 33
       Top = 2
       Caption = 'ToolButton13'
       Style = tbsSeparator
     end
     object btnEditUndo: TToolButton
-      Left = 200
+      Left = 317
       Top = 2
       Action = aEditUndo
     end
     object btnEditRedo: TToolButton
-      Left = 223
+      Left = 352
       Top = 2
       Action = aEditRedo
     end
     object btnReplace: TToolButton
-      Left = 172
+      Left = 270
       Top = 2
       Action = aSearchReplace
     end
     object ToolButton1: TToolButton
-      Left = 144
-      Height = 22
+      Left = 223
+      Height = 33
       Top = 2
       Caption = 'ToolButton1'
       Style = tbsSeparator
@@ -162,16 +163,16 @@ object MainForm: TMainForm
   end
   object pnlRivi: TPanel
     Left = 0
-    Height = 30
-    Top = 26
-    Width = 788
+    Height = 45
+    Top = 39
+    Width = 1182
     Align = alTop
     BevelOuter = bvNone
-    ClientHeight = 30
-    ClientWidth = 788
+    ClientHeight = 45
+    ClientWidth = 1182
     Font.CharSet = ANSI_CHARSET
     Font.Color = clBlack
-    Font.Height = -14
+    Font.Height = -21
     Font.Name = 'Georgia'
     Font.Pitch = fpVariable
     Font.Quality = fqDraft
@@ -179,15 +180,15 @@ object MainForm: TMainForm
     TabOrder = 3
     object pnlRiviBottomLine: TPanel
       Left = 0
-      Height = 1
-      Top = 29
-      Width = 788
+      Height = 2
+      Top = 43
+      Width = 1182
       Align = alBottom
       BevelOuter = bvNone
       Color = clBtnShadow
       Font.CharSet = ANSI_CHARSET
       Font.Color = clBlack
-      Font.Height = -14
+      Font.Height = -21
       Font.Name = 'Georgia'
       Font.Pitch = fpVariable
       Font.Quality = fqDraft
@@ -197,17 +198,17 @@ object MainForm: TMainForm
     end
     object pnlRiviBody: TPanel
       Left = 0
-      Height = 29
+      Height = 43
       Top = 0
-      Width = 788
+      Width = 1182
       Align = alClient
       BevelOuter = bvNone
       BorderWidth = 2
-      ClientHeight = 29
-      ClientWidth = 788
+      ClientHeight = 43
+      ClientWidth = 1182
       Font.CharSet = ANSI_CHARSET
       Font.Color = clBlack
-      Font.Height = -14
+      Font.Height = -21
       Font.Name = 'Georgia'
       Font.Pitch = fpVariable
       Font.Quality = fqDraft
@@ -215,16 +216,16 @@ object MainForm: TMainForm
       TabOrder = 1
       object pnlFontName: TPanel
         Left = 2
-        Height = 25
+        Height = 39
         Top = 2
-        Width = 289
+        Width = 434
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 25
-        ClientWidth = 289
+        ClientHeight = 39
+        ClientWidth = 434
         Font.CharSet = ANSI_CHARSET
         Font.Color = clBlack
-        Font.Height = -14
+        Font.Height = -21
         Font.Name = 'Georgia'
         Font.Pitch = fpVariable
         Font.Quality = fqDraft
@@ -232,14 +233,14 @@ object MainForm: TMainForm
         TabOrder = 0
         object btnHeiti: TSpeedButton
           Left = 0
-          Height = 25
+          Height = 38
           Top = 0
-          Width = 25
+          Width = 38
           Caption = '黑'
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -248,15 +249,15 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnKaiti: TSpeedButton
-          Left = 26
-          Height = 25
+          Left = 39
+          Height = 38
           Top = 0
-          Width = 25
+          Width = 38
           Caption = '楷'
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -265,14 +266,14 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnTextColor: TSpeedButton
-          Left = 213
-          Height = 25
+          Left = 320
+          Height = 38
           Top = 0
-          Width = 25
+          Width = 38
           Caption = 'C'
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlue
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -281,14 +282,14 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnSelectTextColor: TSpeedButton
-          Left = 239
-          Height = 25
+          Left = 358
+          Height = 38
           Top = 0
-          Width = 12
+          Width = 18
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -303,18 +304,18 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object pnlBackground: TPanel
-          Left = 252
-          Height = 25
+          Left = 378
+          Height = 39
           Top = 0
-          Width = 37
+          Width = 56
           Align = alRight
           BevelOuter = bvNone
-          ClientHeight = 25
-          ClientWidth = 37
+          ClientHeight = 39
+          ClientWidth = 56
           Color = clMoneyGreen
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -323,14 +324,14 @@ object MainForm: TMainForm
           TabOrder = 0
           object btnBackground: TSpeedButton
             Left = 0
-            Height = 25
+            Height = 38
             Top = 0
-            Width = 25
+            Width = 38
             Caption = 'G'
             Flat = True
             Font.CharSet = ANSI_CHARSET
             Font.Color = clBlack
-            Font.Height = -14
+            Font.Height = -21
             Font.Name = 'Georgia'
             Font.Pitch = fpVariable
             Font.Quality = fqDraft
@@ -339,14 +340,14 @@ object MainForm: TMainForm
             ParentFont = False
           end
           object btnSelectBackground: TSpeedButton
-            Left = 25
-            Height = 25
+            Left = 38
+            Height = 38
             Top = 0
-            Width = 12
+            Width = 18
             Flat = True
             Font.CharSet = ANSI_CHARSET
             Font.Color = clBlack
-            Font.Height = -14
+            Font.Height = -21
             Font.Name = 'Georgia'
             Font.Pitch = fpVariable
             Font.Quality = fqDraft
@@ -362,14 +363,14 @@ object MainForm: TMainForm
           end
         end
         object btnFontName: TSpeedButton
-          Left = 52
-          Height = 25
+          Left = 78
+          Height = 38
           Top = 0
-          Width = 148
+          Width = 222
           Caption = 'Georgia'
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -377,14 +378,14 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnSelectFontName: TSpeedButton
-          Left = 198
-          Height = 25
+          Left = 297
+          Height = 38
           Top = 0
-          Width = 12
+          Width = 18
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -400,17 +401,17 @@ object MainForm: TMainForm
         end
       end
       object pnlTextColor1: TPanel
-        Left = 296
-        Height = 25
+        Left = 444
+        Height = 39
         Top = 2
-        Width = 150
+        Width = 225
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 25
-        ClientWidth = 150
+        ClientHeight = 39
+        ClientWidth = 225
         Font.CharSet = ANSI_CHARSET
         Font.Color = clBlack
-        Font.Height = -14
+        Font.Height = -21
         Font.Name = 'Georgia'
         Font.Pitch = fpVariable
         Font.Quality = fqDraft
@@ -418,14 +419,14 @@ object MainForm: TMainForm
         TabOrder = 1
         object btnBold: TSpeedButton
           Left = 0
-          Height = 25
+          Height = 38
           Top = 0
-          Width = 25
+          Width = 38
           Caption = 'B'
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -434,15 +435,15 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnItalic: TSpeedButton
-          Left = 25
-          Height = 25
+          Left = 38
+          Height = 38
           Top = 0
-          Width = 22
+          Width = 33
           Caption = 'I'
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -451,15 +452,15 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnUnderline: TSpeedButton
-          Left = 50
-          Height = 25
+          Left = 75
+          Height = 38
           Top = 0
-          Width = 22
+          Width = 33
           Caption = 'U'
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -468,15 +469,15 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnStrikeout: TSpeedButton
-          Left = 75
-          Height = 25
+          Left = 112
+          Height = 38
           Top = 0
-          Width = 22
+          Width = 33
           Caption = ' S '
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -485,15 +486,15 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnSuper: TSpeedButton
-          Left = 100
-          Height = 25
+          Left = 150
+          Height = 38
           Top = 0
-          Width = 22
+          Width = 33
           Caption = 'S^'
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -501,15 +502,15 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnSub: TSpeedButton
-          Left = 125
-          Height = 25
+          Left = 188
+          Height = 38
           Top = 0
-          Width = 22
+          Width = 33
           Caption = 'S_'
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -518,33 +519,33 @@ object MainForm: TMainForm
         end
       end
       object Bevel1: TBevel
-        Left = 291
-        Height = 25
+        Left = 436
+        Height = 39
         Top = 2
-        Width = 5
+        Width = 8
         Align = alLeft
         Shape = bsRightLine
       end
       object Bevel2: TBevel
-        Left = 446
-        Height = 25
+        Left = 669
+        Height = 39
         Top = 2
-        Width = 5
+        Width = 8
         Align = alLeft
         Shape = bsRightLine
       end
       object pnlAlign: TPanel
-        Left = 451
-        Height = 25
+        Left = 677
+        Height = 39
         Top = 2
-        Width = 75
+        Width = 112
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 25
-        ClientWidth = 75
+        ClientHeight = 39
+        ClientWidth = 112
         Font.CharSet = ANSI_CHARSET
         Font.Color = clBlack
-        Font.Height = -14
+        Font.Height = -21
         Font.Name = 'Georgia'
         Font.Pitch = fpVariable
         Font.Quality = fqDraft
@@ -552,13 +553,13 @@ object MainForm: TMainForm
         TabOrder = 2
         object btnLeft: TSpeedButton
           Left = 0
-          Height = 25
+          Height = 38
           Top = 0
-          Width = 25
+          Width = 38
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -603,14 +604,14 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnCenter: TSpeedButton
-          Left = 25
-          Height = 25
+          Left = 38
+          Height = 38
           Top = 0
-          Width = 22
+          Width = 33
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -655,14 +656,14 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnRight: TSpeedButton
-          Left = 50
-          Height = 25
+          Left = 75
+          Height = 38
           Top = 0
-          Width = 22
+          Width = 33
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -708,25 +709,25 @@ object MainForm: TMainForm
         end
       end
       object Bevel3: TBevel
-        Left = 526
-        Height = 25
+        Left = 789
+        Height = 39
         Top = 2
-        Width = 5
+        Width = 8
         Align = alLeft
         Shape = bsRightLine
       end
       object pnlAlign1: TPanel
-        Left = 531
-        Height = 25
+        Left = 797
+        Height = 39
         Top = 2
-        Width = 75
+        Width = 114
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 25
-        ClientWidth = 75
+        ClientHeight = 39
+        ClientWidth = 114
         Font.CharSet = ANSI_CHARSET
         Font.Color = clBlack
-        Font.Height = -14
+        Font.Height = -21
         Font.Name = 'Georgia'
         Font.Pitch = fpVariable
         Font.Quality = fqDraft
@@ -734,13 +735,13 @@ object MainForm: TMainForm
         TabOrder = 3
         object btnImage: TSpeedButton
           Left = 0
-          Height = 25
+          Height = 38
           Top = 0
-          Width = 25
+          Width = 38
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -785,14 +786,14 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnLink: TSpeedButton
-          Left = 25
-          Height = 25
+          Left = 38
+          Height = 38
           Top = 0
-          Width = 22
+          Width = 38
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -837,15 +838,15 @@ object MainForm: TMainForm
           ParentFont = False
         end
         object btnTable: TSpeedButton
-          Left = 50
-          Height = 25
+          Left = 76
+          Height = 38
           Hint = 'Table'
           Top = 0
-          Width = 22
+          Width = 38
           Flat = True
           Font.CharSet = ANSI_CHARSET
           Font.Color = clBlack
-          Font.Height = -14
+          Font.Height = -21
           Font.Name = 'Georgia'
           Font.Pitch = fpVariable
           Font.Quality = fqDraft
@@ -890,19 +891,74 @@ object MainForm: TMainForm
           ParentFont = False
         end
       end
+      object Bevel4: TBevel
+        Left = 911
+        Height = 39
+        Top = 2
+        Width = 8
+        Align = alLeft
+        Shape = bsRightLine
+      end
+      object pnlCode: TPanel
+        Left = 919
+        Height = 39
+        Top = 2
+        Width = 76
+        Align = alLeft
+        BevelOuter = bvNone
+        ClientHeight = 39
+        ClientWidth = 76
+        Font.CharSet = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -21
+        Font.Name = 'Georgia'
+        Font.Pitch = fpVariable
+        Font.Quality = fqDraft
+        Font.Style = [fsBold]
+        ParentFont = False
+        TabOrder = 4
+        object btnCode: TSpeedButton
+          Left = 0
+          Height = 38
+          Hint = 'Mark Code'
+          Top = 0
+          Width = 38
+          Caption = '%'
+          Flat = True
+          OnClick = btnCodeClick
+        end
+        object btnNotCode: TSpeedButton
+          Left = 38
+          Height = 38
+          Hint = 'Unmark Code'
+          Top = 0
+          Width = 38
+          Caption = ' % '
+          Flat = True
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -21
+          Font.Name = 'Georgia'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold, fsStrikeOut]
+          OnClick = btnNotCodeClick
+          ParentFont = False
+        end
+      end
     end
   end
   object pnlTabMan: TPanel
-    Left = 485
-    Height = 22
-    Top = 59
-    Width = 21
+    Left = 728
+    Height = 33
+    Top = 88
+    Width = 32
     BevelOuter = bvNone
-    ClientHeight = 22
-    ClientWidth = 21
+    ClientHeight = 33
+    ClientWidth = 32
     Font.CharSet = ANSI_CHARSET
     Font.Color = clBlack
-    Font.Height = -14
+    Font.Height = -21
     Font.Name = 'Georgia'
     Font.Pitch = fpVariable
     Font.Quality = fqDraft
@@ -913,14 +969,14 @@ object MainForm: TMainForm
     OnResize = pnlTabManResize
     object btnTabClose: TSpeedButton
       Left = 0
-      Height = 22
+      Height = 33
       Top = 0
-      Width = 21
+      Width = 32
       Caption = 'X'
       Flat = True
       Font.CharSet = ANSI_CHARSET
       Font.Color = clBlack
-      Font.Height = -14
+      Font.Height = -21
       Font.Name = 'Georgia'
       Font.Pitch = fpVariable
       Font.Quality = fqDraft
@@ -930,8 +986,8 @@ object MainForm: TMainForm
   end
   object MainMenu: TMainMenu
     Images = ImageList
-    left = 101
-    top = 91
+    left = 152
+    top = 137
     object mmFile: TMenuItem
       Caption = '&File'
       object miFileNew: TMenuItem
@@ -1012,18 +1068,18 @@ object MainForm: TMainForm
   object dlgOpen: TOpenDialog
     DefaultExt = '.*'
     Filter = 'Lysee Files(*.ls; *.rivi)|*.ls; *.rivi|Any Files(*.*)|*.*'
-    left = 176
-    top = 91
+    left = 264
+    top = 137
   end
   object dlgSave: TSaveDialog
     DefaultExt = '.*'
     Filter = 'Lysee Files(*.ls; *.rivi)|*.ls; *.rivi|Any Files(*.*)|*.*'
-    left = 245
-    top = 91
+    left = 368
+    top = 137
   end
   object ImageList: TImageList
-    left = 101
-    top = 160
+    left = 152
+    top = 240
     Bitmap = {
       4C69210000001000000010000000FF00FF00FF00FF00FF00FF00FF00FF00FF00
       FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
@@ -2086,8 +2142,8 @@ object MainForm: TMainForm
   end
   object Actions: TActionList
     Images = ImageList
-    left = 176
-    top = 160
+    left = 264
+    top = 240
     object aFileNew: TAction
       Category = 'File'
       Caption = '&New'
@@ -2337,12 +2393,12 @@ object MainForm: TMainForm
   end
   object APP: TApplicationProperties
     OnDropFiles = APPDropFiles
-    left = 315
-    top = 91
+    left = 473
+    top = 137
   end
   object dlgImage: TOpenPictureDialog
-    left = 315
-    top = 160
+    left = 473
+    top = 240
   end
   object dlgColor: TColorDialog
     Color = clBlack
@@ -2368,7 +2424,36 @@ object MainForm: TMainForm
       'ColorS=F0FBFF'
       'ColorT=A4A0A0'
     )
-    left = 245
-    top = 160
+    left = 368
+    top = 240
+  end
+  object popMenu: TPopupMenu
+    Images = ImageList
+    left = 609
+    top = 174
+    object MenuItem1: TMenuItem
+      Action = aEditUndo
+    end
+    object MenuItem2: TMenuItem
+      Action = aEditRedo
+    end
+    object N1: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem3: TMenuItem
+      Action = aEditCopy
+    end
+    object MenuItem4: TMenuItem
+      Action = aEditCut
+    end
+    object MenuItem5: TMenuItem
+      Action = aEditPaste
+    end
+    object N2: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem6: TMenuItem
+      Action = aEditSelectAll
+    end
   end
 end

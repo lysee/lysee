@@ -375,6 +375,7 @@ type
     destructor Destroy;override;
     class function ReadFor(const AFileName: string; var Buffer; Count: integer): integer;
     class function ReadEditInfo(const AFileName: string; var EI: RLyEditInfo): boolean;
+    class function LockApplication: TLyFileEditLock;
     function LockForFile(const AFileName: string): boolean;
     function Unlock: boolean;
     function Write(const Buffer; Count: integer): integer;
@@ -2892,6 +2893,17 @@ begin
   Result := (ReadFor(AFileName, EI, sizeof(EI)) = sizeof(EI));
 end;
 
+class function TLyFileEditLock.LockApplication: TLyFileEditLock;
+begin
+  Result := TLyFileEditLock.Create;
+  try
+    if not Result.LockForFile(ParamStr(0)) then
+      FreeAndNil(Result);
+  except
+    FreeAndNil(Result);
+  end;
+end;
+
 function TLyFileEditLock.LockForFile(const AFileName: string): boolean;
 var
   F, L: string;
@@ -3178,6 +3190,7 @@ begin
       '(': endc := ')';
       '{': endc := '}';
     end;
+    ch := #0;
     if next_char and skip_space and (ch <> endc) then
     begin
       if ch = '%' then

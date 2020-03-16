@@ -53,10 +53,13 @@ type
     Bevel1: TBevel;
     Bevel2: TBevel;
     Bevel3: TBevel;
+    Bevel4: TBevel;
+    btnCode: TSpeedButton;
     btnLink: TSpeedButton;
     btnLeft: TSpeedButton;
     btnCenter: TSpeedButton;
     btnImage: TSpeedButton;
+    btnNotCode: TSpeedButton;
     btnTable: TSpeedButton;
     btnBackground: TSpeedButton;
     btnKaiti: TSpeedButton;
@@ -71,6 +74,14 @@ type
     dlgColor: TColorDialog;
     ImageList: TImageList;
     MainMenu: TMainMenu;
+    MenuItem1: TMenuItem;
+    MenuItem2: TMenuItem;
+    MenuItem3: TMenuItem;
+    MenuItem4: TMenuItem;
+    MenuItem5: TMenuItem;
+    MenuItem6: TMenuItem;
+    N2: TMenuItem;
+    N1: TMenuItem;
     mmFile: TMenuItem;
     miFileNew: TMenuItem;
     miFileOpen: TMenuItem;
@@ -96,6 +107,7 @@ type
     miSearchNext: TMenuItem;
     dlgImage: TOpenPictureDialog;
     Pages: TPageControl;
+    pnlCode: TPanel;
     pnlTabMan: TPanel;
     pnlAlign1: TPanel;
     pnlRiviBody: TPanel;
@@ -120,6 +132,7 @@ type
     btnFontName: TSpeedButton;
     btnSelectFontName: TSpeedButton;
     btnTabClose: TSpeedButton;
+    popMenu: TPopupMenu;
     StatusBar: TStatusBar;
     barFile: TToolBar;
     btnEditCopy: TToolButton;
@@ -154,6 +167,7 @@ type
     procedure btnBackgroundClick(Sender: TObject);
     procedure btnBoldClick(Sender: TObject);
     procedure btnCenterClick(Sender: TObject);
+    procedure btnCodeClick(Sender: TObject);
     procedure btnFontNameClick(Sender: TObject);
     procedure btnHeitiClick(Sender: TObject);
     procedure btnImageClick(Sender: TObject);
@@ -161,6 +175,7 @@ type
     procedure btnKaitiClick(Sender: TObject);
     procedure btnLeftClick(Sender: TObject);
     procedure btnLinkClick(Sender: TObject);
+    procedure btnNotCodeClick(Sender: TObject);
     procedure btnRightClick(Sender: TObject);
     procedure btnSelectBackgroundClick(Sender: TObject);
     procedure btnSelectFontNameClick(Sender: TObject);
@@ -351,6 +366,11 @@ begin
   SetHorzAlign('center');
 end;
 
+procedure TMainForm.btnCodeClick(Sender: TObject);
+begin
+  RiviMarkCode(ActiveMemo, true);
+end;
+
 procedure TMainForm.btnFontNameClick(Sender: TObject);
 begin
   if ActiveMemo.SelAvail then
@@ -385,6 +405,11 @@ end;
 procedure TMainForm.btnLinkClick(Sender: TObject);
 begin
   actRiviLinkExecute(nil);
+end;
+
+procedure TMainForm.btnNotCodeClick(Sender: TObject);
+begin
+  RiviMarkCode(ActiveMemo, false);
 end;
 
 procedure TMainForm.btnRightClick(Sender: TObject);
@@ -1044,8 +1069,10 @@ begin
   Result.PageControl := Pages;
   Result.HandleNeeded;
   Result.Memo.HandleNeeded;
+  Result.Memo.Modified := false;
   Result.Memo.OnChange := @OnChange;
   Result.Memo.OnStatus := @OnStatus;
+  Result.Memo.PopupMenu := popMenu;
   SelectPage(Result);
 end;
 

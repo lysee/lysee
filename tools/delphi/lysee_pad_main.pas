@@ -218,6 +218,7 @@ begin
   FMemo := PlaceACodeMemo(pnEdit);
   FMemo.Modified := false;
   FMemo.OnStatus := MemoStatus;
+  FMemo.ShowLine80 := true;
 
   FNextMonitor := SetClipBoardViewer(Handle);
   FLysee := ExtractFilePath(Application.ExeName) + 'lysee.exe';
@@ -320,7 +321,7 @@ end;
 
 procedure TMainForm.ReplaceDialogReplace(Sender: TObject);
 begin
-  if FMemo.Selected then
+  if FMemo.SelAvail then
     if SameText(WideToStr(FMemo.SelText), ReplaceDialog.FindText) then
       FMemo.SelText := StrToWide(ReplaceDialog.ReplaceText);
   if frReplaceAll in ReplaceDialog.Options then
@@ -390,8 +391,8 @@ begin
   StatusBar.Panels[2].Text := 'Rivi'; //FMemo.Syntax.Language;
   EditUndo.Enabled := FMemo.CanUndo;
   EditRedo.Enabled := FMemo.CanRedo;
-  EditCut.Enabled := FMemo.Selected;
-  EditCopy.Enabled := FMemo.Selected;
+  EditCut.Enabled := FMemo.SelAvail;
+  EditCopy.Enabled := FMemo.SelAvail;
   EditPaste.Enabled := HasTextFormat;
   EditSelectAll.Enabled := (FMemo.Lines.Count > 1) or (FMemo.Lines.First.Text <> '');
   LyseeMenu.Visible := false; // SameText(FMemo.Syntax.Language, 'Lysee');

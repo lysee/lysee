@@ -7,8 +7,7 @@ unit UIDefs;
 interface
 
 uses
-//{$IFDEF MSWINDOWS}Windows,{$ENDIF}
-  {$IFDEF FPC}LCLType, LCLIntf,{$ELSE}Messages,{$ENDIF}
+  {$IFDEF FPC}LCLType, LCLIntf,{$ELSE}Windows, Messages,{$ENDIF}
   SysUtils, Classes, Controls, Graphics, StdCtrls, ExtCtrls, Forms;
 
 const

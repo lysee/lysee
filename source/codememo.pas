@@ -34,13 +34,21 @@ type
   TLyUndoList  = class;
   TLyHilighter = class;
 
+  RLyInputPos = packed record
+    LineX: integer;
+    ItemX: integer; // index of TLyCodeMemo.FLines
+    TextX: integer;
+    After: boolean; // after last char of the line
+  end;
+  PLyInputPos = ^RLyInputPos;
+
   { TLyCodeMemo }
 
   TLyChangeType = (ctChangeText, ctDeleteLine, ctAddLine);
   TLyChangeDeal = (cdNone, cdUndo, cdRedo);
 
-  TLyMemoState = (msModified, msReadonly, msUndoRedo, msWrapLine, msLine80,
-                  msGutter, msResizing, msFonting, msDestroying);
+  TLyMemoState = (msModified, msReadonly, msUndoRedo, msInsert, msWrapLine,
+                  msLine80, msGutter, msResizing, msFonting, msDestroying);
   TLyMemoStates = set of TLyMemoState;
 
   TLyCodeMemo = class(TCustomControl)
@@ -65,8 +73,8 @@ type
     FOnStatus: TNotifyEvent;
     FOnChange: TNotifyEvent;
     function GetState(X: TLyMemoState): boolean;
-    function GetUpdating: boolean;
     procedure SetState(X: TLyMemoState; Value: boolean);
+    function GetUpdating: boolean;
     function GetCanUndo: boolean;
     function GetCanRedo: boolean;
     function GetSelAvail: boolean;
@@ -74,22 +82,24 @@ type
     procedure SetSelText(const Value: WideString);
     function GetCaretY: integer;
     function GetCaretX: integer;
+    function GetTopCaretY: integer;
+    function GetTopOffset: integer;
     function GetLineCount: integer;
     function GetScrollBar: TScrollBar;
     function StatusOK: boolean;
   protected
-    { message }
     procedure WMSetFocus(var Msg: TWMSetFocus);message WM_SETFOCUS;
     procedure WMKillFocus(var Msg: TWMKillFocus);message WM_KILLFOCUS;
     procedure WMGetDlgCode(var Msg: TWMGetDlgCode);message WM_GETDLGCODE;
-    { mouse }
+    procedure CreateParams(var Params: TCreateParams);override;
+    procedure Resize;override;
+    procedure Paint;override;
     procedure DblClick;override;
     procedure MouseDown(Button: TMouseButton; Shift:TShiftState; X,Y:Integer);override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer);override;
     procedure MouseUp(Button: TMouseButton; Shift:TShiftState; X,Y:Integer);override;
     function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): boolean;override;
     function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): boolean;override;
-    { keyboard }
     procedure KeyDown(var Key: Word; Shift: TShiftState);override;
     procedure KeyUp(var Key: Word; Shift: TShiftState);override;
     {$IFDEF FPC}
@@ -97,35 +107,27 @@ type
     {$ELSE}
     procedure KeyPress(var Key: char);override;
     {$ENDIF}
-    { resize }
-    procedure Resize;override;
-    function ResizeFrom(ItemX: integer; OnlyChanged: boolean): integer;
-    function EditAreaWidth: integer;
-    procedure CheckFontStatus;
     procedure FontChange(Sender: TObject);
-    { display }
-    procedure Paint;override;
+    procedure CheckFontStatus;
+    function EditAreaWidth: integer;
+    function EditAreaLeft: integer;
+    function ResizeFrom(ItemX: integer; OnlyChanged: boolean): integer;
     procedure PaintFrom(AItemX: integer; OnlyChanged: boolean);
     procedure PaintLine80;
     procedure SetCanvas(Selected: boolean);
     procedure ScrollDown(Delta: integer);
     procedure ScrollUp(Delta: integer);
     procedure ScrollBarChange(Sender: TObject);
-    { position }
     function HitLine(Y: integer): integer;
-    function HitText(X, Y: integer; var TextX: integer): TLyLine;
-    function TopOffset: integer;
-    function TopCaretY: integer;
-    function GetTopLine(var ItemX, LineX: integer): boolean;
-    procedure MakeVisible(LineX: integer);
+    function HitText(X, Y: integer; var P: RLyInputPos): integer;
+    function GetItemLine(LineX: integer; var LX: integer): integer;
     procedure NotifyStatus;
     procedure NotifyChange;
-    procedure CreateParams(var Params: TCreateParams);override;
+    procedure BeginUpdate;
+    procedure EndUpdate;
   public
     constructor Create(AOwner: TComponent);override;
     destructor Destroy;override;
-    procedure BeginUpdate;
-    procedure EndUpdate;
     procedure Keyboard(Key: Word; Shift: TShiftState);overload;
     procedure Keyboard(Key: WideChar);overload;
     procedure SelectAll;
@@ -133,6 +135,7 @@ type
     procedure CopyToClipboard;
     procedure CutToClipboard;
     procedure PasteFromClipboard;
+    procedure MakeLineVisible(LineX: integer);
     procedure MakeCaretVisible;
     procedure Print;
     procedure Undo;
@@ -149,6 +152,8 @@ type
     property LineCount: integer read GetLineCount;
     property CaretY: integer read GetCaretY;
     property CaretX: integer read GetCaretX;
+    property TopCaretY: integer read GetTopCaretY;
+    property TopOffset: integer read GetTopOffset;
     property ScrollBar: TScrollBar read GetScrollBar;
     property Readonly: boolean index msReadonly read GetState write SetState;
     property Modified: boolean index msModified read GetState write SetState;
@@ -192,6 +197,16 @@ type
     procedure KeyCopy(AMemo: TObject; Shift: TShiftState);       // Ctrl-C
     procedure KeyCut(AMemo: TObject; Shift: TShiftState);        // Ctrl-X/Shift-DEL
     procedure KeyPaste(AMemo: TObject; Shift: TShiftState);      // Ctrl-V/Shift-INS
+    procedure KeyBack(AMemo: TObject; Shift: TShiftState);       // BACK
+    procedure KeyTab(AMemo: TObject; Shift: TShiftState);        // TAB
+    procedure KeyInsert(AMemo: TObject; Shift: TShiftState);     // INSERT
+    procedure KeyDelete(AMemo: TObject; Shift: TShiftState);     // DELETE
+    procedure KeyDeleteLine(AMemo: TObject; Shift: TShiftState); // Ctrl-Y
+    procedure KeyUndo(AMemo: TObject; Shift: TShiftState);       // Ctrl-Z
+    procedure KeyRedo(AMemo: TObject; Shift: TShiftState);       // Shift-Ctrl-Z
+    { move caret }
+    procedure BeginMoveCaret(Shift: TShiftState);
+    procedure EndMoveCaret(Shift: TShiftState);
     procedure KeyLeft(AMemo: TObject; Shift: TShiftState);       // LEFT
     procedure KeyRight(AMemo: TObject; Shift: TShiftState);      // RIGHT
     procedure KeyUp(AMemo: TObject; Shift: TShiftState);         // UP
@@ -200,11 +215,6 @@ type
     procedure KeyPageDown(AMemo: TObject; Shift: TShiftState);   // NEXT
     procedure KeyHome(AMemo: TObject; Shift: TShiftState);       // HOME
     procedure KeyEnd(AMemo: TObject; Shift: TShiftState);        // END
-    procedure KeyBack(AMemo: TObject; Shift: TShiftState);       // BACK
-    procedure KeyDelete(AMemo: TObject; Shift: TShiftState);     // DELETE
-    procedure KeyDeleteLine(AMemo: TObject; Shift: TShiftState); // Ctrl-Y
-    procedure KeyUndo(AMemo: TObject; Shift: TShiftState);       // Ctrl-Z
-    procedure KeyRedo(AMemo: TObject; Shift: TShiftState);       // Shift-Ctrl-Z
   protected
     procedure UndoSaveChange(ItemX: integer; const S: WideString);
     procedure UndoSaveDelete(ItemX: integer; const S: WideString);
@@ -232,18 +242,17 @@ type
   TLyCaret = class
   private
     FMemo: TLyCodeMemo;
+    FPos: RLyInputPos;
     FMoveCount: integer;
-    FItemX: integer;
-    FTextX: integer;
-    FPos: TPoint;
-    FWidth: integer;
-    FHeight: integer;
     FCreated: boolean;
     FShowing: boolean;
+    FWidth: integer;
+    FHeight: integer;
     function GetVisible: boolean;
     function GetActive: boolean;
     function GetItem: TLyLine;
-    function GetAtTail: boolean;
+    function GetCaretY: integer;
+    function GetCaretX: integer;
   protected
     procedure BeginMove;
     procedure EndMove;
@@ -251,31 +260,27 @@ type
     procedure HideCaret;
     function CreateCaret(Width, Height: integer): boolean;
     function ShowCaret: boolean;
-    procedure MoveTo(ItemX, TextX: integer);
+    procedure MoveTo(ItemX, TextX: integer; After: boolean);
     procedure MoveToHead(Item: TLyLine);
     procedure MoveToTail(Item: TLyLine);
-    procedure MoveToPrev(Item: TLyLine);
-    procedure MoveToNext(Item: TLyLine);
-    procedure MoveToSelEnd;
     procedure MoveCaret;
-    procedure Insert(Strings: TStrings);overload;
-    procedure Insert(const Text: WideString);overload;
-    procedure MoveAfterInsert(Line: TLyLine; TextX: integer; const S: WideString);
-    function ScrollUp(LineCount: integer; var TX: integer): TLyLine;
-    function ScrollDown(LineCount: integer; var TX: integer): TLyLine;
-    function PrevPos(var TX: integer; AWord: boolean): TLyLine;
-    function NextPos(var TX: integer; AWord: boolean): TLyLine;
+    procedure MoveDocumentHead;
+    procedure MoveDocumentEnd;
+    procedure MoveLineHead;
+    procedure MoveLineEnd;
+    procedure MoveLeft(AWord: boolean);
+    procedure MoveRight(AWord: boolean);
+    procedure MoveUp(Lines: integer);
+    procedure MoveDown(Lines: integer);
   public
     constructor Create(AMemo: TLyCodeMemo);
-    procedure MakeVisible;
     property Active: boolean read GetActive;
     property Visible: boolean read GetVisible;
     property Showing: boolean read FShowing;
     property Item: TLyLine read GetItem;
-    property ItemIndex: integer read FItemX;
-    property TextIndex: integer read FTextX;
-    property AtTail: boolean read GetAtTail;
-    property Pos: TPoint read FPos;
+    property X: integer read GetCaretX;
+    property Y: integer read GetCaretY;
+    property Pos: RLyInputPos read FPos;
   end;
 
   { RLyTextPos }
@@ -305,10 +310,8 @@ type
     procedure SetText(const Value: WideString);
   protected
     procedure Reset;
-    procedure MouseDown(P: TLyLine; TextX: integer);overload;
-    procedure MouseMove(P: TLyLine; TextX: integer);overload;
     function Select(HI, HX, TI, TX: integer): boolean;
-    function SelectTo(ItemX, TextX: integer): boolean;
+    function SelectTo(ItemX, TextX: integer; SelectByMouse: boolean): boolean;
     function Contains(ItemX, TextX: integer): boolean;overload;
     function Contains(ItemX: integer): boolean;overload;
     function GetRange(ItemX: integer; var X1, X2: integer): boolean;
@@ -322,8 +325,6 @@ type
     procedure CopyToClipboard;
     procedure CutToClipboard;
     procedure PasteFromClipboard;
-    procedure MarkCode(IsCode: boolean);overload;
-    procedure MarkCode(IsCode: boolean; BegLineX, EndLineX: integer);overload;
     property Selected: boolean read GetSelected write SetSelected;
     property NotSelected: boolean read GetNotSelected;
     property PartialSelected: boolean read GetPartialSelected;
@@ -358,22 +359,18 @@ type
     destructor Destroy;override;
     procedure BeginUpdate;
     procedure EndUpdate;
-    procedure LoadFromFile(const FileName: string); // UTF8
+    procedure LoadFromFile(const FileName: string);   // UTF8
     procedure LoadFromStream(const AStream: TStream); // UTF8
-    procedure SaveToFile(const FileName: string); // UTF8
-    procedure SaveToStream(const AStream: TStream); // UTF8
+    procedure SaveToFile(const FileName: string);     // UTF8
+    procedure SaveToStream(const AStream: TStream);   // UTF8
     procedure Assign(Source: TPersistent);override;
     procedure Clear;
     procedure Delete(Index: integer);overload;
     procedure Delete(BegIndex, EndIndex: integer);overload;
-    function Add(const S: WideString = ''): TLyLine;
+    function Add(const S: WideString): TLyLine;
     function Insert(Index: integer; const S: WideString = ''): TLyLine;
-    function InsertAfter(P: TLyLine; const S: WideString = ''): TLyLine;
     function IndexOf(P: TLyLine): integer;
-    function IndexByLine(var LineIndex: integer): integer;
-    function FindByLine(var LineIndex: integer; Anyway: boolean): TLyLine;
     function Has(Index: integer): boolean;
-    function GetCaretLine(CaretY: integer; var LineX: integer): TLyLine;
     property Count: integer read GetCount;
     property Items[Index: integer]: TLyLine read GetItem;default;
     property Text: WideString read GetText write SetText;
@@ -417,15 +414,11 @@ type
     function Insert(TextX: integer; const S: WideString): integer;
     function CutFrom(TextX: integer): WideString;
     function BreakFrom(TextX: integer): TLyLine;
-    function BreakFromTail: TLyLine;
     function MergeNext: boolean;
-    function Merge(P: TLyLine): boolean;
-    function HitCaret(X: integer): integer;
-    function TextPos(TextX: integer): TPoint;
-    function TextLine(TextX: integer): integer;overload;
-    function TextLine(TextX: integer; var Col: integer): integer;overload;
+    function HitText(X, LineX: integer; var After: boolean): integer;
+    function TextPos(TextX: integer; After: boolean): TPoint;
+    function TextLine(TextX: integer; After: boolean): integer;
     function FirstText(LineX: integer): integer;
-    function HitText(X, LineX: integer): integer;
     function HeadTextX: integer;
     function TailTextX: integer;
     function Prev: TLyLine;
@@ -501,16 +494,13 @@ type
 
   TLyUndoList = class
   private
-    FMemo: TLyCodeMemo;
     FUpdate: TLyUpdate;
     FLast: TLyUndoItem;
-    function GetMode: TLyChangeDeal;
   public
     constructor Create(AUpdate: TLyUpdate);
     destructor Destroy;override;
     procedure Clear;
     procedure Apply;
-    property Mode: TLyChangeDeal read GetMode;
   end;
 
   { TLyHilighter }
@@ -732,6 +722,7 @@ function TabSpaces(TextX, TabSize: integer): WideString;
 function HasTextFormat: boolean;
 function FetchFileExt(var FileExts: string): string;
 function PosEx(const SubStr, Str: WideString; Index: integer): integer;
+procedure RiviMarkCode(Memo: TLyCodeMemo; IsCode: boolean);
 
 implementation
 
@@ -940,6 +931,88 @@ begin
   Result := 0;
 end;
 
+procedure RiviMarkCode(Memo: TLyCodeMemo; IsCode: boolean);
+var
+  S: TLySelection;
+  C: TLyCaret;
+  X1, X2, N: integer;
+  L1, L2, L: TLyLine;
+  T: WideString;
+begin
+  Memo.BeginUpdate;
+  try
+    S := Memo.FSelection;
+    C := Memo.FCaret;
+    L1 := nil;
+    L2 := nil;
+
+    // get line range
+    if S.FSelectAll then
+    begin
+      X1 := 0;
+      X2 := Memo.FLines.Count - 1;
+    end
+    else
+    if S.Selected then
+    begin
+      X1 := S.FHead.ItemX;
+      X2 := S.FTail.ItemX;
+      L1 := Memo.FLines[X1];
+      L2 := Memo.FLines[X2];
+    end
+    else
+    begin
+      X1 := C.FPos.ItemX;
+      X2 := C.FPos.ItemX;
+    end;
+
+    // Mark/Unmark each line
+    while X1 <= X2 do
+    begin
+      L := Memo.FLines[X1];
+      T := L.Text;
+      if IsCode then
+      begin
+        if (T = '') or (T[1] <> '%') then
+        begin
+          L.Text := '% ' + T;
+          if (L = L1) and (S.FHead.TextX > 1) then Inc(S.FHead.TextX, 2);
+          if L = L2 then Inc(S.FTail.TextX, 2);
+          if L = C.Item then
+            C.MoveTo(C.FPos.ItemX, Max(1, C.FPos.TextX) + 2, true);
+        end;
+      end
+      else
+      if (T <> '') and (T[1] = '%') then
+      begin
+        N := IfThen((Length(T) > 1) and (T[2] <= ' '), 2, 1);
+        L.Delete(1, N);
+        if L = L1 then
+        begin
+          Dec(S.FHead.TextX, N);
+          if S.FHead.TextX < 2 then
+            S.FHead.TextX := L.HeadTextX;
+        end;
+        if L = L2 then
+        begin
+          Dec(S.FTail.TextX, N);
+          if S.FTail.TextX < 0 then
+            S.FTail.TextX := 0;
+        end;
+        if L = C.Item then
+        begin
+          N := C.FPos.TextX - N;
+          if N < 2 then N := L.HeadTextX;
+          C.MoveTo(C.FPos.ItemX, N, true);
+        end;
+      end;
+      Inc(X1);
+    end;
+  finally
+    Memo.EndUpdate;
+  end;
+end;
+
 { TLyCodeMemo }
 
 constructor TLyCodeMemo.Create(AOwner: TComponent);
@@ -951,7 +1024,7 @@ begin
   Color := clWindow;
   Cursor := crIBeam;
   FMargin := ScreenWidth(1);
-  FState := [msWrapLine, msUndoRedo, msGutter];
+  FState := [msInsert, msWrapLine, msUndoRedo, msGutter];
 
   FUpdate := TLyUpdate.Create(Self);
   FCaret := TLyCaret.Create(Self);
@@ -980,8 +1053,7 @@ end;
 procedure TLyCodeMemo.CreateParams(var Params: TCreateParams);
 begin
   inherited;
-  with Params do
-    Style := Style or WS_CLIPCHILDREN;
+  Params.Style := Params.Style or WS_CLIPCHILDREN;
 end;
 
 procedure TLyCodeMemo.CutToClipboard;
@@ -998,13 +1070,9 @@ begin
   if FScrollBar <> nil then
     FScrollBar.OnChange := nil;
   FSelection.UnSelect;
-  FCaret.MoveTo(0, 0);
+  FCaret.MoveTo(0, 0, false);
   FLines.Clear;
-  if FScrollBar <> nil then
-  begin
-    FScrollBar.OnChange := nil;
-    FreeAndNil(FScrollBar);
-  end;
+  FreeAndNil(FScrollBar);
   FreeAndNil(FSelection);
   FreeAndNil(FLines);
   FreeAndNil(FCaret);
@@ -1016,7 +1084,7 @@ end;
 
 procedure TLyCodeMemo.Paint;
 begin
-  if FUpdate.FCount = 0 then
+  if not FUpdate.Updating then
     PaintFrom(0, false);
 end;
 
@@ -1026,10 +1094,8 @@ var
 begin
   if ShowLine80 then
   begin
+    X := EditAreaLeft + FSpaceWidth * 80;
     SetCanvas(false);
-    X := FMargin + Canvas.TextWidth(' ') * 80;
-    if FGutter.Visible then
-      Inc(X, FGutter.Width);
     Canvas.Pen.Color := Palette.Line80Color;
     Canvas.MoveTo(X, 0);
     Canvas.LineTo(X, Height);
@@ -1087,14 +1153,14 @@ end;
 
 procedure TLyCodeMemo.MakeCaretVisible;
 begin
-  MakeVisible(CaretY);
+  MakeLineVisible(CaretY);
 end;
 
-procedure TLyCodeMemo.MakeVisible(LineX: integer);
+procedure TLyCodeMemo.MakeLineVisible(LineX: integer);
 var
   P: integer;
 begin
-  if LineX >= 0 then
+  if (LineX >= 0) and (LineX < LineCount) then
   begin
     P := ScrollBar.Position;
     if (FBodyLines = 1) or (LineX < P) then
@@ -1105,27 +1171,24 @@ begin
 end;
 
 procedure TLyCodeMemo.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-var
-  P: TLyLine;
-  I: integer;
 begin
   SetFocus;
   FSelection.FSelecting := false;
-  FCaret.BeginMove;
-  try
-    if (Button = mbLeft) and (Shift = [ssLeft]) then
-    begin
-      FSelection.Selected := false;
-      {$IFDEF FPC}
-      I := 0;
-      {$ENDIF}
-      P := HitText(X, Y, I);
-      FSelection.MouseDown(P, I);
-    end
-    else inherited;
-  finally
-    FCaret.EndMove;
-  end;
+  if Shift = [ssLeft] then
+  begin
+    FCaret.BeginMove;
+    try
+      UnSelect;
+      HitText(X, Y, FCaret.FPos);
+      FSelection.FSelecting := true;
+      FSelection.FFrom.ItemX := FCaret.FPos.ItemX;
+      FSelection.FFrom.TextX := FCaret.FPos.TextX;
+    finally
+      FCaret.EndMove;
+      NotifyStatus;
+    end;
+  end
+  else inherited;
 end;
 
 procedure TLyCodeMemo.ScrollBarChange(Sender: TObject);
@@ -1191,22 +1254,21 @@ var
   L: TLyLine;
 begin
   Y := 0;
-  X := FMargin;
-  if FGutter.Visible then
-    Inc(X, FGutter.Width);
+  X := EditAreaLeft;
 
   N := FBodyLines;
   if N * FLineHeight < Height then Inc(N);
 
-  ItemX := 0;
+  B := -1;
+  E := -1;
+
   LineX := 0;
-  if GetTopLine(ItemX, LineX) then
+  ItemX := GetItemLine(TopCaretY, LineX);
+  if ItemX >= 0 then
   repeat
     L := FLines[ItemX];
     if L.FLastToken < 0 then
       FLines.DecorateFrom(ItemX);
-    B := 0;
-    E := 0;
     if ItemX >= AItemX then
       if not OnlyChanged or L.FChanged then
         FSelection.GetRange(ItemX, B, E);
@@ -1218,8 +1280,8 @@ begin
             L.DrawLine(I, X, Y, B, E);
         Inc(Y, FLineHeight);
         Dec(N);
-      end
-      else Exit;
+        if N = 0 then Break;
+      end;
     LineX := 0;
     Inc(ItemX);
   until (N = 0) or (ItemX = FLines.Count);
@@ -1249,8 +1311,7 @@ begin
   begin
     BeginUpdate;
     try
-      if FUpdate.Process(Self, Key, Shift) then
-        Key := 0;
+      if FUpdate.Process(Self, Key, Shift) then Key := 0;
     finally
       EndUpdate;
     end;
@@ -1267,13 +1328,13 @@ begin
   if L <> nil then
   begin
     N := 0;
-    I := L.SeekCurrWord(FCaret.FTextX, N);
+    I := L.SeekCurrWord(FCaret.FPos.TextX, N);
     if (I > 0) and (N > 0) then
     begin
-      FCaret.MoveTo(FCaret.FItemX, I + N);
-      FSelection.FFrom.ItemX := FCaret.FItemX;
+      FCaret.MoveTo(FCaret.FPos.ItemX, I + N, true);
+      FSelection.FFrom.ItemX := FCaret.FPos.ItemX;
       FSelection.FFrom.TextX := I;
-      FSelection.Select(FCaret.FItemX, I, FCaret.FItemX, I + N - 1);
+      FSelection.Select(FCaret.FPos.ItemX, I, FCaret.FPos.ItemX, I + N - 1);
     end;
   end;
 end;
@@ -1330,39 +1391,9 @@ begin
   Result := FSelection.Text;
 end;
 
-function TLyCodeMemo.GetTopLine(var ItemX, LineX: integer): boolean;
-var
-  I, Y: integer;
-  L: TLyLine;
-begin
-  if not WrapLine then
-  begin
-    ItemX := TopCaretY;
-    LineX := 0;
-    Result := ItemX < FLines.Count;
-  end
-  else
-  begin
-    Y := TopCaretY;
-    for I := 0 to FLines.Count - 1 do
-    begin
-      L := FLines[I];
-      if Y < L.LineCount then
-      begin
-        Result := true;
-        ItemX := I;
-        LineX := Y;
-        Exit;
-      end;
-      Dec(Y, L.LineCount);
-    end;
-    Result := false;
-  end;
-end;
-
 procedure TLyCodeMemo.WMGetDlgCode(var Msg: TWMGetDlgCode);
 begin
-  Msg.Result := DLGC_WANTARROWS;
+  Msg.Result := DLGC_WANTARROWS or DLGC_WANTTAB;
 end;
 
 procedure TLyCodeMemo.WMKillFocus(var Msg: TWMKillFocus);
@@ -1378,24 +1409,21 @@ begin
   FCaret.MoveCaret;
 end;
 
-function TLyCodeMemo.HitText(X, Y: integer; var TextX: integer): TLyLine;
-var
-  I: integer;
-begin
-  I := HitLine(Y);
-  Result := FLines.FindByLine(I, true);
-  TextX := Result.HitText(X, I);
-end;
-
 function TLyCodeMemo.HitLine(Y: integer): integer;
 begin
-  Result := ScrollBar.Position;
-  if Y < 0 then
-  begin
-    Y := FLineHeight - 1 - Y;
-    Dec(Result, Y div FLineHeight);
-  end
-  else Inc(Result, Y div FLineHeight);
+  if Y < 0 then Result := Max(0, TopCaretY - 1) else
+  if Y >= FLineHeight then
+    Result := Min(TopCaretY + (Y div FLineHeight), FLines.LineCount - 1) else
+    Result := TopCaretY;
+end;
+
+function TLyCodeMemo.HitText(X, Y: integer; var P: RLyInputPos): integer;
+begin
+  P.LineX := HitLine(Y);
+  P.ItemX := GetItemLine(P.LineX, Y);
+  P.After := false;
+  P.TextX := FLines[P.ItemX].HitText(X, Y, P.After);
+  Result := P.ItemX;
 end;
 
 procedure TLyCodeMemo.EndUpdate;
@@ -1439,60 +1467,50 @@ end;
 
 function TLyCodeMemo.FindNext(const S: WideString; Rewind: boolean): boolean;
 
-  function find_in(X1, X2: integer): boolean;
+  procedure move_caret;
+  begin
+    FCaret.MoveTo(FSelection.FTail.ItemX, FSelection.FTail.TextX + 1, true);
+    MakeCaretVisible;
+  end;
+
+  function find_in(L1, L2: integer): boolean;
   var
     I, X: integer;
-    M: TLyLine;
   begin
-    for I := X1 to X2 do
+    for I := L1 to L2 do
     begin
-      M := FLines[I];
-      X := PosEx(S, M.Text, 1);
+      X := PosEx(S, FLines[I].FText, 1);
       if X > 0 then
       begin
         FSelection.Select(I, X, I, X + Length(S) - 1);
-        FCaret.MoveToSelEnd;
-        FCaret.MakeVisible;
-        Exit(true);
+        move_caret;
+        Result := true;
+        Exit;
       end;
     end;
     Result := false;
   end;
 
 var
-  X, I, P: integer;
-  M: TLyLine;
+  I, X: integer;
 begin
-  Result := (S <> '') and (FLines.Count > 0);
-  if not Result then Exit;
-
-  if FSelection.PartialSelected then
+  Result := (S <> '') and FCaret.Active;
+  if Result then
   begin
-    I := FSelection.FTail.ItemX;
-    X := FSelection.FTail.TextX + 1;
-  end
-  else
-  if FCaret.GetActive then
-  begin
-    I := FCaret.FItemX;
-    X := FCaret.FTextX;
-  end
-  else
-  begin
-    I := 0;
-    X := 1;
+    I := FCaret.FPos.ItemX;
+    X := PosEx(S, FLines[I].FText, FCaret.FPos.TextX);
+    if X > 0 then
+    begin
+      FSelection.Select(I, X, I, X + Length(S) - 1);
+      move_caret;
+    end
+    else
+    begin
+      Result := find_in(I + 1, FLines.Count - 1);
+      if not Result and Rewind then
+        Result := find_in(0, I - 1);
+    end;
   end;
-
-  M := FLines[I];
-  P := PosEx(S, M.Text, X);
-  if P > 0 then
-  begin
-    FSelection.Select(I, P, I, P + Length(S) - 1);
-    FCaret.MoveToSelEnd;
-    FCaret.MakeVisible;
-  end
-  else Result := find_in(I + 1, FLines.Count - 1) or
-    (Rewind and find_in(0, I - 1));
 end;
 
 procedure TLyCodeMemo.FontChange(Sender: TObject);
@@ -1585,52 +1603,42 @@ end;
 
 procedure TLyCodeMemo.Keyboard(Key: WideChar);
 
-  procedure do_input(const S: WideString);
+  procedure over_write;
   var
+    L: TLyLine;
     I: integer;
   begin
-    if FCaret.FTextX < 1 then FCaret.FTextX := 1;
-    I := FCaret.Item.Insert(FCaret.FTextX, S);
-    Inc(FCaret.FTextX, I);
-  end;
-
-  procedure do_enter;
-  var
-    L, N: TLyLine;
-    I: integer;
-  begin
-    L := FCaret.Item;
-    if FCaret.FTextX <= 1 then
-    begin
-      FLines.Insert(FCaret.FItemX);
-      FCaret.MoveTo(FCaret.FItemX + 1, FCaret.FTextX);
-    end
-    else
-    begin
-      N := L.BreakFrom(FCaret.FTextX);
-      I := N.Insert(1, L.LeadingSpaces);
-      if I > 0 then
-        FCaret.MoveTo(N.Index, I + 1) else
-        FCaret.MoveToHead(N);
+    BeginUpdate;
+    try
+      L := FCaret.GetItem;
+      FUpdate.UndoSaveChange(FCaret.FPos.ItemX, L.FText);
+      I := Max(1, FCaret.FPos.TextX);
+      if I > Length(L.FText) then
+      begin
+        L.FText := L.FText + Key;
+        FCaret.FPos.TextX := L.TailTextX;
+      end
+      else
+      begin
+        L.FText[I] := Key;
+        Inc(FCaret.FPos.TextX);
+      end;
+      FCaret.FPos.After := true;
+      L.Change;
+    finally
+      EndUpdate;
     end;
   end;
 
 begin
   if FCaret.Active and StatusOK then
-    if (Key >= ' ') or CharInSet(Key, [#9, #10, #13]) then
-      if Readonly then FSelection.UnSelect else
-      begin
-        BeginUpdate;
-        try
-          FSelection.Delete;
-          if Key >= ' ' then do_input(Key) else
-          if Key = #13 then do_enter else
-          if Key = #10 then do_enter else
-          if Key = #9 then do_input(TabSpaces(FCaret.FTextX, CM_TABSIZE));
-        finally
-          EndUpdate;
-        end;
-      end;
+    if Readonly then FSelection.UnSelect else
+    if (Key = #10) or (Key = #13) then
+      FSelection.SetText(sLineBreak) else
+    if Key >= ' ' then
+      if (msInsert in FState) or SelAvail then
+        FSelection.SetText(Key) else
+        over_write;
 end;
 
 procedure TLyCodeMemo.KeyUp(var Key: Word; Shift: TShiftState);
@@ -1640,19 +1648,15 @@ begin
 end;
 
 procedure TLyCodeMemo.MouseMove(Shift: TShiftState; X, Y: Integer);
-var
-  P: TLyLine;
-  I: integer;
 begin
-  if FSelection.FSelecting and (Shift = [ssLeft]) then
+  if Shift = [ssLeft] then
   begin
     FCaret.BeginMove;
     try
-      {$IFDEF FPC}
-      I := 0;
-      {$ENDIF}
-      P := HitText(X, Y, I);
-      FSelection.MouseMove(P, I);
+      HitText(X, Y, FCaret.FPos);
+      if FSelection.FSelecting then
+        FSelection.SelectTo(FCaret.FPos.ItemX, FCaret.FPos.TextX, true);
+      MakeCaretVisible;
     finally
       FCaret.EndMove;
     end;
@@ -1713,20 +1717,20 @@ begin
 end;
 
 function TLyCodeMemo.GetCaretY: integer;
-var
-  L: TLyLine;
 begin
-  if FCaret.Active then
-  begin
-    L := FCaret.Item;
-    Result := L.CaretY + L.TextLine(FCaret.FTextX);
-  end
-  else Result := -1;
+  Result := FCaret.Y;
 end;
 
 function TLyCodeMemo.GetLineCount: integer;
 begin
   Result := FLines.LineCount;
+end;
+
+function TLyCodeMemo.EditAreaLeft: integer;
+begin
+  if FGutter.Visible then
+    Result := FMargin + FGutter.Width else
+    Result := FMargin;
 end;
 
 function TLyCodeMemo.EditAreaWidth: integer;
@@ -1741,19 +1745,47 @@ end;
 
 function TLyCodeMemo.GetCaretX: integer;
 begin
-  Result := -1;
-  if FCaret.Active then
-    FCaret.Item.TextLine(FCaret.FTextX, Result);
+  Result := FCaret.X;
 end;
 
-function TLyCodeMemo.TopCaretY: integer;
+function TLyCodeMemo.GetTopCaretY: integer;
 begin
   if ScrollBar.Max > 0 then
     Result := ScrollBar.Position else
     Result := 0;
 end;
 
-function TLyCodeMemo.TopOffset: integer;
+function TLyCodeMemo.GetItemLine(LineX: integer; var LX: integer): integer;
+var
+  I: integer;
+  L: TLyLine;
+begin
+  if LineX >= 0 then
+    if not WrapLine then
+    begin
+      if LineX < FLines.Count then
+      begin
+        Result := LineX;
+        LX := 0;
+        Exit;
+      end;
+    end
+    else
+    for I := 0 to FLines.Count - 1 do
+    begin
+      L := FLines[I];
+      if L.LineCount > LineX then
+      begin
+        Result := I;
+        LX := LineX;
+        Exit;
+      end;
+      Dec(LineX, L.LineCount);
+    end;
+  Result := -1;
+end;
+
+function TLyCodeMemo.GetTopOffset: integer;
 begin
   Result := TopCaretY * FLineHeight;
 end;
@@ -1790,14 +1822,10 @@ procedure TLyCodeMemo.SetState(X: TLyMemoState; Value: boolean);
 begin
   if Value <> (X in FState) then
   begin
-    if Value then FState := FState + [X] else FState := FState - [X];
-    if X = msReadonly then
-    begin
-      FUpdate.FUndos.Clear;
-      FUpdate.FRedos.Clear;
-    end
-    else
-    if X = msUndoRedo then
+    if Value then
+      FState := FState + [X] else
+      FState := FState - [X];
+    if X in [msReadonly, msUndoRedo] then
     begin
       FUpdate.FUndos.Clear;
       FUpdate.FRedos.Clear;
@@ -1806,7 +1834,7 @@ begin
     if X = msModified then
     begin
       if Value then
-      FUpdate.FChanged := true else
+        FUpdate.FChanged := true else
         FLines.SetModified(false);
       NotifyStatus;
     end
@@ -1845,51 +1873,53 @@ begin
 
   { keyboard }
 
-  Add(Ord('A'), [ssCtrl], @KeySelectAll);
-  Add(Ord('C'), [ssCtrl], @KeyCopy);
-  Add(Ord('V'), [ssCtrl], @KeyPaste);
-  Add(Ord('X'), [ssCtrl], @KeyCut);
-  Add(Ord('Y'), [ssCtrl], @KeyDeleteLine);
-  Add(Ord('Z'), [ssCtrl], @KeyUndo);
-  Add(Ord('Z'), [ssCtrl, ssShift], @KeyRedo);
-  Add(VK_F5, [], @KeyRefresh);
-  Add(VK_LEFT, [], @KeyLeft);
-  Add(VK_LEFT, [ssCtrl], @KeyLeft);
-  Add(VK_LEFT, [ssShift], @KeyLeft);
-  Add(VK_LEFT, [ssShift, ssCtrl], @KeyLeft);
-  Add(VK_RIGHT, [], @KeyRight);
-  Add(VK_RIGHT, [ssCtrl], @KeyRight);
-  Add(VK_RIGHT, [ssShift], @KeyRight);
-  Add(VK_RIGHT, [ssShift, ssCtrl], @KeyRight);
-  Add(VK_UP, [], @KeyUp);
-  Add(VK_UP, [ssCtrl], @KeyUp);
-  Add(VK_UP, [ssShift], @KeyUp);
-  Add(VK_UP, [ssShift, ssCtrl], @KeyUp);
-  Add(VK_DOWN, [], @KeyDown);
-  Add(VK_DOWN, [ssCtrl], @KeyDown);
-  Add(VK_DOWN, [ssShift], @KeyDown);
-  Add(VK_DOWN, [ssShift, ssCtrl], @KeyDown);
-  Add(VK_PRIOR, [], @KeyPageUp);
-  Add(VK_PRIOR, [ssCtrl], @KeyPageUp);
-  Add(VK_PRIOR, [ssShift], @KeyPageUp);
-  Add(VK_PRIOR, [ssShift, ssCtrl], @KeyPageUp);
-  Add(VK_NEXT, [], @KeyPageDown);
-  Add(VK_NEXT, [ssCtrl], @KeyPageDown);
-  Add(VK_NEXT, [ssShift], @KeyPageDown);
-  Add(VK_NEXT, [ssShift, ssCtrl], @KeyPageDown);
-  Add(VK_HOME, [], @KeyHome);
-  Add(VK_HOME, [ssCtrl], @KeyHome);
-  Add(VK_HOME, [ssShift], @KeyHome);
-  Add(VK_HOME, [ssShift, ssCtrl], @KeyHome);
-  Add(VK_END, [], @KeyEnd);
-  Add(VK_END, [ssCtrl], @KeyEnd);
-  Add(VK_END, [ssShift], @KeyEnd);
-  Add(VK_END, [ssShift, ssCtrl], @KeyEnd);
-  Add(VK_BACK, [], @KeyBack);
-  Add(VK_BACK, [ssCtrl], @KeyBack);
-  Add(VK_DELETE, [], @KeyDelete);
-  Add(VK_DELETE, [ssShift], @KeyCut);
-  Add(VK_INSERT, [ssShift], @KeyPaste);
+  Add(Ord('A'), [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeySelectAll);
+  Add(Ord('C'), [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyCopy);
+  Add(Ord('V'), [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyPaste);
+  Add(Ord('X'), [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyCut);
+  Add(Ord('Y'), [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyDeleteLine);
+  Add(Ord('Z'), [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyUndo);
+  Add(Ord('Z'), [ssCtrl, ssShift], {$IFDEF FPC}@{$ENDIF}KeyRedo);
+  Add(VK_F5, [], {$IFDEF FPC}@{$ENDIF}KeyRefresh);
+  Add(VK_LEFT, [], {$IFDEF FPC}@{$ENDIF}KeyLeft);
+  Add(VK_LEFT, [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyLeft);
+  Add(VK_LEFT, [ssShift], {$IFDEF FPC}@{$ENDIF}KeyLeft);
+  Add(VK_LEFT, [ssShift, ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyLeft);
+  Add(VK_RIGHT, [], {$IFDEF FPC}@{$ENDIF}KeyRight);
+  Add(VK_RIGHT, [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyRight);
+  Add(VK_RIGHT, [ssShift], {$IFDEF FPC}@{$ENDIF}KeyRight);
+  Add(VK_RIGHT, [ssShift, ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyRight);
+  Add(VK_UP, [], {$IFDEF FPC}@{$ENDIF}KeyUp);
+  Add(VK_UP, [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyUp);
+  Add(VK_UP, [ssShift], {$IFDEF FPC}@{$ENDIF}KeyUp);
+  Add(VK_UP, [ssShift, ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyUp);
+  Add(VK_DOWN, [], {$IFDEF FPC}@{$ENDIF}KeyDown);
+  Add(VK_DOWN, [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyDown);
+  Add(VK_DOWN, [ssShift], {$IFDEF FPC}@{$ENDIF}KeyDown);
+  Add(VK_DOWN, [ssShift, ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyDown);
+  Add(VK_PRIOR, [], {$IFDEF FPC}@{$ENDIF}KeyPageUp);
+  Add(VK_PRIOR, [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyPageUp);
+  Add(VK_PRIOR, [ssShift], {$IFDEF FPC}@{$ENDIF}KeyPageUp);
+  Add(VK_PRIOR, [ssShift, ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyPageUp);
+  Add(VK_NEXT, [], {$IFDEF FPC}@{$ENDIF}KeyPageDown);
+  Add(VK_NEXT, [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyPageDown);
+  Add(VK_NEXT, [ssShift], {$IFDEF FPC}@{$ENDIF}KeyPageDown);
+  Add(VK_NEXT, [ssShift, ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyPageDown);
+  Add(VK_HOME, [], {$IFDEF FPC}@{$ENDIF}KeyHome);
+  Add(VK_HOME, [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyHome);
+  Add(VK_HOME, [ssShift], {$IFDEF FPC}@{$ENDIF}KeyHome);
+  Add(VK_HOME, [ssShift, ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyHome);
+  Add(VK_END, [], {$IFDEF FPC}@{$ENDIF}KeyEnd);
+  Add(VK_END, [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyEnd);
+  Add(VK_END, [ssShift], {$IFDEF FPC}@{$ENDIF}KeyEnd);
+  Add(VK_END, [ssShift, ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyEnd);
+  Add(VK_BACK, [], {$IFDEF FPC}@{$ENDIF}KeyBack);
+  Add(VK_BACK, [ssCtrl], {$IFDEF FPC}@{$ENDIF}KeyBack);
+  Add(VK_DELETE, [], {$IFDEF FPC}@{$ENDIF}KeyDelete);
+  Add(VK_DELETE, [ssShift], {$IFDEF FPC}@{$ENDIF}KeyCut);
+  Add(VK_INSERT, [], {$IFDEF FPC}@{$ENDIF}KeyInsert);
+  Add(VK_INSERT, [ssShift], {$IFDEF FPC}@{$ENDIF}KeyPaste);
+  Add(VK_TAB, [], {$IFDEF FPC}@{$ENDIF}KeyTab);
 end;
 
 destructor TLyUpdate.Destroy;
@@ -1951,12 +1981,13 @@ begin
             FMemo.ScrollBar.Max := X;
             FMemo.ScrollBar.Enabled := (X > 0);
           end;
-          Caret.MakeVisible;
+          FMemo.MakeCaretVisible;
           if FOrgCaretY = FMemo.TopCaretY then
             FMemo.PaintFrom(Max(0, FChangedItemX), (FAddedLines + FDeletedLines) = 0);
         end;
       finally
         FEndUpdating := false;
+        FUndoMode := cdNone;
         if FChanged and FMemo.Modified then
           FMemo.NotifyChange else
           FMemo.NotifyStatus;
@@ -1969,12 +2000,24 @@ end;
 
 procedure TLyUpdate.Undo;
 begin
-  FUndos.Apply;
+  BeginUpdate;
+  try
+    FUndoMode := cdUndo;
+    FUndos.Apply;
+  finally
+    EndUpdate;
+  end;
 end;
 
 procedure TLyUpdate.Redo;
 begin
-  FRedos.Apply;
+  BeginUpdate;
+  try
+    FUndoMode := cdRedo;
+    FRedos.Apply;
+  finally
+    EndUpdate;
+  end;
 end;
 
 function TLyUpdate.GetMemoOK: boolean;
@@ -1997,6 +2040,24 @@ begin
   Result := (FUndos.FLast <> nil) and (FUndoMode = cdNone);
 end;
 
+procedure TLyUpdate.BeginMoveCaret(Shift: TShiftState);
+begin
+  if Selection.FSelectAll then Selection.UnSelect;
+  if (ssShift in Shift) and not Selection.Selected then
+  begin
+    Selection.FFrom.ItemX := Caret.FPos.ItemX;
+    Selection.FFrom.TextX := Caret.FPos.TextX;
+  end;
+end;
+
+procedure TLyUpdate.EndMoveCaret(Shift: TShiftState);
+begin
+  if ssShift in Shift then
+    Selection.SelectTo(Caret.FPos.ItemX, Caret.FPos.TextX, true) else
+    Selection.UnSelect;
+  FMemo.MakeCaretVisible;
+end;
+
 procedure TLyUpdate.KeyRefresh(AMemo: TObject; Shift: TShiftState);
 begin
   FMemo.Refresh;
@@ -2005,6 +2066,12 @@ end;
 procedure TLyUpdate.KeySelectAll(AMemo: TObject; Shift: TShiftState);
 begin
   FMemo.SelectAll;
+end;
+
+procedure TLyUpdate.KeyTab(AMemo: TObject; Shift: TShiftState);
+begin
+  Selection.Delete;
+  Selection.SetText(TabSpaces(Caret.FPos.TextX, CM_TABSIZE));
 end;
 
 procedure TLyUpdate.KeyCopy(AMemo: TObject; Shift: TShiftState);
@@ -2024,158 +2091,69 @@ end;
 
 procedure TLyUpdate.KeyPaste(AMemo: TObject; Shift: TShiftState);
 begin
-  if Readonly then Selection.UnSelect else
-  begin
-    Selection.Delete;
-    Caret.Insert(StrToWide(Clipboard.AsText));
-  end;
+  if Readonly then
+    Selection.UnSelect else
+    Selection.SetText(StrToWide(Clipboard.AsText));
 end;
 
 procedure TLyUpdate.KeyLeft(AMemo: TObject; Shift: TShiftState);
-var
-  M: TLyLine;
-  I: integer;
 begin
-  I := 0;
-  M := Caret.PrevPos(I, ssCtrl in Shift);
-  if M <> nil then
-  begin
-    if ssShift in Shift then
-      Selection.SelectTo(M.Index, I) else
-      Selection.UnSelect;
-    Caret.MoveTo(M.Index, I);
-    Caret.MakeVisible;
-  end;
+  BeginMoveCaret(Shift);
+  Caret.MoveLeft(ssCtrl in Shift);
+  EndMoveCaret(Shift);
 end;
 
 procedure TLyUpdate.KeyRight(AMemo: TObject; Shift: TShiftState);
-var
-  M: TLyLine;
-  I: integer;
 begin
-  I := 0;
-  M := Caret.NextPos(I, ssCtrl in Shift);
-  if M <> nil then
-  begin
-    if ssShift in Shift then
-      Selection.SelectTo(M.Index, I) else
-      Selection.UnSelect;
-    Caret.MoveTo(M.Index, I);
-    Caret.MakeVisible;
-  end;
+  BeginMoveCaret(Shift);
+  Caret.MoveRight(ssCtrl in Shift);
+  EndMoveCaret(Shift);
 end;
 
 procedure TLyUpdate.KeyUp(AMemo: TObject; Shift: TShiftState);
-var
-  M: TLyLine;
-  I: integer;
 begin
-  I := 0;
-  M := Caret.ScrollUp(1, I);
-  if M <> nil then
-  begin
-    if ssShift in Shift then
-      Selection.SelectTo(M.Index, I) else
-      Selection.UnSelect;
-    Caret.MoveTo(M.Index, I);
-    Caret.MakeVisible;
-  end;
+  BeginMoveCaret(Shift);
+  Caret.MoveUp(1);
+  EndMoveCaret(Shift);
 end;
 
 procedure TLyUpdate.KeyDown(AMemo: TObject; Shift: TShiftState);
-var
-  M: TLyLine;
-  I: integer;
 begin
-  I := 0;
-  M := Caret.ScrollDown(1, I);
-  if M <> nil then
-  begin
-    if ssShift in Shift then
-      Selection.SelectTo(M.Index, I) else
-      Selection.UnSelect;
-    Caret.MoveTo(M.Index, I);
-    Caret.MakeVisible;
-  end;
+  BeginMoveCaret(Shift);
+  Caret.MoveDown(1);
+  EndMoveCaret(Shift);
 end;
 
 procedure TLyUpdate.KeyPageUp(AMemo: TObject; Shift: TShiftState);
-var
-  M: TLyLine;
-  I: integer;
 begin
-  I := 0;
-  M := Caret.ScrollUp(FMemo.FBodyLines, I);
-  if M <> nil then
-  begin
-    if ssShift in Shift then
-      Selection.SelectTo(M.Index, I) else
-      Selection.UnSelect;
-    Caret.MoveTo(M.Index, I);
-    Caret.MakeVisible;
-  end;
+  BeginMoveCaret(Shift);
+  Caret.MoveUp(FMemo.FBodyLines);
+  EndMoveCaret(Shift);
 end;
 
 procedure TLyUpdate.KeyPageDown(AMemo: TObject; Shift: TShiftState);
-var
-  M: TLyLine;
-  I: integer;
 begin
-  I := 0;
-  M := Caret.ScrollDown(FMemo.FBodyLines, I);
-  if M <> nil then
-  begin
-    if ssShift in Shift then
-      Selection.SelectTo(M.Index, I) else
-      Selection.UnSelect;
-    Caret.MoveTo(M.Index, I);
-    Caret.MakeVisible;
-  end;
+  BeginMoveCaret(Shift);
+  Caret.MoveDown(FMemo.FBodyLines);
+  EndMoveCaret(Shift);
 end;
 
 procedure TLyUpdate.KeyHome(AMemo: TObject; Shift: TShiftState);
-var
-  M: TLyLine;
-  X: integer;
 begin
+  BeginMoveCaret(Shift);
   if ssCtrl in Shift then
-  begin
-    M := Lines[0];
-    X := M.HeadTextX;
-  end
-  else
-  begin
-    M := Caret.Item;
-    X := M.FirstText(M.TextLine(Caret.FTextX));
-  end;
-  if ssShift in Shift then
-    Selection.SelectTo(M.Index, X) else
-    Selection.UnSelect;
-  Caret.MoveTo(M.Index, X);
-  Caret.MakeVisible;
+    Caret.MoveDocumentHead else
+    Caret.MoveLineHead;
+  EndMoveCaret(Shift);
 end;
 
 procedure TLyUpdate.KeyEnd(AMemo: TObject; Shift: TShiftState);
-var
-  M: TLyLine;
-  X, I: integer;
 begin
+  BeginMoveCaret(Shift);
   if ssCtrl in Shift then
-  begin
-    M := Lines.Last;
-    X := M.TailTextX;
-  end
-  else
-  begin
-    M := Caret.Item;
-    I := M.TextLine(Caret.FTextX);
-    X := M.FirstText(I) + M.FL[I];
-  end;
-  if ssShift in Shift then
-    Selection.SelectTo(M.Index, X) else
-    Selection.UnSelect;
-  Caret.MoveTo(M.Index, X);
-  Caret.MakeVisible;
+    Caret.MoveDocumentEnd else
+    Caret.MoveLineEnd;
+  EndMoveCaret(Shift);
 end;
 
 procedure TLyUpdate.KeyBack(AMemo: TObject; Shift: TShiftState);
@@ -2187,32 +2165,32 @@ begin
   if Selection.Selected then Selection.Delete else
   begin
     L := Caret.Item;
-    I := Caret.FTextX;
+    I := Caret.FPos.TextX;
     if (I > 1) and (ssCtrl in Shift) then
     begin
       I := L.SeekPriorWord(I);
       if I < 1 then
       begin
-        L.Delete(1, Caret.FTextX - 1);
-        Caret.MoveTo(Caret.FItemX, L.HeadTextX);
+        L.Delete(1, Caret.FPos.TextX - 1);
+        Caret.MoveTo(Caret.FPos.ItemX, L.HeadTextX, false);
       end
       else
       begin
-        L.Delete(I, Caret.FTextX - I);
-        Caret.MoveTo(Caret.FItemX, I);
+        L.Delete(I, Caret.FPos.TextX - I);
+        Caret.MoveTo(Caret.FPos.ItemX, I, false);
       end;
     end
     else
     if I > 1 then
     begin
-      Caret.MoveTo(Caret.FItemX, I - 1);
-      L.Delete(Caret.FTextX);
+      Caret.MoveTo(Caret.FPos.ItemX, I - 1, false);
+      L.Delete(Caret.FPos.TextX);
     end
     else
-    if Caret.FItemX > 0 then
+    if Caret.FPos.ItemX > 0 then
     begin
-      L := Lines[Caret.FItemX - 1];
-      Caret.MoveTo(Caret.FItemX - 1, L.TailTextX);
+      L := Lines[Caret.FPos.ItemX - 1];
+      Caret.MoveTo(Caret.FPos.ItemX - 1, L.TailTextX, false);
       L.MergeNext;
     end;
   end;
@@ -2226,11 +2204,20 @@ begin
   if Selection.NotSelected then
   begin
     L := Caret.Item;
-    if (L.FText = '') or (Caret.FTextX > Length(L.FText)) then
+    if (L.FText = '') or (Caret.FPos.TextX > Length(L.FText)) then
       L.MergeNext else
-      L.Delete(Caret.FTextX);
+      L.Delete(Caret.FPos.TextX);
   end
   else Selection.Delete;
+end;
+
+procedure TLyUpdate.KeyInsert(AMemo: TObject; Shift: TShiftState);
+begin
+  if msInsert in FMemo.FState then
+    Exclude(FMemo.FState, msInsert) else
+    Include(FMemo.FState, msInsert);
+  FMemo.FCaret.DestroyCaret;
+  FMemo.FCaret.MoveCaret;
 end;
 
 procedure TLyUpdate.KeyDeleteLine(AMemo: TObject; Shift: TShiftState);
@@ -2246,22 +2233,21 @@ begin
       if L.LineCount > 1 then
       begin
         Inc(FDeletedLines);
-        I := L.TextLine(Caret.FTextX);
+        I := L.TextLine(Caret.FPos.TextX, Caret.FPos.After);
         X := L.FirstText(I);
         L.Delete(X, L.FL[I]);
-        if I = 0 then
-          Caret.FTextX := L.HeadTextX else
+        if I = 0 then Caret.MoveToHead(L) else
         if I = L.LineCount - 1 then
         begin
           X := L.Index;
           if X < Lines.Count - 1 then
           begin
             L := Lines[X + 1];
-            Caret.MoveTo(X + 1, L.HeadTextX);
+            Caret.MoveTo(X + 1, L.HeadTextX, false);
           end
-          else Caret.FTextX := L.FirstText(I - 1);
+          else Caret.MoveTo(X, L.FirstText(I - 1), false);
         end
-        else Caret.FTextX := X;
+        else Caret.MoveTo(Caret.FPos.ItemX, X, false);
       end
       else
       if Lines.Count > 1 then
@@ -2272,7 +2258,7 @@ begin
         begin
           L := Lines[I - 1];
           X := L.FirstText(L.LineCount - 1);
-          Caret.MoveTo(I - 1, X);
+          Caret.MoveTo(I - 1, X, false);
         end
         else
         begin
@@ -2399,8 +2385,6 @@ begin
   FMemo := AMemo;
   FWidth := -1;
   FHeight := -1;
-  FItemX := 0;
-  FTextX := 0;
 end;
 
 function TLyCaret.GetActive: boolean;
@@ -2408,18 +2392,10 @@ begin
   Result := (GetItem <> nil);
 end;
 
-function TLyCaret.GetAtTail: boolean;
-var
-  P: TLyLine;
-begin
-  P := GetItem;
-  Result := (P <> nil) and (TextIndex >= P.TailTextX);
-end;
-
 function TLyCaret.GetItem: TLyLine;
 begin
-  if (FItemX >= 0) and (FItemX < FMemo.FLines.Count) then
-    Result := FMemo.FLines[ItemIndex] else
+  if (FPos.ItemX >= 0) and (FPos.ItemX < FMemo.FLines.Count) then
+    Result := FMemo.FLines[FPos.ItemX] else
     Result := nil;
 end;
 
@@ -2428,174 +2404,228 @@ begin
   Result := true;
 end;
 
-procedure TLyCaret.MoveAfterInsert(Line: TLyLine; TextX: integer; const S: WideString);
+function TLyCaret.GetCaretY: integer;
 var
-  X, L: integer;
+  L: TLyLine;
 begin
-  X := Length(S);
-  L := Length(Line.FText);
-  if TextX > L then
-  begin
-    if X > 0 then Line.Add(S);
-    MoveToTail(Line);
-  end
-  else
-  if TextX > 1 then
-  begin
-    if X > 0 then Line.Insert(TextX, S);
-    MoveTo(Line.Index, TextX + X);
-  end
-  else
-  if X > 0 then
-  begin
-    Line.SetText(S + Line.FText);
-    MoveTo(Line.Index, X + 1);
-  end
-  else MoveToHead(Line);
+  L := GetItem;
+  if L <> nil then
+    Result := L.CaretY + L.TextLine(FPos.TextX, FPos.After) else
+    Result := -1;
+end;
+
+function TLyCaret.GetCaretX: integer;
+var
+  L: TLyLine;
+  I: integer;
+begin
+  Result := FPos.TextX;
+  L := GetItem;
+  if L <> nil then
+    for I := 0 to L.LineCount - 2 do
+    begin
+      if Result <= L.FL[I] then Exit;
+      Dec(Result, L.FL[I]);
+    end;
 end;
 
 procedure TLyCaret.MoveCaret;
 var
   M: TLyLine;
+  P: TPoint;
+  W: integer;
 begin
   if (FMoveCount = 0) and Visible and Active then
   begin
     M := GetItem;
-    FPos := M.TextPos(FTextX);
+    P := M.TextPos(FPos.TextX, FPos.After);
     FMemo.FGutter.Invalidate;
-    if (FPos.X >= 0) and (FPos.Y >= 0) then
+    if (P.X >= 0) and (P.Y >= 0) then
     begin
-      if CreateCaret(2, FMemo.FTextHeight) and ShowCaret then
+      W := IfThen(msInsert in FMemo.FState, 2, FMemo.FSpaceWidth);
+      if CreateCaret(W, FMemo.FTextHeight) and ShowCaret then
       begin
         {$IFDEF FPC}
-        SetCaretPosEx(FMemo.Handle, FPos.X, FPos.Y - FMemo.TopOffset);
+        SetCaretPosEx(FMemo.Handle, P.X, P.Y - FMemo.TopOffset);
         {$ELSE}
-        SetCaretPos(FPos.X, FPos.Y - FMemo.TopOffset);
+        SetCaretPos(P.X, P.Y - FMemo.TopOffset);
         {$ENDIF}
         Exit;
       end;
     end;
   end;
   DestroyCaret;
-  FPos.X := -1;
-  FPos.Y := -1;
+end;
+
+procedure TLyCaret.MoveLeft(AWord: boolean);
+var
+  L: TLyLine;
+begin
+  L := GetItem;
+  if L <> nil then
+  begin
+    if AWord then
+    begin
+      FPos.TextX := L.SeekPriorWord(FPos.TextX);
+      if FPos.TextX < 1 then
+        if FPos.ItemX > 0 then
+        begin
+          Dec(FPos.ItemX);
+          FPos.TextX := FMemo.FLines[FPos.ItemX].TailTextX;
+          FPos.After := true;
+        end
+        else FPos.TextX := L.HeadTextX;
+    end
+    else
+    if FPos.TextX > 1 then
+    begin
+      Dec(FPos.TextX);
+      FPos.After := false;
+    end
+    else
+    if FPos.ItemX > 0 then
+    begin
+      Dec(FPos.ItemX);
+      FPos.TextX := FMemo.FLines[FPos.ItemX].TailTextX;
+      FPos.After := true;
+    end;
+    MoveCaret;
+  end
+  else MoveDocumentHead;
+end;
+
+procedure TLyCaret.MoveRight(AWord: boolean);
+var
+  L: TLyLine;
+begin
+  L := GetItem;
+  if L <> nil then
+  begin
+    if AWord then
+    begin
+      FPos.TextX := L.SeekNextWord(FPos.TextX);
+      if FPos.TextX < 1 then
+        if FPos.ItemX < FMemo.FLines.Count then
+        begin
+          Inc(FPos.ItemX);
+          FPos.TextX := FMemo.FLines[FPos.ItemX].HeadTextX;
+          FPos.After := false;
+        end
+        else FPos.TextX := L.TailTextX;
+    end
+    else
+    if FPos.TextX < L.TailTextX then
+    begin
+      Inc(FPos.TextX);
+      FPos.After := true;
+    end
+    else
+    if FPos.ItemX < FMemo.FLines.Count then
+    begin
+      Inc(FPos.ItemX);
+      FPos.TextX := FMemo.FLines[FPos.ItemX].HeadTextX;
+      FPos.After := false;
+    end;
+    MoveCaret;
+  end
+  else MoveDocumentHead;
+end;
+
+procedure TLyCaret.MoveUp(Lines: integer);
+var
+  L: TLyLine;
+  P: TPoint;
+begin
+  L := GetItem;
+  if L <> nil then
+  begin
+    P := L.TextPos(FPos.TextX, FPos.After);
+    Dec(P.Y, Lines * FMemo.FLineHeight);
+    Dec(P.Y, FMemo.TopOffset);
+    FMemo.HitText(P.X, P.Y, FPos);
+    MoveCaret;
+  end
+  else MoveDocumentHead;
+end;
+
+procedure TLyCaret.MoveDown(Lines: integer);
+var
+  L: TLyLine;
+  P: TPoint;
+begin
+  L := GetItem;
+  if L <> nil then
+  begin
+    P := L.TextPos(FPos.TextX, FPos.After);
+    Inc(P.Y, Lines * FMemo.FLineHeight);
+    Dec(P.Y, FMemo.TopOffset);
+    FMemo.HitText(P.X, P.Y, FPos);
+    MoveCaret;
+  end
+  else MoveDocumentHead;
+end;
+
+procedure TLyCaret.MoveLineHead;
+var
+  L: TLyLine;
+begin
+  L := GetItem;
+  if L <> nil then
+  begin
+    FPos.TextX := L.FirstText(L.TextLine(FPos.TextX, FPos.After));
+    FPos.After := false;
+    MoveCaret;
+  end
+  else MoveDocumentHead;
+end;
+
+procedure TLyCaret.MoveLineEnd;
+var
+  L: TLyLine;
+  I: integer;
+begin
+  L := GetItem;
+  if L <> nil then
+  begin
+    I := L.TextLine(FPos.TextX, FPos.After);
+    FPos.TextX := L.FirstText(I) + L.FL[I];
+    FPos.After := true;
+    MoveCaret;
+  end
+  else MoveDocumentHead;
 end;
 
 procedure TLyCaret.MoveToTail(Item: TLyLine);
 begin
   if Item <> nil then
-    MoveTo(Item.Index, Item.TailTextX);
+    MoveTo(Item.Index, Item.TailTextX, false);
 end;
 
-function TLyCaret.NextPos(var TX: integer; AWord: boolean): TLyLine;
-var
-  LX: integer;
+procedure TLyCaret.MoveDocumentHead;
 begin
-  Result := GetItem;
-  if Result <> nil then
-    if AWord then
-    begin
-      TX := Result.SeekNextWord(FTextX);
-      if TX = 0 then
-      begin
-        LX := Result.Index + 1;
-        if LX < FMemo.FLines.Count then
-        begin
-          Result := FMemo.FLines[LX];
-          TX := Result.HeadTextX;
-        end
-        else TX := Result.TailTextX;
-      end;
-    end
-    else
-    begin
-      TX := FTextX;
-      if TX < Result.TailTextX then Inc(TX) else
-      begin
-        LX := Result.Index + 1;
-        if LX < FMemo.FLines.Count then
-        begin
-          Result := FMemo.FLines[LX];
-          TX := Result.HeadTextX;
-        end;
-      end;
-    end;
+  if FMemo.FLines.Count > 0 then
+    MoveTo(0, FMemo.FLines[0].HeadTextX, false) else
+    MoveTo(0, 0, false);
+  MoveCaret;
 end;
 
-function TLyCaret.PrevPos(var TX: integer; AWord: boolean): TLyLine;
+procedure TLyCaret.MoveDocumentEnd;
 var
-  LX: integer;
+  I: integer;
 begin
-  Result := GetItem;
-  if Result <> nil then
-    if AWord then
-    begin
-      TX := Result.SeekPriorWord(FTextX);
-      if TX = 0 then
-      begin
-        LX := Result.Index - 1;
-        if LX >= 0 then
-        begin
-          Result := FMemo.FLines[LX];
-          TX := Result.TailTextX;
-        end
-        else TX := Result.HeadTextX;
-      end;
-    end
-    else
-    begin
-      TX := FTextX;
-      if TX > 1 then Dec(TX) else
-      begin
-        LX := Result.Index - 1;
-        if LX >= 0 then
-        begin
-          Result := FMemo.FLines[LX];
-          TX := Result.TailTextX;
-        end;
-      end;
-    end;
+  if FMemo.FLines.Count > 0 then
+  begin
+    I := FMemo.FLines.Count - 1;
+    MoveTo(I, FMemo.FLines[I].TailTextX, true);
+  end
+  else MoveTo(0, 0, false);
+  MoveCaret;
 end;
 
 procedure TLyCaret.MoveToHead(Item: TLyLine);
 begin
   if Item <> nil then
-    MoveTo(Item.Index, Item.HeadTextX);
-end;
-
-procedure TLyCaret.MoveToNext(Item: TLyLine);
-begin
-  Item := Item.Next;
-  if Item <> nil then
-    MoveToHead(Item);
-end;
-
-procedure TLyCaret.MoveToPrev(Item: TLyLine);
-begin
-  Item := Item.Prev;
-  if Item <> nil then
-    MoveToTail(Item);
-end;
-
-procedure TLyCaret.MoveToSelEnd;
-var
-  X, L: integer;
-begin
-  if (FMemo.FLines.Count > 0) and FMemo.FSelection.Selected then
-    if not FMemo.FSelection.FSelectAll then
-    begin
-      X := FMemo.FSelection.FTail.TextX;
-      L := Length(FMemo.FLines[FMemo.FSelection.FTail.ItemX].Text);
-      if L > 0 then
-        Inc(X) else X := 0;
-      MoveTo(FMemo.FSelection.FTail.ItemX, X);
-    end
-    else MoveToTail(FMemo.FLines.Last);
-end;
-
-procedure TLyCaret.MakeVisible;
-begin
-  FMemo.MakeVisible(FMemo.CaretY);
+    MoveTo(Item.Index, Item.HeadTextX, false);
 end;
 
 function TLyCaret.CreateCaret(Width, Height: integer): boolean;
@@ -2616,96 +2646,6 @@ begin
       FHeight := Height;
     end;
   end;
-end;
-
-function TLyCaret.ScrollDown(LineCount: integer; var TX: integer): TLyLine;
-var
-  L: TLyLine;
-  LX, IX: integer;
-begin
-  Result := nil;
-  L := GetItem;
-  if L = nil then Exit;
-
-  if LineCount < 1 then
-  begin
-    Result := L;
-    TX := FTextX;
-    Exit;
-  end;
-
-  IX := FItemX;
-  TX := 1;
-  LX := L.TextLine(FTextX, TX);
-  while (LineCount > 0) and (LX < L.LineCount - 1) do
-  begin
-    Dec(LineCount);
-    Inc(LX);
-  end;
-
-  while (LineCount > 0) and (IX < FMemo.FLines.Count - 1) do
-  begin
-    Dec(LineCount);
-    Inc(IX);
-    L := FMemo.FLines[IX];
-    LX := 0;
-    while (LineCount > 0) and (LX < L.LineCount - 1) do
-    begin
-      Dec(LineCount);
-      Inc(LX);
-    end;
-  end;
-
-  if TX > L.FL[LX] + 1 then
-    TX := L.FL[LX] + 1;
-  for IX := 0 to LX - 1 do
-    Inc(TX, L.FL[IX]);
-  Result := L;
-end;
-
-function TLyCaret.ScrollUp(LineCount: integer; var TX: integer): TLyLine;
-var
-  L: TLyLine;
-  LX, IX: integer;
-begin
-  Result := nil;
-  L := GetItem;
-  if L = nil then Exit;
-
-  if LineCount < 1 then
-  begin
-    Result := L;
-    TX := FTextX;
-    Exit;
-  end;
-
-  IX := FItemX;
-  TX := 1;
-  LX := L.TextLine(FTextX, TX);
-  while (LineCount > 0) and (LX > 0) do
-  begin
-    Dec(LineCount);
-    Dec(LX);
-  end;
-
-  while (LineCount > 0) and (IX > 0) do
-  begin
-    Dec(LineCount);
-    Dec(IX);
-    L := FMemo.FLines[IX];
-    LX := L.LineCount - 1;
-    while (LineCount > 0) and (LX > 0) do
-    begin
-      Dec(LineCount);
-      Dec(LX);
-    end;
-  end;
-
-  if TX > L.FL[LX] + 1 then
-    TX := L.FL[LX] + 1;
-  for IX := 0 to LX - 1 do
-    Inc(TX, L.FL[IX]);
-  Result := L;
 end;
 
 function TLyCaret.ShowCaret: boolean;
@@ -2734,56 +2674,6 @@ begin
   FShowing := false;
 end;
 
-procedure TLyCaret.Insert(Strings: TStrings);
-var
-  L: TLyLine;
-  S: WideString;
-  I, X: integer;
-begin
-  if Active and (Strings.Count > 0) then
-  begin
-    FMemo.BeginUpdate;
-    try
-      if FMemo.FSelection.Selected then FMemo.FSelection.Delete;
-      L := GetItem;
-      if Strings.Count > 1 then
-      begin
-        S := L.CutFrom(FTextX);
-        L.Add(StrToWide(Strings[0]));
-        X := L.Index + 1;
-        for I := 1 to Strings.Count - 2 do
-        begin
-          FMemo.FLines.Insert(X, StrToWide(Strings[I]));
-          Inc(X);
-        end;
-        L := FMemo.FLines.Insert(X, S);
-        MoveAfterInsert(L, 0, StrToWide(Strings[Strings.Count - 1]));
-      end
-      else MoveAfterInsert(L, FTextX, StrToWide(Strings[0]));
-    finally
-      FMemo.EndUpdate;
-    end;
-  end;
-end;
-
-procedure TLyCaret.Insert(const Text: WideString);
-var
-  L: TStrings;
-begin
-  if (Text <> '') and Active then
-  begin
-    L := TStringList.Create;
-    try
-      L.Text := WideToStr(Text);
-      if CharInSet(Text[Length(Text)], [#13, #10]) then
-         L.Add('');
-      Insert(L);
-    finally
-      L.Free;
-    end;
-  end;
-end;
-
 procedure TLyCaret.DestroyCaret;
 begin
   if FCreated and FMemo.StatusOK then
@@ -2807,12 +2697,13 @@ begin
     MoveCaret;
 end;
 
-procedure TLyCaret.MoveTo(ItemX, TextX: integer);
+procedure TLyCaret.MoveTo(ItemX, TextX: integer; After: boolean);
 begin
-  if (ItemX <> FItemX) or (TextX <> FTextX) then
+  if (ItemX <> FPos.ItemX) or (TextX <> FPos.TextX) or (FPos.After xor After) then
   begin
-    FItemX := ItemX;
-    FTextX := TextX;
+    FPos.ItemX := ItemX;
+    FPos.TextX := TextX;
+    FPos.After := After;
     MoveCaret;
   end;
 end;
@@ -2934,7 +2825,7 @@ begin
       E := FTail.TextX;
       FMemo.FUpdate.UndoSaveChange(F.Index, F.FText); // save selection
       Unselect;
-      FMemo.FCaret.MoveTo(F.Index, S);
+      FMemo.FCaret.MoveTo(F.Index, S, false);
       if F <> L then
       begin
         F.Delete(S, Length(F.FText));
@@ -2976,7 +2867,8 @@ begin
   if Selected then
   begin
     Reset;
-    FMemo.Invalidate;
+    if FMemo.StatusOK then
+      FMemo.Invalidate;
   end;
 end;
 
@@ -3026,26 +2918,89 @@ begin
 end;
 
 procedure TLySelection.SetText(const Value: WideString);
+
+  function has_no_line_break: boolean;
+  var
+    I: integer;
+  begin
+    for I := 1 to Length(Value) do
+      if (Value[I] = #10) or (Value[1] = #13)  then
+      begin
+        Result := false;
+        Exit;
+      end;
+    Result := true;
+  end;
+
+  function make_lines: TStrings;
+  var
+    I: integer;
+  begin
+    Result := TStringList.Create;
+    Result.Text := WideToStr(Value);
+    I := Length(Value);
+    if (Value[I] = #10) or (Value[1] = #13)  then
+      Result.Add('');
+  end;
+
+var
+  caret: TLyCaret;
+  lines: TStrings;
+  I, X: integer;
+  L: TLyLine;
+  S: WideString;
 begin
-  FMemo.BeginUpdate;
-  try
-    Delete;
-    FMemo.FCaret.Insert(Value);
-  finally
-    FMemo.EndUpdate;
+  caret := FMemo.FCaret;
+  if Selected or (caret.Active and (Value <> '')) then
+  begin
+    FMemo.BeginUpdate;
+    try
+      Delete;
+      L := caret.GetItem;
+      if has_no_line_break then
+      begin
+        X := L.Insert(caret.FPos.TextX, Value);
+        caret.MoveTo(caret.FPos.ItemX, Max(caret.FPos.TextX, 1) + X, true);
+      end
+      else
+      begin
+        lines := make_lines;
+        try
+          S := L.CutFrom(caret.FPos.TextX);
+          L.FText := L.FText + StrToWide(lines[0]);
+          X := caret.FPos.ItemX + 1;
+          for I := 1 to lines.Count - 1 do
+          begin
+            L := FMemo.FLines.Insert(X, StrToWide(lines[I]));
+            Inc(X);
+          end;
+          I := Length(L.FText);
+          L.FText := L.FText + S;
+          if I > 0 then
+            caret.MoveTo(X - 1, I + 1, true) else
+          if S <> '' then
+            caret.MoveTo(X - 1, 1, false) else
+            caret.MoveTo(X - 1, 0, false);
+        finally
+          lines.Free;
+        end;
+      end;
+    finally
+      FMemo.EndUpdate;
+    end;
   end;
 end;
 
-function TLySelection.SelectTo(ItemX, TextX: integer): boolean;
+function TLySelection.SelectTo(ItemX, TextX: integer; SelectByMouse: boolean): boolean;
 var
   IX, TX, F: integer;
 begin
   if FSelectAll then Reset;
 
-  if not Selected then
+  if not SelectByMouse and not Selected then
   begin
-    FFrom.ItemX := FMemo.FCaret.ItemIndex;
-    FFrom.TextX := FMemo.FCaret.TextIndex;
+    FFrom.ItemX := FMemo.FCaret.FPos.ItemX;
+    FFrom.TextX := FMemo.FCaret.FPos.TextX;
   end;
 
   IX := FFrom.ItemX;
@@ -3105,79 +3060,9 @@ begin
     Clipboard.AsText := WideToStr(GetText);
 end;
 
-procedure TLySelection.MouseMove(P: TLyLine; TextX: integer);
-begin
-  if FSelecting then
-  begin
-    SelectTo(P.Index, TextX);
-    FMemo.FCaret.MoveTo(P.Index, TextX);
-    FMemo.FCaret.MakeVisible;
-  end;
-end;
-
-procedure TLySelection.MarkCode(IsCode: boolean);
-begin
-  if FSelectAll then
-    MarkCode(IsCode, 0, FMemo.FLines.Count - 1) else
-  if Selected then
-    MarkCode(IsCode, FHead.ItemX, FTail.ItemX) else
-  if FMemo.FCaret.Active then
-    MarkCode(IsCode, FMemo.FCaret.FItemX, FMemo.FCaret.FItemX);
-end;
-
-procedure TLySelection.MarkCode(IsCode: boolean; BegLineX, EndLineX: integer);
-var
-  L: TLyLine;
-  S: WideString;
-begin
-  FMemo.BeginUpdate;
-  try
-    while BegLineX <= EndLineX do
-    begin
-      L := FMemo.FLines[BegLineX];
-      S := L.Text;
-      if IsCode then
-      begin
-        if (S = '') or (S[1] <> '%') then
-          L.Text := '% ' + S;
-      end
-      else
-      if (S <> '') and (S[1] = '%') then
-      begin
-        if (Length(S) > 1) and (S[2] <= ' ') then
-          L.Text := Copy(S, 3, Length(S)) else
-          L.Text := Copy(S, 2, Length(S));
-      end;
-      Inc(BegLineX);
-    end;
-  finally
-    FMemo.EndUpdate;
-  end;
-end;
-
-procedure TLySelection.MouseDown(P: TLyLine; TextX: integer);
-begin
-  UnSelect;
-  FSelecting := true;
-  FFrom.ItemX := P.Index;
-  FFrom.TextX := TextX;
-  FMemo.FCaret.MoveTo(FFrom.ItemX, TextX);
-  FMemo.FCaret.MakeVisible;
-  FMemo.NotifyStatus;
-end;
-
 procedure TLySelection.PasteFromClipboard;
 begin
-  if FMemo.FCaret.Active then
-  begin
-    FMemo.BeginUpdate;
-    try
-      Delete;
-      FMemo.FCaret.Insert(StrToWide(Clipboard.AsText));
-    finally
-      FMemo.EndUpdate;
-    end;
-  end;
+  SetText(StrToWide(Clipboard.AsText));
 end;
 
 procedure TLySelection.Reset;
@@ -3190,14 +3075,18 @@ end;
 
 function TLyLineList.Add(const S: WideString): TLyLine;
 begin
-  FMemo.BeginUpdate;
-  try
-    Result := TLyLine.Create(Self);
-    FItems.Add(Result);
-    Result.FText := S;
-    Result.Change;
-  finally
-    FMemo.EndUpdate;
+  Result := nil;
+  if FMemo.StatusOK then
+  begin
+    FMemo.BeginUpdate;
+    try
+      Result := TLyLine.Create(Self);
+      FMemo.FUpdate.UndoSaveAdd(FItems.Add(Result));
+      Result.FText := S;
+      Result.Change;
+    finally
+      FMemo.EndUpdate;
+    end;
   end;
 end;
 
@@ -3209,14 +3098,14 @@ procedure TLyLineList.Assign(Source: TPersistent);
   begin
     FMemo.BeginUpdate;
     try
-      FMemo.FCaret.MoveTo(0, 1);
+      FMemo.FCaret.MoveTo(0, 1, false);
       X := FItems.Count;
       I := 0;
       while I < Lines.Count do
       begin
         if I < X then
           GetItem(I).Assign(Lines[I]) else
-          Add.Assign(Lines[I]);
+          Add('').Assign(Lines[I]);
         Inc(I);
       end;
 
@@ -3226,7 +3115,7 @@ procedure TLyLineList.Assign(Source: TPersistent);
         Delete(X);
       end;
 
-      if I = 0 then Add;
+      if I = 0 then Add('');
       FMemo.Modified := true;
     finally
       FMemo.EndUpdate;
@@ -3239,7 +3128,7 @@ procedure TLyLineList.Assign(Source: TPersistent);
   begin
     FMemo.BeginUpdate;
     try
-      FMemo.FCaret.MoveTo(0, 1);
+      FMemo.FCaret.MoveTo(0, 1, false);
       X := FItems.Count;
       I := 0;
       while I < Lines.Count do
@@ -3256,7 +3145,7 @@ procedure TLyLineList.Assign(Source: TPersistent);
         Delete(X);
       end;
 
-      if I = 0 then Add;
+      if I = 0 then Add('');
       FMemo.Modified := true;
     finally
       FMemo.EndUpdate;
@@ -3356,56 +3245,6 @@ begin
   FMemo.EndUpdate;
 end;
 
-function TLyLineList.FindByLine(var LineIndex: integer; Anyway: boolean): TLyLine;
-var
-  I: integer;
-begin
-  I := IndexByLine(LineIndex);
-  if I >= 0 then
-    Result := GetItem(I) else
-    Result := nil;
-
-  if (Result = nil) and Anyway then
-    if LineIndex <= 0 then
-    begin
-      Result := First;
-      LineIndex := 0;
-    end
-    else
-    begin
-      Result := Last;
-      LineIndex := Result.LineCount - 1;
-    end;
-end;
-
-function TLyLineList.GetCaretLine(CaretY: integer; var LineX: integer): TLyLine;
-var
-  I: integer;
-begin
-  if CaretY >= 0 then
-    if not FMemo.WrapLine then
-    begin
-      if CaretY < GetCount then
-      begin
-        Result := GetItem(CaretY);
-        LineX := 0;
-        Exit;
-      end;
-    end
-    else
-    for I := 0 to GetCount - 1 do
-    begin
-      Result := GetItem(I);
-      if Result.LineCount > CaretY then
-      begin
-        LineX := CaretY;
-        Exit;
-      end;
-      Dec(CaretY, Result.LineCount);
-    end;
-  Result := nil;
-end;
-
 function TLyLineList.GetCount: integer;
 begin
   if FItems <> nil then
@@ -3437,28 +3276,13 @@ function TLyLineList.GetLineCount: integer;
 var
   I: integer;
 begin
-  Result := 0;
-  for I := 0 to FItems.Count - 1 do
-    Inc(Result, GetItem(I).LineCount);
-end;
-
-function TLyLineList.IndexByLine(var LineIndex: integer): integer;
-var
-  I: integer;
-  P: TLyLine;
-begin
-  if LineIndex >= 0 then
+  if FMemo.WrapLine then
+  begin
+    Result := 0;
     for I := 0 to FItems.Count - 1 do
-    begin
-      P := GetItem(I);
-      if LineIndex < P.LineCount then
-      begin
-        Result := I;
-        Exit;
-      end;
-      Dec(LineIndex, P.LineCount);
-    end;
-  Result := -1;
+      Inc(Result, GetItem(I).LineCount);
+  end
+  else Result := FItems.Count;
 end;
 
 function TLyLineList.IndexOf(P: TLyLine): integer;
@@ -3485,20 +3309,6 @@ begin
       FMemo.EndUpdate;
     end;
   end;
-end;
-
-function TLyLineList.InsertAfter(P: TLyLine; const S: WideString): TLyLine;
-var
-  I: integer;
-begin
-  if P <> nil then
-  begin
-    I := FItems.IndexOf(P);
-    if I >= 0 then
-      Result := Insert(I + 1, S) else
-      Result := nil;
-  end
-  else Result := Add(S);
 end;
 
 procedure TLyLineList.LoadFromFile(const FileName: string);
@@ -3671,7 +3481,7 @@ end;
 
 { TLyLine }
 
-function TLyLine.TextPos(TextX: integer): TPoint;
+function TLyLine.TextPos(TextX: integer; After: boolean): TPoint;
 var
   I, X: integer;
 begin
@@ -3690,17 +3500,16 @@ begin
       begin
         if TextX <= FL[I] then
         begin
-          Result.X := Left;
-          while TextX > 1 do
-          begin
-            Inc(Result.X, TextWidth(FText[X]));
-            Inc(X);
-            Dec(TextX);
-          end;
+          Result.X := Left + TextWidth(Copy(FText, X, TextX - 1));
+          Exit;
+        end;
+        Dec(TextX, FL[I]);
+        if (TextX = 1) and After then
+        begin
+          Result.X := Left + FW[I];
           Exit;
         end;
         Inc(X, FL[I]);
-        Dec(TextX, FL[I]);
         Inc(Result.Y, FList.FMemo.FLineHeight);
       end;
     end;
@@ -3748,11 +3557,6 @@ begin
   finally
     FList.FMemo.EndUpdate;
   end;
-end;
-
-function TLyLine.BreakFromTail: TLyLine;
-begin
-  Result := FList.InsertAfter(Self);
 end;
 
 procedure TLyLine.BeginUpdate;
@@ -3838,7 +3642,7 @@ var
   S: WideString;
 begin
   S := FText;
-  System.Delete(S, TextX, Count);
+  System.Delete(S, Max(1, TextX), Count);
   Result := Length(FText) - Length(S);
   if Result > 0 then
   begin
@@ -3992,20 +3796,6 @@ begin
   end;
 end;
 
-function TLyLine.Merge(P: TLyLine): boolean;
-begin
-  Result := (P <> nil) and (P <> Self);
-  if Result then
-  begin
-    if P.FText <> '' then
-    begin
-      FText := FText + P.FText;
-      Change;
-    end;
-    P.Free;
-  end;
-end;
-
 function TLyLine.MergeNext: boolean;
 var
   L: TLyLine;
@@ -4034,39 +3824,27 @@ begin
     Result := nil;
 end;
 
-function TLyLine.TextLine(TextX: integer): integer;
+function TLyLine.TextLine(TextX: integer; After: boolean): integer;
 var
-  I, L: integer;
+  I: integer;
 begin
-  L := LineCount;
-  for I := 0 to L - 1 do
+  for I := 0 to LineCount - 1 do
   begin
     if TextX <= FL[I] then
     begin
       Result := I;
       Exit;
     end;
-    Dec(TextX, FL[I]);
-  end;
-  Result := L - 1;
-end;
 
-function TLyLine.TextLine(TextX: integer; var Col: integer): integer;
-var
-  I, L: integer;
-begin
-  L := LineCount;
-  Col := TextX;
-  for I := 0 to L - 2 do
-  begin
-    if Col <= FL[I] then
+    Dec(TextX, FL[I]);
+
+    if (TextX = 1) and After then
     begin
       Result := I;
       Exit;
     end;
-    Dec(Col, FL[I]);
   end;
-  Result := L - 1;
+  Result := LineCount - 1;
 end;
 
 function TLyLine.TextOut(X, Y: integer; const S: WideString): boolean;
@@ -4128,43 +3906,19 @@ begin
     Result := 0;
 end;
 
-function TLyLine.HitCaret(X: integer): integer;
-var
-  L, I: integer;
-begin
-  L := 0;
-  if L < X then
-  begin
-    I := L + TextWidth(FText);
-    if I > X then
-    begin
-      for I := 1 to Length(FText) do
-      begin
-        Inc(L, TextWidth(FText[I]));
-        if X < L then
-        begin
-          Result := I;
-          Exit;
-        end;
-      end;
-      Result := Length(FText) + 1;
-    end
-    else Result := Length(FText) + 1 + (X - I) div FList.FMemo.FSpaceWidth;
-  end
-  else Result := 1;
-end;
-
-function TLyLine.HitText(X, LineX: integer): integer;
+function TLyLine.HitText(X, LineX: integer; var After: boolean): integer;
 var
   I, L, E: integer;
 begin
   Result := 0;
+  After := false;
   if FText <> '' then
   begin
     for I := 0 to LineX - 1 do Inc(Result, FL[I]);
     Inc(Result);
     L := Left;
     if X > L then
+    begin
       if X < L + FW[LineX] then
       begin
         E := Result + FL[LineX];
@@ -4176,6 +3930,8 @@ begin
         end;
       end
       else Inc(Result, FL[LineX]);
+      After := true;
+    end;
   end;
 end;
 
@@ -4208,15 +3964,18 @@ var
   I, B, E: integer;
 begin
   M := FList.FMemo;
-  {$IFDEF FPC}
-  B := 0;
-  E := 0;
-  {$ENDIF}
-  M.FSelection.GetRange(Index, B, E);
-  for I := 0 to LineCount - 1 do
+  if M.StatusOK then
   begin
-    DrawLine(I, X, Y, B, E);
-    Inc(Y, M.FLineHeight);
+    {$IFDEF FPC}
+    B := 0;
+    E := 0;
+    {$ENDIF}
+    M.FSelection.GetRange(Index, B, E);
+    for I := 0 to LineCount - 1 do
+    begin
+      DrawLine(I, X, Y, B, E);
+      Inc(Y, M.FLineHeight);
+    end;
   end;
 end;
 
@@ -4347,10 +4106,11 @@ begin
   if (Y >= 0) and (Y < Height) then
   begin
     {$IFDEF FPC}X := 0;{$ENDIF}
-    L := FMemo.FLines.GetCaretLine(LineX, X);
-    F := (L <> nil) and FMemo.FCaret.Visible and
-      FMemo.FCaret.Active and
-      (LineX = FMemo.FCaret.FPos.Y div LineHeight);
+    I := FMemo.GetItemLine(LineX, X);
+    if I >= 0 then
+      L := FMemo.FLines[I] else
+      L := nil;
+    F := (L <> nil) and (LineX = FMemo.FCaret.Y);
 
     // 1.draw line mark
     X := 0;
@@ -4424,10 +4184,10 @@ begin
   FList := AList;
   FPrev := FList.FLast;
   FList.FLast := Self;
-  M := FList.FMemo;
+  M := FList.FUpdate.FMemo;
   FMagic := M.FUpdate.FMagic;
-  FCaret.Y := M.FCaret.FItemX;
-  FCaret.X := M.FCaret.FTextX;
+  FCaret.Y := M.FCaret.FPos.ItemX;
+  FCaret.X := M.FCaret.FPos.TextX;
   FFrom := M.FSelection.FFrom;
   FStart := M.FSelection.FHead;
   FEnd := M.FSelection.FTail;
@@ -4445,7 +4205,7 @@ var
   Edit: TLyCodeMemo;
 begin
   try
-    Edit := FList.FMemo;
+    Edit := FList.FUpdate.FMemo;
     case FType of
       ctChangeText: Edit.Lines[FLine].SetText(FText);
       ctDeleteLine: Edit.Lines.Insert(FLine, FText);
@@ -4453,7 +4213,7 @@ begin
     end;
     if (FPrev = nil) or (FPrev.FMagic <> FMagic) then
     begin
-      Edit.FCaret.MoveTo(FCaret.Y, FCaret.X);
+      Edit.FCaret.MoveTo(FCaret.Y, FCaret.X, false);
       Edit.FSelection.FFrom := FFrom;
       Edit.FSelection.Select(FStart.ItemX, FStart.TextX, FEnd.ItemX, FEnd.TextX);
     end;
@@ -4464,16 +4224,9 @@ end;
 
 { TLyUndoList }
 
-function TLyUndoList.GetMode: TLyChangeDeal;
-begin
-  if Self = FUpdate.FUndos then Result := cdUndo else
-  if Self = FUpdate.FRedos then Result := cdRedo else Result := cdNone;
-end;
-
 constructor TLyUndoList.Create(AUpdate: TLyUpdate);
 begin
   FUpdate := AUpdate;
-  FMemo := FUpdate.FMemo;
 end;
 
 destructor TLyUndoList.Destroy;
@@ -4491,19 +4244,10 @@ procedure TLyUndoList.Apply;
 var
   M: cardinal;
 begin
-  if (FLast <> nil) and (FUpdate.FUndoMode = cdNone) then
-  try
-    FMemo.BeginUpdate;
-    try
-      FUpdate.FUndoMode := Mode;
-      M := FLast.FMagic;
-      repeat FLast.Apply until (FLast = nil) or (FLast.FMagic <> M);
-    finally
-      FMemo.EndUpdate;
-      FMemo.MakeCaretVisible;
-    end;
-  finally
-    FUpdate.FUndoMode := cdNone;
+  if FLast <> nil then
+  begin
+    M := FLast.FMagic;
+    repeat FLast.Apply until (FLast = nil) or (FLast.FMagic <> M);
   end;
 end;
 
